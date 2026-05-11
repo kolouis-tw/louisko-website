@@ -1,6 +1,6 @@
 # Louisko Site Workflow
 
-這個資料夾保存 Louisko.com 之後新增首頁入口、建立次頁、驗證、推送 GitHub 與部署 Zeabur 的共用腳本。首頁目前是無印良品風格的私人入口，腳本會產生同樣風格的圓形入口按鈕。
+這個資料夾保存 `louisko.com` 主站新增入口、建立子頁、驗證、推送 GitHub 與部署 Zeabur 的共用腳本。
 
 主腳本：
 
@@ -10,39 +10,35 @@ node scripts/site-workflow/manage-site.mjs
 
 ## 常用流程
 
-列出首頁目前卡片：
+列出首頁目前入口：
 
 ```sh
 node scripts/site-workflow/manage-site.mjs list
 ```
 
-建立新的次頁，並自動加到首頁入口：
+建立新的子頁資料夾，並自動加到首頁入口：
 
 ```sh
 node scripts/site-workflow/manage-site.mjs add-page \
   --slug my-tool \
   --title "我的新工具" \
-  --description "這裡放新工具的簡短說明。" \
+  --description "我的新工具" \
   --code 000000
 ```
 
-新增外部連結卡片：
+這會建立：
 
-```sh
-node scripts/site-workflow/manage-site.mjs add-link \
-  --slug my-link \
-  --title "外部網站" \
-  --description "放在首頁的外部連結。" \
-  --href "https://example.com"
+```text
+apps/my-tool/index.html
 ```
 
-重新依 `site-pages.json` 產生首頁卡片：
+重新依 `site-pages.json` 產生首頁入口：
 
 ```sh
 node scripts/site-workflow/manage-site.mjs refresh-home
 ```
 
-檢查首頁卡片與必要檔案：
+檢查首頁入口與必要檔案：
 
 ```sh
 node scripts/site-workflow/manage-site.mjs verify
@@ -63,9 +59,10 @@ node scripts/site-workflow/manage-site.mjs publish --message "Update Louisko pag
 ## 約定
 
 - `index.html` 是 Louisko 主頁。
-- `bazi.html` 是既有八字十神排盤子頁，先保留在根目錄，避免改動既有網址。
-- 新增的一般次頁放在 `pages/<slug>.html`。
-- 首頁入口按鈕資料放在 `site-pages.json`。
+- `apps/<slug>/index.html` 是子頁或子專案入口。
+- `apps/bazi/index.html` 是八字排盤主檔。
+- `bazi.html` 保留在根目錄作為舊網址相容入口。
+- 首頁入口資料放在 `site-pages.json`。
 - `index.html` 裡的首頁入口按鈕區塊由下列 marker 管理：
 
 ```html
@@ -73,12 +70,11 @@ node scripts/site-workflow/manage-site.mjs publish --message "Update Louisko pag
 <!-- LOUISKO_APP_CARDS_END -->
 ```
 
-請不要手動刪除這兩個 marker，否則腳本無法更新首頁卡片。
+請不要手動刪除這兩個 marker，否則腳本無法更新首頁入口。
 
-## 安全注意
+## 安全與頁面規則
 
-- 腳本不會覆蓋已存在的 `pages/<slug>.html`。
+- 腳本不會覆蓋已存在的 `apps/<slug>/index.html`。
 - Zeabur token 只會從 `/Users/kolouis/.codex/config.toml` 讀取，不會寫入 repository。
 - `publish` 只會加入網站與文件相關檔案，不會批次加入整個工作區。
 - 除非使用者明確要求，不要把提示詞、說明提醒、使用說明、安全提醒或教學文字放到公開頁面上。
-- 首頁通行碼彈窗只是前端提示，不是正式安全驗證；此類提醒只記錄於文件，不顯示在頁面上。

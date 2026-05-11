@@ -8,7 +8,7 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(scriptDir, "../..");
 const configPath = path.join(scriptDir, "site-pages.json");
 const indexPath = path.join(root, "index.html");
-const pagesDir = path.join(root, "pages");
+const appsDir = path.join(root, "apps");
 
 const startMarker = "      <!-- LOUISKO_APP_CARDS_START -->";
 const endMarker = "      <!-- LOUISKO_APP_CARDS_END -->";
@@ -35,7 +35,7 @@ Usage:
   node scripts/site-workflow/manage-site.mjs publish --message <commit message> [--zeabur]
 
 Notes:
-  - Future tool pages are created under pages/<slug>.html.
+  - Future tool pages are created under apps/<slug>/index.html.
   - Existing files are not overwritten.
   - publish runs verify, git add, git commit when needed, git push, and optionally Zeabur CLI deploy.
 `);
@@ -85,7 +85,7 @@ function slugToFile(slug) {
   if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
     throw new Error("Slug must use lowercase letters, numbers, and hyphens only.");
   }
-  return path.join(pagesDir, `${slug}.html`);
+  return path.join(appsDir, slug, "index.html");
 }
 
 function cardHtml(card) {
@@ -139,16 +139,12 @@ h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:48px;li
 <body>
 <main class="shell">
   <nav class="top">
-    <a class="brand" href="../index.html">Louisko</a>
-    <a class="back" href="../index.html">回首頁</a>
+    <a class="brand" href="../../index.html">Louisko</a>
+    <a class="back" href="../../index.html">回首頁</a>
   </nav>
   <section class="hero">
-    <div class="eyebrow">Louisko page</div>
     <h1>${escapeHtml(title)}</h1>
     <p class="lead">${escapeHtml(description)}</p>
-  </section>
-  <section class="content">
-    <p>這是新建立的次頁模板。之後可以在這裡加入實際內容、表單、工具或連結。</p>
   </section>
 </main>
 </body>
@@ -174,13 +170,13 @@ function addPage(args) {
   if (existsSync(filePath)) {
     throw new Error(`Page already exists: ${path.relative(root, filePath)}`);
   }
-  mkdirSync(pagesDir, { recursive: true });
+  mkdirSync(path.dirname(filePath), { recursive: true });
   writeFileSync(filePath, pageTemplate({ title, description }));
   addCard({
     slug,
     title,
     description,
-    href: `pages/${slug}.html`,
+    href: `apps/${slug}/`,
     code: args.code || "000000"
   });
   console.log(`Created ${path.relative(root, filePath)}.`);
@@ -258,7 +254,7 @@ function deployZeabur() {
 function publish(args) {
   const message = requireArg(args, "message");
   verify();
-  run("git", ["add", "index.html", "bazi.html", "pages", "Dockerfile", ".dockerignore", "README.md", "AGENTS.md", "manifest.json", "scripts/site-workflow"]);
+  run("git", ["add", "index.html", "bazi.html", "apps", "Dockerfile", ".dockerignore", "README.md", "AGENTS.md", "manifest.json", "scripts/site-workflow"]);
   const status = capture("git", ["status", "--short"]);
   if (status) {
     run("git", ["commit", "-m", message]);
