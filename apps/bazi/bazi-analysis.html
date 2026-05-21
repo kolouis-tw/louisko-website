@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>八字論命</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111318;
+      --panel: #191d24;
+      --panel-2: #202631;
+      --text: #f2efe6;
+      --muted: #b3ad9f;
+      --line: rgba(242, 239, 230, 0.16);
+      --accent: #d8b86a;
+      --wood: #39b777;
+      --fire: #ef684f;
+      --earth: #d1a34c;
+      --metal: #cfd6df;
+      --water: #4f96e8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", sans-serif;
+      letter-spacing: 0;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .back-link,
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #151922;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #15120a;
+      border-color: transparent;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+      gap: 22px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .hero-copy,
+    .summary-panel,
+    .section,
+    .empty-state {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .hero-copy {
+      padding: 28px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(34px, 5vw, 62px);
+      line-height: 1;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.8;
+      font-weight: 650;
+    }
+
+    .summary-panel {
+      padding: 20px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .metric {
+      min-height: 86px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-2);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .chart-overview {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .pillar {
+      min-height: 210px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      text-align: center;
+    }
+
+    .pillar-label {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .pillar-chars {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      margin: 12px 0;
+    }
+
+    .char {
+      display: grid;
+      place-items: center;
+      width: 62px;
+      height: 62px;
+      border: 1px solid currentColor;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 36px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .pillar-meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.65;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .section {
+      padding: 18px;
+    }
+
+    .section.wide {
+      grid-column: 1 / -1;
+    }
+
+    .section h2 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .subtitle {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .tag {
+      display: inline-flex;
+      min-height: 28px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 10px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .evidence {
+      margin: 10px 0 0;
+      padding-left: 20px;
+      color: #ddd7c8;
+      line-height: 1.75;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .conclusion {
+      margin: 14px 0 0;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      color: var(--text);
+      line-height: 1.8;
+      font-size: 16px;
+      font-weight: 720;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 36px 1fr 28px;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .bar-track {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+    }
+
+    .monthly-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .monthly-card {
+      min-height: 260px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+    }
+
+    .shensha-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .shensha-card {
+      min-height: 190px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+    }
+
+    .shensha-card h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .shensha-card p {
+      margin: 8px 0;
+      color: #ddd7c8;
+      font-size: 14px;
+      font-weight: 650;
+      line-height: 1.65;
+    }
+
+    .monthly-card h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .monthly-card p {
+      margin: 8px 0;
+      color: #ddd7c8;
+      font-size: 14px;
+      font-weight: 650;
+      line-height: 1.65;
+    }
+
+    .monthly-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin: 10px 0;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 104px 72px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .timeline-item strong {
+      color: var(--text);
+      font-size: 18px;
+    }
+
+    .prompt-box {
+      max-height: 360px;
+      overflow: auto;
+      white-space: pre-wrap;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 14px;
+      background: #0d1016;
+      color: #d8d2c2;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .empty-state {
+      padding: 28px;
+      text-align: center;
+    }
+
+    .wood { color: var(--wood); }
+    .fire { color: var(--fire); }
+    .earth { color: var(--earth); }
+    .metal { color: var(--metal); }
+    .water { color: var(--water); }
+
+    @media (max-width: 860px) {
+      .hero,
+      .chart-overview,
+      .monthly-grid,
+      .shensha-grid,
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .timeline-item {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      main {
+        width: min(100vw - 20px, 520px);
+        padding-top: 18px;
+      }
+
+      .topbar {
+        display: grid;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-copy,
+      .summary-panel,
+      .section {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="bazi-analysis-page">
+    <div class="topbar">
+      <a class="back-link" href="./bazi-input-test.html">返回排盤</a>
+      <button class="primary" id="copy-prompt" type="button" hidden>複製 AI Prompt</button>
+    </div>
+
+    <div id="app"></div>
+  </main>
+
+  <script>
+    const elementClassByElement = { 木: "wood", 火: "fire", 土: "earth", 金: "metal", 水: "water" };
+    const stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+    const monthBranches = ["寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑"];
+    const firstMonthStemByYearStem = { 甲: "丙", 己: "丙", 乙: "戊", 庚: "戊", 丙: "庚", 辛: "庚", 丁: "壬", 壬: "壬", 戊: "甲", 癸: "甲" };
+    const branchMainStem = { 子: "癸", 丑: "己", 寅: "甲", 卯: "乙", 辰: "戊", 巳: "丙", 午: "丁", 未: "己", 申: "庚", 酉: "辛", 戌: "戊", 亥: "壬" };
+    const stemElement = { 甲: "木", 乙: "木", 丙: "火", 丁: "火", 戊: "土", 己: "土", 庚: "金", 辛: "金", 壬: "水", 癸: "水" };
+    const stemYinYang = { 甲: "陽", 乙: "陰", 丙: "陽", 丁: "陰", 戊: "陽", 己: "陰", 庚: "陽", 辛: "陰", 壬: "陽", 癸: "陰" };
+    const branchElement = { 子: "水", 丑: "土", 寅: "木", 卯: "木", 辰: "土", 巳: "火", 午: "火", 未: "土", 申: "金", 酉: "金", 戌: "土", 亥: "水" };
+    const elementGenerates = { 木: "火", 火: "土", 土: "金", 金: "水", 水: "木" };
+    const elementControls = { 木: "土", 土: "水", 水: "火", 火: "金", 金: "木" };
+    const solarTermMonthLabels = [
+      { monthIndex: 1, branch: "寅", solarTermName: "立春", approximateGregorianRange: "約 2/4-3/5" },
+      { monthIndex: 2, branch: "卯", solarTermName: "驚蟄", approximateGregorianRange: "約 3/5-4/4" },
+      { monthIndex: 3, branch: "辰", solarTermName: "清明", approximateGregorianRange: "約 4/4-5/5" },
+      { monthIndex: 4, branch: "巳", solarTermName: "立夏", approximateGregorianRange: "約 5/5-6/5" },
+      { monthIndex: 5, branch: "午", solarTermName: "芒種", approximateGregorianRange: "約 6/5-7/7" },
+      { monthIndex: 6, branch: "未", solarTermName: "小暑", approximateGregorianRange: "約 7/7-8/7" },
+      { monthIndex: 7, branch: "申", solarTermName: "立秋", approximateGregorianRange: "約 8/7-9/7" },
+      { monthIndex: 8, branch: "酉", solarTermName: "白露", approximateGregorianRange: "約 9/7-10/8" },
+      { monthIndex: 9, branch: "戌", solarTermName: "寒露", approximateGregorianRange: "約 10/8-11/7" },
+      { monthIndex: 10, branch: "亥", solarTermName: "立冬", approximateGregorianRange: "約 11/7-12/7" },
+      { monthIndex: 11, branch: "子", solarTermName: "大雪", approximateGregorianRange: "約 12/7-隔年 1/5" },
+      { monthIndex: 12, branch: "丑", solarTermName: "小寒", approximateGregorianRange: "約 1/5-2/4" }
+    ];
+    const monthSeason = {
+      寅: "初春木旺，陽氣始生", 卯: "仲春木旺，木氣純粹", 辰: "季春土濕，木餘土起",
+      巳: "初夏火旺，燥熱漸成", 午: "仲夏火旺，陽氣極盛", 未: "季夏土燥，火餘土厚",
+      申: "初秋金旺，肅殺漸起", 酉: "仲秋金旺，金氣純粹", 戌: "季秋燥土，金餘火藏",
+      亥: "初冬水旺，寒氣漸深", 子: "仲冬水旺，寒氣最重", 丑: "季冬寒土，水餘土凝"
+    };
+    const tenGodMeaning = {
+      比肩: ["自主、同儕、自我", "固執、競爭、自我過強"],
+      劫財: ["行動、冒險、人脈", "破財、衝動、爭奪"],
+      食神: ["才華、享受、創作", "安逸、拖延、過度理想"],
+      傷官: ["表達、創新、批判", "叛逆、口舌、衝撞權威"],
+      正財: ["穩定、管理、現實", "保守、壓力、物質焦慮"],
+      偏財: ["機會、商業、資源", "投機、分散、不穩"],
+      正官: ["秩序、名聲、規範", "壓抑、拘束、畏懼權威"],
+      七殺: ["競爭、魄力、危機處理", "壓力、衝突、急躁"],
+      正印: ["學習、保護、正統資源", "依賴、保守、慢熱"],
+      偏印: ["靈感、研究、非主流", "孤僻、想太多、不穩定"]
+    };
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;"
+      })[char]);
+    }
+
+    function elementClass(element) {
+      return elementClassByElement[element] ?? "";
+    }
+
+    function elementText(element) {
+      return `<span class="${elementClass(element)}">${escapeHtml(element)}</span>`;
+    }
+
+    function getTenGod(dayMaster, targetStem) {
+      if (dayMaster === targetStem) return "比肩";
+      const dayElement = stemElement[dayMaster];
+      const targetElement = stemElement[targetStem];
+      const samePolarity = stemYinYang[dayMaster] === stemYinYang[targetStem];
+      if (dayElement === targetElement) return samePolarity ? "比肩" : "劫財";
+      if (elementGenerates[dayElement] === targetElement) return samePolarity ? "食神" : "傷官";
+      if (elementControls[dayElement] === targetElement) return samePolarity ? "偏財" : "正財";
+      if (elementControls[targetElement] === dayElement) return samePolarity ? "七殺" : "正官";
+      if (elementGenerates[targetElement] === dayElement) return samePolarity ? "偏印" : "正印";
+      return "資料不足";
+    }
+
+    function getAnnualMonths(yearStem) {
+      const firstMonthStem = firstMonthStemByYearStem[yearStem];
+      if (!firstMonthStem) throw new Error(`Invalid year stem: ${yearStem}`);
+      const firstStemIndex = stems.indexOf(firstMonthStem);
+      return monthBranches.map((branch, index) => {
+        const stem = stems[(firstStemIndex + index) % stems.length];
+        const label = solarTermMonthLabels[index];
+        return {
+          monthIndex: index + 1,
+          solarTermName: label.solarTermName,
+          approximateGregorianRange: label.approximateGregorianRange,
+          stem,
+          branch,
+          pillar: `${stem}${branch}`,
+          element: stemElement[stem],
+          branchElement: branchElement[branch]
+        };
+      });
+    }
+
+    function enrichAnnualMonthsWithTenGods(annualMonths, dayStem) {
+      return annualMonths.map((month) => ({
+        ...month,
+        tenGod: getTenGod(dayStem, month.stem),
+        branchTenGod: getTenGod(dayStem, branchMainStem[month.branch])
+      }));
+    }
+
+    function getPillarList(payload) {
+      return [payload.pillars.year, payload.pillars.month, payload.pillars.day, payload.pillars.hour];
+    }
+
+    function getAllBranches(payload) {
+      const branches = getPillarList(payload).map((pillar) => pillar.branch);
+      if (payload.annualLuck?.branch) branches.push(payload.annualLuck.branch);
+      if (payload.currentLuck?.branch) branches.push(payload.currentLuck.branch);
+      return branches;
+    }
+
+    function strongestKey(record) {
+      return Object.entries(record).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
+    }
+
+    function weakestKey(record) {
+      return Object.entries(record).sort((a, b) => a[1] - b[1])[0]?.[0] ?? "";
+    }
+
+    function analyzeStrength(payload) {
+      const dayElement = payload.dayMaster.element;
+      const monthBranch = payload.pillars.month.branch;
+      const monthElement = payload.pillars.month.branchElement;
+      let score = 50;
+      const evidence = [];
+
+      if (monthElement === dayElement) {
+        score += 28;
+        evidence.push(`日主${payload.dayMaster.stem}${dayElement}生於${monthBranch}月，月令同氣，得令有力。`);
+      } else if (elementGenerates[monthElement] === dayElement) {
+        score += 16;
+        evidence.push(`${monthBranch}月之${monthElement}能生扶日主${dayElement}，月令有助。`);
+      } else if (elementControls[monthElement] === dayElement) {
+        score -= 22;
+        evidence.push(`${monthBranch}月之${monthElement}制約日主${dayElement}，月令成壓。`);
+      } else {
+        evidence.push(`${monthBranch}月為${monthSeason[monthBranch] ?? "月令氣勢待校"}，需合看通根與透干。`);
+      }
+
+      const roots = getPillarList(payload).flatMap((pillar) =>
+        (pillar.hiddenStems ?? [])
+          .filter((hidden) => hidden.element === dayElement)
+          .map((hidden) => ({ branch: pillar.branch, qiType: hidden.qiType }))
+      );
+      const rootScore = roots.reduce((sum, root) => sum + (root.qiType === "本氣" ? 18 : root.qiType === "中氣" ? 11 : 6), 0);
+      score += rootScore;
+      evidence.push(roots.length ? `地支見${roots.map((root) => `${root.branch}${root.qiType}`).join("、")}，日主有根。` : "四支藏干未見日主同氣，日主根氣偏少。");
+
+      const supportCount = getPillarList(payload).filter((pillar) => pillar.stemElement === dayElement || elementGenerates[pillar.stemElement] === dayElement).length;
+      const pressureCount = getPillarList(payload).filter((pillar) => elementControls[pillar.stemElement] === dayElement || elementControls[dayElement] === pillar.stemElement).length;
+      score += supportCount * 5 - pressureCount * 4;
+      evidence.push(`天干生扶同黨約 ${supportCount} 位，剋洩耗壓力約 ${pressureCount} 位。`);
+
+      score = Math.max(0, Math.min(100, score));
+      const level = score >= 76 ? "身強" : score >= 61 ? "偏強" : score >= 43 ? "中和" : score >= 28 ? "偏弱" : "身弱";
+      const conclusion = level.includes("強")
+        ? "日主氣勢不弱，論命宜看能否洩秀、制衡與調候，不宜一味再增生扶。"
+        : level.includes("弱")
+          ? "日主承載力偏弱，宜先看印比扶身與根氣是否可用，再談財官食傷。"
+          : "日主大致中和，格局、調候與大運引動會成為判斷重點。";
+
+      return { id: "day-master-strength", title: "日主旺衰", subtitle: `${level}｜分數 ${score}`, score, tags: [level, payload.dayMaster.stem + payload.dayMaster.element], evidence, conclusion };
+    }
+
+    function analyzeFiveElements(payload) {
+      const counts = payload.fiveElements;
+      const dominant = strongestKey(counts);
+      const weak = weakestKey(counts);
+      const monthElement = payload.pillars.month.branchElement;
+      const evidence = [
+        `五行表面數量以${dominant}較顯，${weak}較少。`,
+        `月令為${payload.pillars.month.branch}，其主氣屬${monthElement}，故${monthElement}得時令加權。`,
+        "五行不可只看數量，仍需合看透干、通根、合沖與調候。"
+      ];
+      const conclusion = `此局五行氣勢以${dominant}與月令${monthElement}為觀察重心。若能形成「生而有承、洩而不枯」之流通，則結構較順；若某氣過旺無制，便成命局之病。`;
+      return { id: "five-element-flow", title: "五行氣勢", subtitle: `旺象 ${dominant}｜弱象 ${weak}`, tags: [dominant + "較顯", weak + "較少"], evidence, conclusion };
+    }
+
+    function analyzeTenGod(payload) {
+      const counts = payload.tenGodCounts ?? {};
+      const strongest = strongestKey(counts);
+      const monthMainGod = payload.pillars.month.branchMainTenGod;
+      const visible = getPillarList(payload).map((pillar) => pillar.tenGodStem).filter((god) => god && god !== "日主");
+      const meaning = tenGodMeaning[strongest] ?? ["資料不足", "資料不足"];
+      return {
+        id: "ten-god-structure",
+        title: "十神結構",
+        subtitle: `較顯十神：${strongest || "待判"}`,
+        tags: [monthMainGod ? `月令主氣${monthMainGod}` : "月令待判", ...visible.slice(0, 4)],
+        evidence: [
+          `十神統計以${strongest || "資料不足"}較顯，其正向象為「${meaning[0]}」，陰影象為「${meaning[1]}」。`,
+          `月令主氣為${payload.pillars.month.branchMainStem}${monthMainGod}，格局判定須先看月令，不以數量最多者獨斷。`,
+          `天干透出十神包含：${visible.join("、") || "資料不足"}。`
+        ],
+        conclusion: `${strongest || "主要十神"}為命局重要取象，但須看是否得令、是否通根，以及是否被合沖破壞；旺而有制為用，旺而失衡則成壓。`
+      };
+    }
+
+    function analyzeInteractions(payload) {
+      const branches = getAllBranches(payload);
+      const pairs = [
+        ["六合", "子", "丑", "土"], ["六合", "寅", "亥", "木"], ["六合", "卯", "戌", "火"], ["六合", "辰", "酉", "金"], ["六合", "巳", "申", "水"], ["六合", "午", "未", "土"],
+        ["六沖", "子", "午"], ["六沖", "丑", "未"], ["六沖", "寅", "申"], ["六沖", "卯", "酉"], ["六沖", "辰", "戌"], ["六沖", "巳", "亥"],
+        ["六害", "子", "未"], ["六害", "丑", "午"], ["六害", "寅", "巳"], ["六害", "卯", "辰"], ["六害", "申", "亥"], ["六害", "酉", "戌"]
+      ];
+      const found = pairs.filter((item) => branches.includes(item[1]) && branches.includes(item[2]));
+      const evidence = found.length
+        ? found.map((item) => `${item[1]}${item[2]}見${item[0]}${item[3] ? `，有化${item[3]}之象，仍需看月令與透干是否成化。` : "，主變動牽引，吉凶視其所沖之宮位與用忌而定。"}`)
+        : ["目前原局、大運、流年地支未見明顯六合、六沖、六害成組。"];
+      return {
+        id: "stem-branch-interactions",
+        title: "干支作用",
+        subtitle: found.length ? `見 ${found.length} 組作用` : "作用較少",
+        tags: found.map((item) => `${item[1]}${item[2]}${item[0]}`),
+        evidence,
+        conclusion: "合沖刑害不是直接判吉凶；合可成局也可合去用神，沖可破根也可沖開阻滯，必須放回日主旺衰、月令與大運流年中判斷。"
+      };
+    }
+
+    function findBranchInteractions(monthBranch, payload) {
+      const relations = [
+        ["合", "子", "丑", "子丑合土"], ["合", "寅", "亥", "寅亥合木"], ["合", "卯", "戌", "卯戌合火"], ["合", "辰", "酉", "辰酉合金"], ["合", "巳", "申", "巳申合水"], ["合", "午", "未", "午未合土"],
+        ["沖", "子", "午", "子午沖"], ["沖", "丑", "未", "丑未沖"], ["沖", "寅", "申", "寅申沖"], ["沖", "卯", "酉", "卯酉沖"], ["沖", "辰", "戌", "辰戌沖"], ["沖", "巳", "亥", "巳亥沖"],
+        ["害", "子", "未", "子未害"], ["害", "丑", "午", "丑午害"], ["害", "寅", "巳", "寅巳害"], ["害", "卯", "辰", "卯辰害"], ["害", "申", "亥", "申亥害"], ["害", "酉", "戌", "酉戌害"]
+      ];
+      const targets = [
+        ...Object.entries(payload.pillars).map(([key, pillar]) => ({ target: "原局", key, branch: pillar.branch })),
+        payload.currentLuck?.branch ? { target: "大運", key: "currentLuck", branch: payload.currentLuck.branch } : null,
+        payload.annualLuck?.branch ? { target: "流年", key: "annualLuck", branch: payload.annualLuck.branch } : null
+      ].filter(Boolean);
+      const result = [];
+      for (const item of targets) {
+        for (const [type, a, b, description] of relations) {
+          if ((monthBranch === a && item.branch === b) || (monthBranch === b && item.branch === a)) {
+            const palace = item.key === "day" ? "，引動日支夫妻宮" : item.key === "month" ? "，引動月柱事業宮" : "";
+            result.push({ target: item.target, type, description: `${description}見於流月與${item.target}${palace}` });
+          }
+        }
+      }
+      return result;
+    }
+
+    function tenGodTheme(tenGod) {
+      const map = {
+        比肩: ["自我能量與同儕互動增強", "宜把競爭化為作品與行動，少作意氣之爭。"],
+        劫財: ["人際、合作與資源爭奪感較明", "合作可談，但財務承諾宜白紙黑字。"],
+        食神: ["創作、表達與享受生活", "適合整理作品與穩定輸出，避免過度安逸。"],
+        傷官: ["表達、突破與制度摩擦", "宜用專業說話，少用情緒挑戰權威。"],
+        正財: ["穩定收入、管理與現實責任", "適合做預算、收款、整理資源。"],
+        偏財: ["機會、商業、人脈與外部資源", "可主動開啟合作，但不宜投機過快。"],
+        正官: ["規範、職責、名聲與秩序", "宜守規矩、重承諾，適合處理正式事務。"],
+        七殺: ["壓力、競爭、決斷與危機處理", "宜化壓力為紀律，避免急躁硬碰。"],
+        正印: ["學習、保護、資格與正統資源", "適合進修、整理方法論、尋求長輩貴人。"],
+        偏印: ["靈感、研究、非主流路線", "適合深度研究，但需避免想太多而不落地。"]
+      };
+      return map[tenGod] ?? ["本月主題待判", "資料不足，暫不判定。"];
+    }
+
+    function analyzeAnnualMonths(payload) {
+      if (!payload.annualLuck?.stem) return [];
+      return enrichAnnualMonthsWithTenGods(getAnnualMonths(payload.annualLuck.stem), payload.dayMaster.stem).map((month) => {
+        const interactions = findBranchInteractions(month.branch, payload);
+        const [theme, advice] = tenGodTheme(month.tenGod);
+        const interactionText = interactions.length
+          ? interactions.map((item) => item.description).join("；")
+          : "本月與原局、大運、流年未見明顯六合、六沖、六害成組。";
+        return {
+          ...month,
+          interactions,
+          theme,
+          evidence: `${month.pillar}以${month.solarTermName}起，約略區間為${month.approximateGregorianRange}；天干${month.stem}${month.element}為${month.tenGod}，地支${month.branch}${month.branchElement}主氣為${month.branchTenGod}。${interactionText}`,
+          advice
+        };
+      });
+    }
+
+    function getPillarsForShenSha(payload) {
+      return {
+        year: { stem: payload.pillars.year.stem, branch: payload.pillars.year.branch },
+        month: { stem: payload.pillars.month.stem, branch: payload.pillars.month.branch },
+        day: { stem: payload.pillars.day.stem, branch: payload.pillars.day.branch },
+        hour: { stem: payload.pillars.hour.stem, branch: payload.pillars.hour.branch }
+      };
+    }
+
+    function calculateShenShaStatic(chart) {
+      const pillarLabels = { year: "年柱", month: "月柱", day: "日柱", hour: "時柱" };
+      const entries = Object.entries(chart);
+      const hits = [];
+      const add = (hit) => hits.push({ ...hit, pillarLabel: pillarLabels[hit.position] });
+      const branchMapHits = (name, category, level, map, references, rule, meaning, aiHint) => {
+        for (const ref of references) {
+          const target = map[ref.branch];
+          for (const [position, pillar] of entries) {
+            if (pillar.branch === target) add({ name, category, level, basis: `${ref.label} ${ref.branch}`, rule, matchedBy: "年支或日支", target, position, meaning, aiHint });
+          }
+        }
+      };
+      const stemMapHits = (name, category, level, map, rule, meaning, aiHint) => {
+        const targets = Array.isArray(map[chart.day.stem]) ? map[chart.day.stem] : [map[chart.day.stem]];
+        for (const [position, pillar] of entries) {
+          if (targets.includes(pillar.branch)) add({ name, category, level, basis: `日干 ${chart.day.stem}`, rule, matchedBy: "日干", target: pillar.branch, position, meaning, aiHint });
+        }
+      };
+      const refs = [{ label: "年支", branch: chart.year.branch }, { label: "日支", branch: chart.day.branch }];
+      branchMapHits("桃花", "桃花感情類", "常用", { 申: "酉", 子: "酉", 辰: "酉", 寅: "卯", 午: "卯", 戌: "卯", 亥: "子", 卯: "子", 未: "子", 巳: "午", 酉: "午", 丑: "午" }, refs, "申子辰見酉，寅午戌見卯，亥卯未見子，巳酉丑見午。", "主魅力、人緣、審美、情感吸引力；若受沖刑，亦可能主感情波動。", "桃花須結合夫妻宮、官殺財星、合沖刑害與大運流年判斷，不可單論感情多寡。");
+      branchMapHits("驛馬", "遷移變動類", "常用", { 申: "寅", 子: "寅", 辰: "寅", 寅: "申", 午: "申", 戌: "申", 巳: "亥", 酉: "亥", 丑: "亥", 亥: "巳", 卯: "巳", 未: "巳" }, refs, "申子辰馬在寅，寅午戌馬在申，巳酉丑馬在亥，亥卯未馬在巳。", "主移動、遠行、變動、跨地域發展、外出求財。", "驛馬若逢沖動，變動性更強；若為喜用，多主遠方機會，若為忌，則奔波勞碌。");
+      branchMapHits("華蓋", "才學藝術類", "常用", { 申: "辰", 子: "辰", 辰: "辰", 寅: "戌", 午: "戌", 戌: "戌", 亥: "未", 卯: "未", 未: "未", 巳: "丑", 酉: "丑", 丑: "丑" }, refs, "申子辰見辰，寅午戌見戌，亥卯未見未，巳酉丑見丑。", "主藝術、技藝、孤高、宗教哲思、審美與精神性。", "華蓋宜結合印星、食傷與日主旺衰判斷；為喜時利創作學術，為忌時易孤僻自閉。");
+      branchMapHits("將星", "權威領導類", "進階", { 申: "子", 子: "子", 辰: "子", 寅: "午", 午: "午", 戌: "午", 巳: "酉", 酉: "酉", 丑: "酉", 亥: "卯", 卯: "卯", 未: "卯" }, refs, "申子辰見子，寅午戌見午，巳酉丑見酉，亥卯未見卯。", "主領導、掌控、組織能力、權威感。", "將星若配官殺印星得宜，利管理領導；若忌神過旺，則易固執或掌控欲強。");
+      stemMapHits("天乙貴人", "貴人類", "常用", { 甲: ["丑", "未"], 戊: ["丑", "未"], 庚: ["丑", "未"], 乙: ["子", "申"], 己: ["子", "申"], 丙: ["亥", "酉"], 丁: ["亥", "酉"], 壬: ["巳", "卯"], 癸: ["巳", "卯"], 辛: ["午", "寅"] }, "甲戊庚牛羊，乙己鼠猴鄉，丙丁豬雞位，壬癸蛇兔藏，六辛逢馬虎。", "主貴人、助力、逢凶有解、遇事有人提攜。", "天乙貴人若落喜用且不受嚴重刑沖，助力較明顯；若落忌神或被沖破，助力減弱。");
+      stemMapHits("文昌貴人", "才學藝術類", "常用", { 甲: "巳", 乙: "午", 丙: "申", 戊: "申", 丁: "酉", 己: "酉", 庚: "亥", 辛: "子", 壬: "寅", 癸: "卯" }, "甲乙巳午報君知，丙戊申宮丁己雞，庚豬辛鼠壬逢虎，癸人見卯入雲梯。", "主學習、文筆、表達、考試、設計與知識整理能力。", "文昌需配合印星、食傷、官星判斷；若與喜用相合，利學業、設計、寫作、申請文件。");
+      stemMapHits("羊刃", "衝突煞類", "常用", { 甲: "卯", 乙: "寅", 丙: "午", 戊: "午", 丁: "巳", 己: "巳", 庚: "酉", 辛: "申", 壬: "子", 癸: "亥" }, "甲刃卯，乙刃寅，丙戊刃午，丁己刃巳，庚刃酉，辛刃申，壬刃子，癸刃亥。", "主剛烈、決斷、競爭、衝勁；若失衡，亦主衝突、急躁與傷損。", "羊刃不必然為凶；身弱逢刃可助身，身強刃旺又逢沖則需防衝突與過剛。");
+      if (["庚辰", "庚戌", "壬辰", "戊戌"].includes(`${chart.day.stem}${chart.day.branch}`)) {
+        hits.push({ name: "魁罡", category: "特殊日柱類", level: "特殊", basis: `日柱 ${chart.day.stem}${chart.day.branch}`, rule: "庚辰、庚戌、壬辰、戊戌為魁罡日。", matchedBy: "日柱", target: `${chart.day.stem}${chart.day.branch}`, position: "day", pillarLabel: "日柱", meaning: "主剛毅、果決、氣勢強、權威感；亦可能性情剛烈。", aiHint: "魁罡需看日主旺衰與格局清濁；不宜單論吉凶，忌再逢重刑沖破。" });
+      }
+      const gcgs = { 亥: ["寅", "戌"], 子: ["寅", "戌"], 丑: ["寅", "戌"], 寅: ["巳", "丑"], 卯: ["巳", "丑"], 辰: ["巳", "丑"], 巳: ["申", "辰"], 午: ["申", "辰"], 未: ["申", "辰"], 申: ["亥", "未"], 酉: ["亥", "未"], 戌: ["亥", "未"] }[chart.year.branch];
+      for (const [position, pillar] of entries) {
+        if (pillar.branch === gcgs[0]) add({ name: "孤辰", category: "孤寂精神類", level: "進階", basis: `年支 ${chart.year.branch}`, rule: "亥子丑見寅，寅卯辰見巳，巳午未見申，申酉戌見亥為孤辰。", matchedBy: "年支", target: gcgs[0], position, meaning: "主獨立、孤高、自我意識強，亦可能人際距離感較重。", aiHint: "孤辰須結合印星、華蓋、夫妻宮與大運流年判斷，不可直接斷孤獨或婚姻不順。" });
+        if (pillar.branch === gcgs[1]) add({ name: "寡宿", category: "孤寂精神類", level: "進階", basis: `年支 ${chart.year.branch}`, rule: "亥子丑見戌，寅卯辰見丑，巳午未見辰，申酉戌見未為寡宿。", matchedBy: "年支", target: gcgs[1], position, meaning: "主情感慢熱、內心孤寂、關係中保留感較強。", aiHint: "寡宿不可單斷感情不佳，須看夫妻宮、桃花、官殺財星與合沖情況。" });
+      }
+      const seen = new Set();
+      const deduped = hits.filter((hit) => {
+        const key = `${hit.name}-${hit.position}-${hit.target}-${hit.basis}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      const names = [...new Set(deduped.map((hit) => hit.name))];
+      return {
+        hits: deduped,
+        summary: names.length ? `命局見 ${names.join("、")} 等神煞。神煞只作輔助參考，須結合原局旺衰、格局、用神、大運流年同看，不可單獨定吉凶。` : "未見主要神煞明顯成象。神煞為輔助參考，仍須以原局旺衰、格局、用神與大運流年為主。"
+      };
+    }
+
+    function analyzePattern(payload, strength) {
+      const monthGod = payload.pillars.month.branchMainTenGod;
+      const map = { 正官: "正官格", 七殺: "七殺格", 正財: "正財格", 偏財: "偏財格", 食神: "食神格", 傷官: "傷官格", 正印: "正印格", 偏印: "偏印格", 比肩: "建祿/月劫類", 劫財: "月劫格" };
+      const pattern = map[monthGod] ?? "格局待判";
+      return {
+        id: "structure-pattern",
+        title: "格局判定",
+        subtitle: pattern,
+        tags: [pattern, strength.subtitle.split("｜")[0]],
+        evidence: [
+          `子平格局先取月令，月支${payload.pillars.month.branch}主氣為${payload.pillars.month.branchMainStem}${monthGod}。`,
+          `依月令主氣，初步可觀察為「${pattern}」。`,
+          "是否成格，還需看月令藏干是否透出、是否清純、是否被沖破，以及是否有救應。"
+        ],
+        conclusion: `此局暫以${pattern}作第一層觀察。若大運流年能扶成格局所需之氣，則格象可用；若沖破月令或混雜太重，則需轉看病藥與調候。`
+      };
+    }
+
+    function analyzeClimate(payload) {
+      const month = payload.pillars.month.branch;
+      const cold = ["亥", "子", "丑"].includes(month);
+      const hot = ["巳", "午", "未"].includes(month);
+      const dry = ["巳", "午", "未", "戌"].includes(month);
+      const damp = ["亥", "子", "丑", "辰"].includes(month);
+      const climate = cold ? "寒氣偏重" : hot ? "火熱偏盛" : dry ? "燥氣較明" : damp ? "濕氣較明" : "寒暖較平";
+      const primary = cold ? "火" : hot || dry ? "水" : damp ? "火土疏化" : "依格局取用";
+      return {
+        id: "climate-adjustment",
+        title: "調候分析",
+        subtitle: climate,
+        tags: [monthSeason[month] ?? "月令待校", `首重${primary}`],
+        evidence: [
+          `出生月令為${month}，${monthSeason[month] ?? "季節資料不足"}。`,
+          `調候優先看寒暖燥濕，不等同於缺什麼補什麼。`,
+          `目前以${primary}作調候觀察方向，仍需看原局是否透出且有根。`
+        ],
+        conclusion: `命局調候以「${climate}」為題。若大運流年補足調候，又不破格局，常能使原局氣機較順；若反增偏氣，則需守中取平。`
+      };
+    }
+
+    function analyzeFavorable(payload, strength, climate) {
+      const dayElement = payload.dayMaster.element;
+      const outputElement = elementGenerates[dayElement];
+      const wealthElement = elementControls[dayElement];
+      const supportElement = Object.entries(elementGenerates).find(([, value]) => value === dayElement)?.[0] ?? dayElement;
+      const strong = strength.score >= 61;
+      const useful = strong ? [outputElement, wealthElement] : [supportElement, dayElement];
+      return {
+        id: "favorable-gods",
+        title: "用神喜忌",
+        subtitle: `暫取 ${useful.join("、")} 為觀察`,
+        tags: [`日主${strength.subtitle.split("｜")[0]}`, climate.subtitle],
+        evidence: [
+          `用神需綜合旺衰、格局、調候與流通，不可只按五行缺失判斷。`,
+          strong ? `日主不弱，宜先看${outputElement}洩秀、${wealthElement}承接。` : `日主偏弱，宜先看${supportElement}生身、${dayElement}扶身。`,
+          `調候顯示${climate.subtitle}，用神若同時能調候，力量更佳。`
+        ],
+        conclusion: `此處為基礎引擎暫判：用神喜忌需待權威曆法、格局成敗與大運引動校準後再定案。`
+      };
+    }
+
+    function analyzeLuck(payload) {
+      const cycles = payload.luckCycles ?? [];
+      const evidence = cycles.slice(0, 4).map((cycle) => `${cycle.ageStart}-${cycle.ageEnd}歲走${cycle.pillar}，天干${cycle.stemTenGod}、地支主氣${cycle.branchTenGod}。`);
+      return {
+        id: "luck-cycle-analysis",
+        title: "大運分析",
+        subtitle: cycles.length ? `共 ${cycles.length} 步大運` : "目前缺少大運資料",
+        tags: cycles.slice(0, 3).map((cycle) => cycle.pillar),
+        evidence: evidence.length ? evidence : ["目前缺少大運資料，本頁先顯示原局分析。"],
+        conclusion: "大運不是單獨吉凶，而是引動原局。喜神運若能成格、調候、通關，多主順勢；忌神運若沖破月令、傷根，則需保守調整。"
+      };
+    }
+
+    function analyzeAnnual(payload) {
+      const annual = payload.annualLuck;
+      if (!annual) {
+        return { id: "annual-luck-analysis", title: "流年分析", subtitle: "流年待串接", tags: [], evidence: ["目前缺少指定流年資料，暫不進行流年分析。"], conclusion: "請回主頁指定流年後重新進入論命頁。" };
+      }
+      return {
+        id: "annual-luck-analysis",
+        title: "流年分析",
+        subtitle: `${annual.year} ${annual.pillar}`,
+        tags: [annual.stemTenGod, annual.branchTenGod],
+        evidence: [
+          `${annual.year}年為${annual.pillar}，天干${annual.stemTenGod}，地支主氣${annual.branchTenGod}。`,
+          `流年地支${annual.branch}與原局四支需合看是否沖月令、夫妻宮或日主根氣。`,
+          "流年吉凶重在引動，不可只看流年五行。"
+        ],
+        conclusion: "此年宜觀察流年十神所主之事是否被大運承接；若與原局成合沖，則該宮位與該十神象意會較明顯。"
+      };
+    }
+
+    function analyzeDomains(payload, tenGod, favorable) {
+      return {
+        id: "life-domains",
+        title: "人生領域",
+        subtitle: "性格、事業、財運、感情、健康",
+        tags: ["傾向分析", "非絕對定論"],
+        evidence: [
+          `性格看日主${payload.dayMaster.stem}${payload.dayMaster.element}與十神結構，${tenGod.subtitle}是重要取象。`,
+          "事業財運需看財官印食傷是否成系統，並看大運能否承接。",
+          "感情婚姻需另看日支夫妻宮與財官星，不宜單點判斷。",
+          "健康段落只作五行命理傾向，不能取代醫療診斷。"
+        ],
+        conclusion: `整體建議以${favorable.subtitle.replace("暫取 ", "")}作修正方向：把命局偏旺之氣導入作品、紀律與長期積累，少作絕對化判斷。`
+      };
+    }
+
+    function analyzeMonthly(payload, annualMonths) {
+      if (annualMonths.length) {
+        return {
+          id: "monthly-luck-analysis",
+          title: "流月分析",
+          subtitle: `${payload.annualLuck.year} 年十二流月`,
+          tags: annualMonths.slice(0, 4).map((month) => month.pillar),
+          evidence: [
+            `依${payload.annualLuck.pillar}年天干${payload.annualLuck.stem}，使用五虎遁推十二流月。`,
+            "流月以節氣為界，不以農曆初一為界；目前日期區間為 MVP 約略標籤。",
+            `十二流月為：${annualMonths.map((month) => month.pillar).join("、")}。`
+          ],
+          conclusion: "流月分析需合看原局、大運、流年與當月干支。若流月沖日支、月支或合去用神，該月事件感會較強；若能補調候與成格，則較利推進。"
+        };
+      }
+      return {
+        id: "monthly-luck-analysis",
+        title: "流月分析",
+        subtitle: "待串接",
+        tags: ["預留欄位"],
+        evidence: ["主頁目前尚未提供流月資料，本區先保留。"],
+        conclusion: "日後接入流月後，可分類事業較佳月、財運較佳月、感情活躍月、壓力月與沉澱月。"
+      };
+    }
+
+    function analyzeShenSha(payload, shenShaResult) {
+      if (shenShaResult.hits.length) {
+        return {
+          id: "shen-sha",
+          title: "神煞輔助",
+          subtitle: `命中 ${shenShaResult.hits.length} 項`,
+          tags: [...new Set(shenShaResult.hits.map((hit) => hit.name))],
+          evidence: [
+            shenShaResult.summary,
+            ...shenShaResult.hits.slice(0, 4).map((hit) => `${hit.name}在${hit.pillarLabel}，依據 ${hit.basis}，命中 ${hit.target}。`)
+          ],
+          conclusion: "神煞不可單獨定吉凶；須回到日主旺衰、月令格局、用神喜忌與大運流年引動中同看。"
+        };
+      }
+      return {
+        id: "shen-sha",
+        title: "神煞輔助",
+        subtitle: "未見主要神煞明顯成象",
+        tags: ["輔助參考"],
+        evidence: [shenShaResult.summary],
+        conclusion: "神煞只能作輔助，不可凌駕旺衰、格局、調候與用神。"
+      };
+    }
+
+    function buildPromptChartHeader(payload) {
+      const chartGenderLabel = payload.user.gender === "female" ? "坤造" : "乾造";
+      const pillars = [
+        `年柱 ${payload.pillars.year.pillar}`,
+        `月柱 ${payload.pillars.month.pillar}`,
+        `日柱 ${payload.pillars.day.pillar}`,
+        `時柱 ${payload.pillars.hour.pillar}`
+      ].join("，");
+      return `${chartGenderLabel}：${pillars}。日主為 ${payload.dayMaster.stem}${payload.dayMaster.element}，出生資料：${payload.user.birthSolar}，換日法：${payload.user.dayChangeRule}。`;
+    }
+
+    function buildAiPrompt(payload, sections) {
+      return `你是一位精通《淵海子平》、《滴天髓》、《窮通寶鑑》的八字命理大師。
+
+請在輸出第一段先定盤，明確寫出乾造或坤造與四柱：
+${buildPromptChartHeader(payload)}
+
+請根據以下八字排盤資料進行完整論命。請使用繁體中文，風格半文言半白話；每段都要有「依據」與「結論」；不可只用五行數量判斷吉凶；不可說「缺什麼就補什麼」；健康只能描述五行傾向，不可做醫療診斷。
+
+請依序分析：命盤總論、日主旺衰、月令與通根、五行氣勢、十神結構、干支合沖刑害、格局判定、調候分析、用神喜忌、性格、事業、財運、感情婚姻、健康五行傾向、大運、流年、流月、神煞輔助、最終建議。
+
+神煞分析限制：
+- 神煞只作輔助，不可凌駕於旺衰、格局、用神。
+- 不可見桃花即斷感情旺，不可見孤辰寡宿即斷婚姻不順。
+- 必須說明神煞與日主旺衰、十神、夫妻宮、事業宮、大運流年之關係。
+- 每段須有「依據」與「結論」。
+
+流月補充規則：
+- 若輸入資料未提供流月，請根據指定流年天干，依五虎遁規則自行推算十二流月。
+- 流月地支固定由寅月開始，依序為：寅、卯、辰、巳、午、未、申、酉、戌、亥、子、丑。
+- 流月天干依五虎遁：甲己年丙寅起，乙庚年戊寅起，丙辛年庚寅起，丁壬年壬寅起，戊癸年甲寅起。
+- 流月分析須以節氣為界，不以農曆初一為界。若系統尚未提供精準節氣日期，可先以節氣月份區間作為約略標籤，但需註明為約略時間。
+- 每一流月須分析：流月干支、十神、五行、與原局/大運/流年合沖刑害破、是否引動日支/月柱/財官印食傷、本月主題與建議。
+
+基礎引擎初判如下：
+${JSON.stringify(sections.map(({ id, title, subtitle, evidence, conclusion }) => ({ id, title, subtitle, evidence, conclusion })), null, 2)}
+
+命盤 JSON：
+${JSON.stringify(payload, null, 2)}`;
+    }
+
+    function analyzeBazi(payload) {
+      const annualMonths = analyzeAnnualMonths(payload);
+      const shenShaResult = calculateShenShaStatic(getPillarsForShenSha(payload));
+      const strength = analyzeStrength(payload);
+      const elementFlow = analyzeFiveElements(payload);
+      const tenGod = analyzeTenGod(payload);
+      const interactions = analyzeInteractions(payload);
+      const pattern = analyzePattern(payload, strength);
+      const climate = analyzeClimate(payload);
+      const favorable = analyzeFavorable(payload, strength, climate);
+      const luck = analyzeLuck(payload);
+      const annual = analyzeAnnual(payload);
+      const monthly = analyzeMonthly(payload, annualMonths);
+      const domains = analyzeDomains(payload, tenGod, favorable);
+      const shenSha = analyzeShenSha(payload, shenShaResult);
+      const sections = [strength, elementFlow, tenGod, interactions, pattern, climate, favorable, domains, luck, annual, monthly, shenSha];
+      return { sections, annualMonths, shenShaResult, aiPrompt: buildAiPrompt({ ...payload, monthlyLuck: annualMonths, shenSha: shenShaResult }, sections) };
+    }
+
+    function renderPillar(pillar, title) {
+      return `
+        <article class="pillar">
+          <div class="pillar-label">${title}</div>
+          <div class="pillar-chars">
+            <div class="char ${elementClass(pillar.stemElement)}">${escapeHtml(pillar.stem)}</div>
+            <div class="char ${elementClass(pillar.branchElement)}">${escapeHtml(pillar.branch)}</div>
+          </div>
+          <div class="pillar-meta">
+            天干 ${elementText(pillar.stemElement)}｜${escapeHtml(pillar.tenGodStem)}<br>
+            地支 ${elementText(pillar.branchElement)}｜主氣 ${escapeHtml(pillar.branchMainStem)}${escapeHtml(pillar.branchMainTenGod)}<br>
+            藏干 ${(pillar.hiddenStems ?? []).map((hidden) => `${escapeHtml(hidden.stem)}${escapeHtml(hidden.tenGod)}`).join("、") || "無"}
+          </div>
+        </article>
+      `;
+    }
+
+    function renderElementBars(fiveElements) {
+      const max = Math.max(1, ...Object.values(fiveElements));
+      return Object.entries(fiveElements).map(([element, count]) => `
+        <div class="bar-row">
+          <span class="${elementClass(element)}">${element}</span>
+          <div class="bar-track"><div class="bar-fill ${elementClass(element)}" style="width:${Math.round(count / max * 100)}%; background: currentColor;"></div></div>
+          <span>${count}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderSection(section) {
+      return `
+        <section class="section ${section.id === "life-domains" || section.id === "luck-cycle-analysis" ? "wide" : ""}" id="${escapeHtml(section.id)}">
+          <h2>${escapeHtml(section.title)}</h2>
+          <p class="subtitle">${escapeHtml(section.subtitle ?? "")}</p>
+          <div class="tags">${(section.tags ?? []).map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}</div>
+          <ul class="evidence">${(section.evidence ?? []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+          <p class="conclusion">${escapeHtml(section.conclusion)}</p>
+        </section>
+      `;
+    }
+
+    function renderTimeline(cycles) {
+      if (!cycles?.length) return "<p class=\"subtitle\">目前缺少大運資料。</p>";
+      return `<div class="timeline">${cycles.map((cycle) => `
+        <div class="timeline-item">
+          <span>${cycle.ageStart}-${cycle.ageEnd} 歲</span>
+          <strong>${escapeHtml(cycle.pillar)}</strong>
+          <span>天干 ${escapeHtml(cycle.stemTenGod)}，地支 ${escapeHtml(cycle.branchTenGod)}；五行主題 ${escapeHtml((cycle.elementTheme ?? []).join("、"))}</span>
+        </div>
+      `).join("")}</div>`;
+    }
+
+    function renderAnnualMonths(months) {
+      if (!months.length) return "<p class=\"subtitle\">目前缺少流年資料，暫不產生流月。</p>";
+      return `<div class="monthly-grid">${months.map((month) => `
+        <article class="monthly-card">
+          <h3>${escapeHtml(month.pillar)}月</h3>
+          <p class="subtitle">${escapeHtml(month.solarTermName)}起｜${escapeHtml(month.approximateGregorianRange)}</p>
+          <div class="monthly-meta">
+            <span class="tag">十神 ${escapeHtml(month.tenGod)}</span>
+            <span class="tag">五行 ${escapeHtml(month.element)}${escapeHtml(month.branchElement)}</span>
+            <span class="tag">主氣 ${escapeHtml(month.branchTenGod)}</span>
+          </div>
+          <p><strong>本月主題：</strong>${escapeHtml(month.theme)}</p>
+          <p><strong>命理依據：</strong>${escapeHtml(month.evidence)}</p>
+          <p><strong>結論建議：</strong>${escapeHtml(month.advice)}</p>
+        </article>
+      `).join("")}</div>`;
+    }
+
+    function renderShenSha(result) {
+      if (!result.hits.length) {
+        return `<p class="conclusion">${escapeHtml(result.summary)}</p>`;
+      }
+      return `
+        <p class="conclusion">${escapeHtml(result.summary)}</p>
+        <div class="shensha-grid">${result.hits.map((hit) => `
+          <article class="shensha-card">
+            <h3>${escapeHtml(hit.name)}</h3>
+            <div class="tags">
+              <span class="tag">${escapeHtml(hit.category)}</span>
+              <span class="tag">${escapeHtml(hit.level)}</span>
+              <span class="tag">${escapeHtml(hit.pillarLabel)}</span>
+            </div>
+            <p><strong>依據：</strong>${escapeHtml(hit.basis)}，見 ${escapeHtml(hit.target)}。${escapeHtml(hit.rule)}</p>
+            <p><strong>含義：</strong>${escapeHtml(hit.meaning)}</p>
+            <p><strong>備註：</strong>${escapeHtml(hit.aiHint)}</p>
+          </article>
+        `).join("")}</div>
+      `;
+    }
+
+    function renderEmptyState() {
+      document.getElementById("app").innerHTML = `
+        <section class="empty-state">
+          <h1>尚未取得命盤資料</h1>
+          <p class="lead">請先返回主頁完成排盤，再點擊「論命」進入本頁。</p>
+          <p><a class="back-link" href="./bazi-input-test.html">返回排盤</a></p>
+        </section>
+      `;
+    }
+
+    function renderBaziAnalysis(payload) {
+      const analysis = analyzeBazi(payload);
+      const annual = payload.annualLuck;
+      document.getElementById("copy-prompt").hidden = false;
+      document.getElementById("copy-prompt").addEventListener("click", async () => {
+        await navigator.clipboard.writeText(analysis.aiPrompt);
+        document.getElementById("copy-prompt").textContent = "已複製";
+      });
+
+      document.getElementById("app").innerHTML = `
+        <section class="hero">
+          <div class="hero-copy">
+            <h1>八字論命</h1>
+            <p class="lead">主頁負責精準排盤，次頁負責深度論命。本頁先以子平法順序建立基礎判斷：月令、旺衰、通根、格局、調候、用神，再看大運流年如何引動原局。</p>
+          </div>
+          <aside class="summary-panel">
+            <div class="summary-grid">
+              <div class="metric"><span>日主</span><strong class="${elementClass(payload.dayMaster.element)}">${escapeHtml(payload.dayMaster.stem)}${escapeHtml(payload.dayMaster.element)}</strong></div>
+              <div class="metric"><span>出生</span><strong>${escapeHtml(payload.user.birthSolar)}</strong></div>
+              <div class="metric"><span>月令</span><strong>${escapeHtml(payload.pillars.month.branch)}月</strong></div>
+              <div class="metric"><span>流年</span><strong>${annual ? `${escapeHtml(annual.year)} ${escapeHtml(annual.pillar)}` : "待定"}</strong></div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="chart-overview" id="chart-overview">
+          ${renderPillar(payload.pillars.year, "年柱")}
+          ${renderPillar(payload.pillars.month, "月柱")}
+          ${renderPillar(payload.pillars.day, "日柱")}
+          ${renderPillar(payload.pillars.hour, "時柱")}
+        </section>
+
+        <section class="section wide" id="five-element-bars">
+          <h2>五行分布</h2>
+          <p class="subtitle">數量只作入口，正式判斷仍以月令、透干、通根與合沖為主。</p>
+          ${renderElementBars(payload.fiveElements)}
+        </section>
+
+        <div class="section-grid">
+          ${analysis.sections.map(renderSection).join("")}
+          <section class="section wide" id="luck-timeline">
+            <h2>大運時間軸</h2>
+            <p class="subtitle">每步十年，起運歲數目前仍沿用主頁示意資料。</p>
+            ${renderTimeline(payload.luckCycles)}
+          </section>
+          <section class="section wide" id="monthly-cards">
+            <h2>十二流月卡</h2>
+            <p class="subtitle">依流年天干五虎遁推算，日期以節氣約略區間呈現。</p>
+            ${renderAnnualMonths(analysis.annualMonths)}
+          </section>
+          <section class="section wide" id="shensha-list">
+            <h2>神煞輔助列表</h2>
+            <p class="subtitle">固定規則引擎計算；只作輔助參考，不單獨定吉凶。</p>
+            ${renderShenSha(analysis.shenShaResult)}
+          </section>
+          <section class="section wide" id="ai-master-reading">
+            <h2>AI 綜合論命 Prompt</h2>
+            <p class="subtitle">目前尚未串接 LLM API，先提供可直接送入模型的 prompt payload。</p>
+            <pre class="prompt-box">${escapeHtml(analysis.aiPrompt)}</pre>
+          </section>
+        </div>
+      `;
+    }
+
+    try {
+      const raw = localStorage.getItem("baziAnalysisPayload");
+      const payload = raw ? JSON.parse(raw) : null;
+      if (!payload?.pillars?.day || !payload?.dayMaster) renderEmptyState();
+      else renderBaziAnalysis(payload);
+    } catch (error) {
+      renderEmptyState();
+    }
+  </script>
+</body>
+</html>
