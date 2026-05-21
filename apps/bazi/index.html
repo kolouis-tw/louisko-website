@@ -748,7 +748,41 @@
       return { stem, branch, ganzhi: `${stem}${branch}` };
     }
 
-    function calculateLuckCycles(monthPillar, dayMaster, birthYear, direction, startAge = 1, steps = 9) {
+    function calculateStartAge(diffHours) {
+      return Number((diffHours / 24 / 3).toFixed(2));
+    }
+
+    function getAdjacentSolarTermForLuck(input, direction) {
+      const birthUtcMs = localTimeToUtcMs(input.year, input.month, input.day, input.hour, input.minute, input.timezoneOffset);
+      const terms = [input.year - 1, input.year, input.year + 1]
+        .flatMap((year) => getSolarMonthTermTimes(year))
+        .sort((a, b) => a.utcMs - b.utcMs);
+      return direction === "順行"
+        ? terms.find((term) => term.utcMs > birthUtcMs)
+        : terms.filter((term) => term.utcMs < birthUtcMs).at(-1);
+    }
+
+    function formatTermLocalTime(utcMs, timezoneOffset) {
+      const termLocalTime = new Date(utcMs + timezoneOffset * 60 * msPerMinute);
+      return `${termLocalTime.getUTCFullYear()}-${String(termLocalTime.getUTCMonth() + 1).padStart(2, "0")}-${String(termLocalTime.getUTCDate()).padStart(2, "0")} ${String(termLocalTime.getUTCHours()).padStart(2, "0")}:${String(termLocalTime.getUTCMinutes()).padStart(2, "0")}`;
+    }
+
+    function calculateLuckStartInfo(input, direction) {
+      const birthUtcMs = localTimeToUtcMs(input.year, input.month, input.day, input.hour, input.minute, input.timezoneOffset);
+      const target = getAdjacentSolarTermForLuck(input, direction);
+      if (!target) throw new Error("無法取得起運用的前後節氣。");
+      const diffHours = Math.abs(target.utcMs - birthUtcMs) / (60 * msPerMinute);
+      return {
+        direction,
+        startAge: calculateStartAge(diffHours),
+        diffHours: Number(diffHours.toFixed(2)),
+        solarTermName: target.name,
+        solarTermTime: formatTermLocalTime(target.utcMs, input.timezoneOffset),
+        solarTermUtcMs: target.utcMs
+      };
+    }
+
+    function calculateLuckCycles(monthPillar, dayMaster, birthYear, direction, startAge, steps = 10) {
       const sign = direction === "順行" ? 1 : -1;
       return Array.from({ length: steps }, (_, index) => {
         const pillar = movePillar(monthPillar, sign * (index + 1));
@@ -757,10 +791,11 @@
         return {
           index: index + 1,
           ...pillar,
-          startAge: startAgeOfCycle,
-          endAge: startAgeOfCycle + 9,
-          startYear: birthYear + startAgeOfCycle,
-          endYear: birthYear + startAgeOfCycle + 9,
+          startAge: Math.floor(startAgeOfCycle),
+          endAge: Math.floor(startAge + (index + 1) * 10 - 1),
+          startYear: birthYear + Math.floor(startAgeOfCycle),
+          endYear: birthYear + Math.floor(startAge + (index + 1) * 10 - 1),
+          startAgeExact: Number(startAgeOfCycle.toFixed(2)),
           stemTenGod: getTenGod(dayMaster, pillar.stem),
           branchMainTenGod: getTenGod(dayMaster, mainStem),
           branchMainStem: mainStem
@@ -1067,12 +1102,14 @@
       const pillars = calculateFourPillars(input);
       const dayMaster = pillars.day.stem;
       const luckDirection = getLuckDirection(input.gender, pillars.year.stem);
-      const luckCycles = calculateLuckCycles(pillars.month, dayMaster, input.year, luckDirection);
+      const luckStartInfo = calculateLuckStartInfo(input, luckDirection);
+      const luckCycles = calculateLuckCycles(pillars.month, dayMaster, input.year, luckDirection, luckStartInfo.startAge, 10);
       const annualFlows = getAnnualFlows(targetYear, dayMaster);
       return {
         ...pillars,
         dayMaster,
         luckDirection,
+        luckStartInfo,
         luckCycles,
         annualFlows,
         targetYear
@@ -1139,7 +1176,7 @@
         hour: toPayloadPillar(chart.hour, chart.dayMaster, "hour")
       };
       const annualLuck = chart.annualFlows.find((annual) => annual.year === chart.targetYear) ?? chart.annualFlows[3];
-      const currentLuck = chart.luckCycles[0] ?? null;
+      const currentLuck = chart.luckCycles.find((cycle) => chart.targetYear >= cycle.startYear && chart.targetYear <= cycle.endYear) ?? chart.luckCycles[0] ?? null;
 
       return {
         meta: {
@@ -1166,6 +1203,7 @@
         luckCycles: chart.luckCycles.map((cycle) => ({
           ageStart: cycle.startAge,
           ageEnd: cycle.endAge,
+          ageStartExact: cycle.startAgeExact,
           yearStart: cycle.startYear,
           yearEnd: cycle.endYear,
           pillar: cycle.ganzhi,
@@ -1175,6 +1213,13 @@
           branchTenGod: cycle.branchMainTenGod,
           elementTheme: [stemElement[cycle.stem], branchElement[cycle.branch]]
         })),
+        luckStartInfo: {
+          direction: chart.luckStartInfo.direction,
+          startAge: chart.luckStartInfo.startAge,
+          diffHours: chart.luckStartInfo.diffHours,
+          solarTermName: chart.luckStartInfo.solarTermName,
+          solarTermTime: chart.luckStartInfo.solarTermTime
+        },
         currentLuck: currentLuck ? {
           ageStart: currentLuck.startAge,
           ageEnd: currentLuck.endAge,
@@ -1219,7 +1264,7 @@
 
     function renderLuckAndAnnual(chart) {
       document.getElementById("luck-direction-note").textContent =
-        `${chart.luckDirection}｜起運歲數暫以 1 歲示意`;
+        `${chart.luckDirection}｜${chart.luckStartInfo.startAge}歲起運｜取${chart.luckStartInfo.solarTermName} ${chart.luckStartInfo.solarTermTime}｜相差約${chart.luckStartInfo.diffHours}小時`;
 
       document.getElementById("luck-cycles").innerHTML = chart.luckCycles.map((cycle) => {
         return `
