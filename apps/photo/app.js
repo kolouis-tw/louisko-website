@@ -576,7 +576,11 @@ async function openAlbum(albumId) {
   setCloudStatus("");
   const album = state.albums.find((item) => item.id === albumId);
   els.detailTitle.textContent = album?.name || "相簿";
-  state.detailPhotos = (await getPhotosByAlbum(albumId)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const photos = await getPhotosByAlbum(albumId);
+  const viewPhotos = album?.cloudSyncedAt
+    ? photos.filter((photo) => photo.cloudSyncedAt || photo.cloudStorageKey || photo.cloudOnly)
+    : photos;
+  state.detailPhotos = viewPhotos.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   renderPhotoGrid();
   showView("detail");
 }
@@ -984,7 +988,13 @@ function updateLightbox() {
 
 function photoImageSrc(photo, size = "thumb") {
   if (photo.blob) return URL.createObjectURL(photo.blob);
-  return photo.cloudUrl || "";
+  return cloudObjectUrl(photo) || photo.cloudUrl || "";
+}
+
+function cloudObjectUrl(photo) {
+  const key = photo?.cloudStorageKey || photo?.storageKey || "";
+  if (!key) return "";
+  return `/api/photo-cloud/object?key=${encodeURIComponent(key)}&name=${encodeURIComponent(photo.outputName || "photo.jpg")}`;
 }
 
 function photoSizeLabel(photo) {
