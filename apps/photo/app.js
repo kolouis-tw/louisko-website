@@ -631,30 +631,56 @@ function clearSelection() {
 
 async function rotateSelected(degrees) {
   const selected = state.detailPhotos.filter((photo) => state.selectedPhotoIds.has(photo.id));
+  if (!selected.length) return setCloudStatus("請先勾選要旋轉的照片。");
+  const failed = [];
   for (const photo of selected) {
-    if (!photo.blob) continue;
-    photo.blob = await rotateBlob(photo.blob, degrees);
-    photo.processedSizeBytes = photo.blob.size;
-    photo.updatedAt = new Date().toISOString();
-    photo.transformHistory = [...(photo.transformHistory || []), degrees > 0 ? "rotate-right" : "rotate-left"];
-    photo.cloudSyncedAt = "";
-    await putRecord("photos", photo);
+    try {
+      const sourceBlob = photo.blob || await fetchCloudBlob(photo);
+      if (!sourceBlob) throw new Error("找不到可旋轉的照片檔。");
+      if (!photo.originalBlob) photo.originalBlob = sourceBlob;
+      photo.blob = await rotateBlob(sourceBlob, degrees);
+      photo.processedSizeBytes = photo.blob.size;
+      photo.updatedAt = new Date().toISOString();
+      photo.transformHistory = [...(photo.transformHistory || []), degrees > 0 ? "rotate-right" : "rotate-left"];
+      photo.cloudSyncedAt = "";
+      photo.cloudOnly = false;
+      await putRecord("photos", photo);
+    } catch (error) {
+      console.warn(error);
+      failed.push(photo.originalName);
+    }
   }
   await openAlbum(state.detailAlbumId);
+  setCloudStatus(failed.length
+    ? `部分照片旋轉失敗：${failed.slice(0, 2).join("、")}`
+    : "已旋轉選取照片；如需保存到其他裝置，請再按「同步雲端」。");
 }
 
 async function resetSelected() {
   const selected = state.detailPhotos.filter((photo) => state.selectedPhotoIds.has(photo.id));
+  if (!selected.length) return setCloudStatus("請先勾選要重設的照片。");
+  const failed = [];
   for (const photo of selected) {
-    if (!photo.originalBlob) continue;
-    photo.blob = photo.originalBlob;
-    photo.processedSizeBytes = photo.blob.size;
-    photo.updatedAt = new Date().toISOString();
-    photo.transformHistory = [];
-    photo.cloudSyncedAt = "";
-    await putRecord("photos", photo);
+    try {
+      const sourceBlob = photo.originalBlob || await fetchCloudBlob(photo);
+      if (!sourceBlob) throw new Error("找不到可重設的照片檔。");
+      photo.blob = sourceBlob;
+      photo.originalBlob = photo.originalBlob || sourceBlob;
+      photo.processedSizeBytes = photo.blob.size;
+      photo.updatedAt = new Date().toISOString();
+      photo.transformHistory = [];
+      photo.cloudSyncedAt = photo.cloudStorageKey ? photo.cloudSyncedAt : "";
+      photo.cloudOnly = false;
+      await putRecord("photos", photo);
+    } catch (error) {
+      console.warn(error);
+      failed.push(photo.originalName);
+    }
   }
   await openAlbum(state.detailAlbumId);
+  setCloudStatus(failed.length
+    ? `部分照片重設失敗：${failed.slice(0, 2).join("、")}`
+    : "已重設選取照片。");
 }
 
 async function deleteSelectedPhotos() {
