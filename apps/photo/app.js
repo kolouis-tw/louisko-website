@@ -19,6 +19,7 @@ const LOCAL_API_BASES = [
   "http://127.0.0.1:8080",
 ];
 const CLOUD_API_BASES = [
+  "https://louisko.com",
   "https://louisko-node-photo.zeabur.app",
 ];
 
@@ -211,8 +212,9 @@ async function createAlbumFromPrompt() {
 }
 
 async function renderAlbumGrid() {
-  const cards = await Promise.all(state.albums.map(async (album) => {
-    const photos = await getPhotosByAlbum(album.id);
+  const visibleAlbums = state.albums.filter((album) => album.cloudSyncedAt);
+  const cards = await Promise.all(visibleAlbums.map(async (album) => {
+    const photos = (await getPhotosByAlbum(album.id)).filter((photo) => photo.cloudSyncedAt || photo.cloudStorageKey || photo.cloudOnly);
     const coverUrl = photos[0] ? photoImageSrc(photos[0], "thumb") : "";
     return { album, photos, coverUrl };
   }));
@@ -1019,7 +1021,9 @@ function photoImageSrc(photo, size = "thumb") {
 function cloudObjectUrl(photo) {
   const key = photo?.cloudStorageKey || photo?.storageKey || "";
   if (!key) return "";
-  return `/api/photo-cloud/object?key=${encodeURIComponent(key)}&name=${encodeURIComponent(photo.outputName || "photo.jpg")}`;
+  const path = `/api/photo-cloud/object?key=${encodeURIComponent(key)}&name=${encodeURIComponent(photo.outputName || "photo.jpg")}`;
+  if (location.protocol === "file:") return `https://louisko.com${path}`;
+  return path;
 }
 
 function photoSizeLabel(photo) {
