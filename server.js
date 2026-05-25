@@ -94,7 +94,7 @@ app.get("/api/photo-cloud/albums", async (req, res) => {
 
 app.post("/api/photo-cloud/albums", async (req, res) => {
   const id = normalizeId(req.body?.id) || crypto.randomUUID();
-  const name = String(req.body?.name || "Louis Album").trim().slice(0, 80) || "Louis Album";
+  const name = String(req.body?.name || "Photo Album").trim().slice(0, 80) || "Photo Album";
   const now = new Date().toISOString();
   const db = await readPhotoDb();
   const existing = db.albums.find((album) => album.id === id);
@@ -180,7 +180,7 @@ app.post("/api/photo-cloud/albums/:albumId/photos", photoUpload.single("file"), 
     const metadata = safeJson(req.body.metadata, {});
     const dimensions = await sharp(displayBuffer).metadata();
     const db = await readPhotoDb();
-    const albumName = String(req.body.albumName || "Louis Album").trim().slice(0, 80) || "Louis Album";
+    const albumName = String(req.body.albumName || "Photo Album").trim().slice(0, 80) || "Photo Album";
     const existingAlbum = db.albums.find((item) => item.id === albumId);
     if (existingAlbum) {
       existingAlbum.name = albumName || existingAlbum.name;

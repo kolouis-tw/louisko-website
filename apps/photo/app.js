@@ -62,7 +62,7 @@ async function init() {
   els.brandLogo.src = logoSrc;
   state.logo = await loadImage(logoSrc);
   state.db = await openDb();
-  await ensureDefaultAlbum();
+  await removeLegacyDefaultAlbums();
   bindEvents();
   await pullCloudLibrary({ silent: true });
   await refreshAlbums();
@@ -180,21 +180,31 @@ function getPhotosByAlbum(albumId) {
   return requestToPromise(tx("photos").index("albumId").getAll(albumId));
 }
 
-async function ensureDefaultAlbum() {
+async function removeLegacyDefaultAlbums() {
   const albums = await getAll("albums");
-  if (albums.length) return;
-  const now = new Date().toISOString();
-  await putRecord("albums", { id: crypto.randomUUID(), name: "Louis Album", createdAt: now, updatedAt: now });
+  const legacyAlbums = albums.filter((album) => album.name === "Louis Album");
+  for (const album of legacyAlbums) {
+    const photos = await getPhotosByAlbum(album.id);
+    for (const photo of photos) await deleteRecord("photos", photo.id);
+    await deleteRecord("albums", album.id);
+  }
 }
 
 async function refreshAlbums() {
   state.albums = (await getAll("albums")).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  state.currentAlbumId ||= state.albums[0]?.id;
+  if (!state.albums.some((album) => album.id === state.currentAlbumId)) {
+    state.currentAlbumId = state.albums[0]?.id || null;
+  }
   renderAlbumSelect();
   renderAlbumGrid();
 }
 
 function renderAlbumSelect() {
+  if (!state.albums.length) {
+    els.albumSelect.innerHTML = '<option value="">請先新增相簿</option>';
+    els.albumSelect.value = "";
+    return;
+  }
   els.albumSelect.innerHTML = state.albums.map((album) => (
     `<option value="${escapeHtml(album.id)}">${escapeHtml(album.name)}</option>`
   )).join("");
@@ -254,7 +264,6 @@ async function deleteAlbum(albumId) {
   await Promise.all(photos.map((photo) => deleteRecord("photos", photo.id)));
   await deleteRecord("albums", albumId);
   if (state.currentAlbumId === albumId) state.currentAlbumId = null;
-  await ensureDefaultAlbum();
   await refreshAlbums();
   setCloudStatus(cloudError
     ? `本機相簿已清除；雲端刪除需重試：${cloudError}`
@@ -264,7 +273,7 @@ async function deleteAlbum(albumId) {
 async function handleFiles(files) {
   if (!files.length) return;
   const albumId = state.currentAlbumId || els.albumSelect.value;
-  if (!albumId) return setStatus("請先建立相簿");
+  if (!albumId) return setStatus("請先按 + 建立相簿");
   clearErrors();
   let done = 0;
   let succeeded = 0;
@@ -782,7 +791,7 @@ async function syncCurrentAlbumToCloud() {
       try {
         const formData = new FormData();
         formData.append("photoId", photo.id);
-        formData.append("albumName", album?.name || "Louis Album");
+        formData.append("albumName", album?.name || "Photo Album");
         formData.append("originalName", photo.originalName);
         formData.append("outputName", photo.outputName);
         formData.append("metadata", JSON.stringify({ exifData: photo.exifData, transformHistory: photo.transformHistory || [] }));
@@ -914,7 +923,7 @@ async function mergeCloudAlbum(cloudAlbum) {
   await putRecord("albums", {
     ...(existing || {}),
     id,
-    name: cloudAlbum.name || existing?.name || "Louis Album",
+    name: cloudAlbum.name || existing?.name || "Photo Album",
     createdAt: existing?.createdAt || cloudAlbum.createdAt || new Date().toISOString(),
     updatedAt: cloudAlbum.updatedAt || existing?.updatedAt || new Date().toISOString(),
     cloudSyncedAt: cloudAlbum.updatedAt || new Date().toISOString(),
