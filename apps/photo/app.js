@@ -758,19 +758,16 @@ async function downloadSelected() {
   const selected = getActionPhotos();
   if (!selected.length) return alert("目前相簿沒有可下載的照片");
   setCloudStatus("準備下載照片中...");
-  const { zip, failed } = await buildPhotoZip(selected);
-  const blob = await zip.generateAsync({ type: "blob" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "louis_gallery.zip";
-  link.click();
-  URL.revokeObjectURL(link.href);
+  const { failed } = await downloadPhotosAsZip(selected);
   setCloudStatus(failed.length ? `已下載部分照片，${failed.length} 張雲端檔案不存在。` : "已建立下載檔。");
 }
 
 async function shareSelectedPhotos() {
   const selected = getActionPhotos();
   if (!selected.length) return alert("目前相簿沒有可分享的照片");
+  if (!isMobileShareDevice()) {
+    return shareByEmail(selected);
+  }
   setCloudStatus(`準備分享 ${selected.length} 張照片中...`);
   const { files, failed } = await buildShareFiles(selected);
   const title = shareTitle();
@@ -803,6 +800,39 @@ async function shareSelectedPhotos() {
     console.warn(error);
     setCloudStatus(`分享失敗：${readableError(error)}`);
   }
+}
+
+async function shareByEmail(photos) {
+  const title = shareTitle();
+  setCloudStatus(`準備 Email 分享 ${photos.length} 張照片中...`);
+  try {
+    await downloadPhotosAsZip(photos, "louis_gallery_for_email.zip");
+    const subject = encodeURIComponent(title);
+    const body = encodeURIComponent([
+      `${title}`,
+      "",
+      `共有 ${photos.length} 張照片。`,
+      "照片壓縮檔已由瀏覽器下載，請在郵件中附加 louis_gallery_for_email.zip。",
+      "",
+      `相簿頁面：${location.href}`,
+    ].join("\n"));
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    setCloudStatus("已開啟 Email；請把剛下載的 zip 附加到郵件。");
+  } catch (error) {
+    console.warn(error);
+    setCloudStatus(`Email 分享準備失敗：${readableError(error)}`);
+  }
+}
+
+async function downloadPhotosAsZip(photos, fileName = "louis_gallery.zip") {
+  const { zip, failed } = await buildPhotoZip(photos);
+  const blob = await zip.generateAsync({ type: "blob" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  return { failed };
 }
 
 async function buildShareFiles(photos) {
@@ -847,6 +877,10 @@ async function bestPhotoBlob(photo) {
 function shareTitle() {
   const album = state.albums.find((item) => item.id === state.detailAlbumId);
   return album?.name ? `Louis Photo｜${album.name}` : "Louis Photo";
+}
+
+function isMobileShareDevice() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
 }
 
 async function syncCurrentAlbumToCloud() {
