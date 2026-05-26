@@ -231,7 +231,7 @@ async function renderAlbumGrid() {
   }));
   els.albumGrid.innerHTML = cards.map(({ album, photos, coverUrl }) => `
     <article class="album-card">
-      ${coverUrl ? `<img class="album-cover" src="${coverUrl}" alt="">` : `<div class="album-cover"></div>`}
+      ${coverUrl ? `<img class="album-cover" src="${coverUrl}" alt="" loading="lazy" decoding="async">` : `<div class="album-cover"></div>`}
       <div class="album-body">
         <h3>${escapeHtml(album.name)}</h3>
         <p class="photo-meta">${photos.length} 張照片${album.cloudSyncedAt ? " · 雲端相簿" : ""}</p>
@@ -622,7 +622,7 @@ function renderPhotoGrid() {
     const size = photoSizeLabel(photo);
     return `
       <article class="photo-card">
-        <img src="${url}" alt="" data-lightbox-index="${index}">
+        <img src="${url}" alt="" loading="lazy" decoding="async" data-lightbox-index="${index}">
         <div class="photo-body">
           <strong>${escapeHtml(photo.originalName)}</strong>
           <p class="photo-meta">${escapeHtml(photo.outputName)} · ${size} · ${changed}${cloud}</p>

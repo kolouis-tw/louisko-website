@@ -120,9 +120,10 @@ app.get("/api/photo-cloud/object", async (req, res) => {
     if (!key) return res.status(400).json({ ok: false, error: "INVALID_OBJECT", message: "Invalid object key." });
     const fileName = String(req.query.name || path.basename(key)).replace(/[^\w.\-()\u4e00-\u9fff]/g, "_").slice(0, 180);
     const object = await readPhotoObject(key);
+    const download = req.query.download === "1";
     res.setHeader("Content-Type", object.contentType || "image/jpeg");
-    res.setHeader("Cache-Control", "private, no-store");
-    res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(fileName)}"`);
+    res.setHeader("Cache-Control", download ? "private, no-store" : "private, max-age=86400");
+    res.setHeader("Content-Disposition", `${download ? "attachment" : "inline"}; filename="${encodeURIComponent(fileName)}"`);
     res.send(object.buffer);
   } catch (error) {
     console.error("Photo object download failed:", error.message);
