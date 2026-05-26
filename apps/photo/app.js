@@ -804,24 +804,17 @@ async function shareSelectedPhotos() {
 
 async function shareByEmail(photos) {
   const title = shareTitle();
-  setCloudStatus(`準備 Email 分享 ${photos.length} 張照片中...`);
-  try {
-    await downloadPhotosAsZip(photos, "louis_gallery_for_email.zip");
-    const subject = encodeURIComponent(title);
-    const body = encodeURIComponent([
-      `${title}`,
-      "",
-      `共有 ${photos.length} 張照片。`,
-      "照片壓縮檔已由瀏覽器下載，請在郵件中附加 louis_gallery_for_email.zip。",
-      "",
-      `相簿頁面：${location.href}`,
-    ].join("\n"));
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-    setCloudStatus("已開啟 Email；請把剛下載的 zip 附加到郵件。");
-  } catch (error) {
-    console.warn(error);
-    setCloudStatus(`Email 分享準備失敗：${readableError(error)}`);
-  }
+  const subject = encodeURIComponent(title);
+  const body = encodeURIComponent([
+    `${title}`,
+    "",
+    `共有 ${photos.length} 張照片。`,
+    "若要寄送照片檔案，請先按「下載選取」取得 louis_gallery.zip，再附加到郵件。",
+    "",
+    `相簿頁面：${location.href}`,
+  ].join("\n"));
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  setCloudStatus("已開啟 Email；照片檔案請用「下載選取」取得 zip 後附加。");
 }
 
 async function downloadPhotosAsZip(photos, fileName = "louis_gallery.zip") {
@@ -1090,7 +1083,7 @@ async function fetchCloudBlob(photo) {
     ? `/api/photo-cloud/object?key=${encodeURIComponent(key)}&name=${encodeURIComponent(photo.outputName || "photo.jpg")}`
     : photo.cloudUrl;
   if (!url) return null;
-  const response = key ? await fetchCloud(url, { cache: "no-store" }) : await fetch(url);
+  const response = key ? await fetchCloud(url, { cache: "no-store", timeoutMs: 30_000 }) : await fetch(url);
   if (!response.ok) throw new Error("雲端照片下載失敗");
   return response.blob();
 }
