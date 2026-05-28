@@ -129,3 +129,72 @@ npm run site -- add-page --slug my-tool --title "我的新工具" --description 
 ## 網域說明
 
 此資料夾以 `louisko.com` 作為未來目標站名。部分歷史文件保留 `Louisko Website`、`louisko.com`、`bazi-website` 等名稱，代表舊專案來源與部署紀錄。
+
+## 共用腳本
+
+優先使用站台工作流腳本：
+
+```sh
+node scripts/site-workflow/manage-site.mjs add-page --slug my-tool --title "我的新工具" --description "我的新工具"
+node scripts/site-workflow/manage-site.mjs verify
+```
+
+若 shell 有載入 npm，也可用：
+
+```sh
+npm run site:list
+npm run site:verify
+npm run site -- add-page --slug my-tool --title "我的新工具" --description "我的新工具"
+```
+
+## 視覺風格定案
+
+目前網站定案為「苔原綠 / System」：
+
+- 背景：暖白 `#F8F6EF` + 苔原綠 `#DDE8D2`
+- 字體：Manrope + Noto Sans TC
+- 語氣：較厚、圓潤、穩定的北歐簡約風
+
+若需要重新套用最終顏色與字體 token：
+
+```sh
+npm run style:final
+```
+
+此腳本只重套 `assets/louisko-theme.css` 的顏色與字體，不應改動已確認的頁面佈局與功能。
+
+## 部署
+
+Zeabur 使用 Dockerfile：
+
+```Dockerfile
+FROM nginx:alpine
+COPY . /usr/share/nginx/html/
+EXPOSE 80
+```
+
+部署目標：
+
+```text
+Project: louisko-website
+Service: louisko-website
+Server: Tencent Tokyo 2C 2GB
+Custom domain: louisko.com
+Public port: HTTP:80
+```
+
+Zeabur token 只保存在本機 Codex 設定檔或安全 secret store，不要寫入 repository、README、AGENTS、commit message 或 chat 回覆。
+
+## 頁面規則
+
+除非使用者明確要求，不要在公開頁面加入提示詞、說明提醒、使用說明、安全提醒或教學文字。必要提醒只寫在 `README.md`、`AGENTS.md` 或其他內部文件。
+
+## 八字子專案
+
+八字排盤的維護文件已移到 `apps/bazi/`。修改排盤、流年、大運、六柱或十神邏輯時，請先閱讀：
+
+- `apps/bazi/README.md`
+- `apps/bazi/docs_algorithm.md`
+- `apps/bazi/docs_overview.md`
+- `apps/bazi/SMOKE_TEST.md`
+- `apps/bazi/docs/regression_cases.md`

@@ -8,6 +8,15 @@
 node scripts/site-workflow/manage-site.mjs
 ```
 
+最終視覺風格腳本：
+
+```sh
+node scripts/site-workflow/louisko-style-system.mjs info
+node scripts/site-workflow/louisko-style-system.mjs final
+```
+
+目前最終定案為「苔原綠 / System」：暖白 `#F8F6EF` + 苔原綠 `#DDE8D2`，字體為 Manrope + Noto Sans TC，整體較厚、圓潤、穩。此腳本只重套顏色與字體 token，不應改動已確認的版面結構與功能。
+
 ## 流程與紀錄文件
 
 - `WEB_CHANGE_DEPLOYMENT_WORKFLOW.md`：記錄每次網頁變更、GitHub 同步與 Zeabur 部署的標準流程，以及各步驟的作用。

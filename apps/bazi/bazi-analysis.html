@@ -423,10 +423,15 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="../../assets/louisko-theme.css">
 </head>
 <body>
   <main class="bazi-analysis-page">
     <div class="topbar">
+      <a class="louisko-page-brand" href="../../index.html" aria-label="Louisko 首頁">
+        <img class="louisko-logo" src="../../assets/louis-logo-transparent.png" alt="Louis">
+        <span class="louisko-brand-text">Louisko</span>
+      </a>
       <a class="back-link" href="./">返回排盤</a>
       <button class="primary" id="copy-prompt" type="button" hidden>複製 AI Prompt</button>
     </div>
@@ -1099,7 +1104,7 @@ ${JSON.stringify(payload, null, 2)}`;
         <section class="hero">
           <div class="hero-copy">
             <h1>八字論命</h1>
-            <p class="lead">主頁負責精準排盤，次頁負責深度論命。本頁先以子平法順序建立基礎判斷：月令、旺衰、通根、格局、調候、用神，再看大運流年如何引動原局。</p>
+            <p class="lead">以月令、旺衰、通根、格局、調候、用神為序，再看大運流年如何引動原局。</p>
           </div>
           <aside class="summary-panel">
             <div class="summary-grid">
@@ -1128,7 +1133,7 @@ ${JSON.stringify(payload, null, 2)}`;
           ${analysis.sections.map(renderSection).join("")}
           <section class="section wide" id="luck-timeline">
             <h2>大運時間軸</h2>
-            <p class="subtitle">每步十年，起運歲數目前仍沿用主頁示意資料。</p>
+            <p class="subtitle">每步十年。</p>
             ${renderTimeline(payload.luckCycles)}
           </section>
           <section class="section wide" id="monthly-cards">
@@ -1143,7 +1148,6 @@ ${JSON.stringify(payload, null, 2)}`;
           </section>
           <section class="section wide" id="ai-master-reading">
             <h2>AI 綜合論命 Prompt</h2>
-            <p class="subtitle">目前尚未串接 LLM API，先提供可直接送入模型的 prompt payload。</p>
             <pre class="prompt-box">${escapeHtml(analysis.aiPrompt)}</pre>
           </section>
         </div>

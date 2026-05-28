@@ -6,7 +6,9 @@
     "start": "node server.js",
     "site": "node scripts/site-workflow/manage-site.mjs",
     "site:list": "node scripts/site-workflow/manage-site.mjs list",
-    "site:verify": "node scripts/site-workflow/manage-site.mjs verify"
+    "site:verify": "node scripts/site-workflow/manage-site.mjs verify",
+    "style:info": "node scripts/site-workflow/louisko-style-system.mjs info",
+    "style:final": "node scripts/site-workflow/louisko-style-system.mjs final"
   },
   "engines": {
     "node": ">=18"

@@ -6,6 +6,7 @@
   <title>Louis Image Processor｜Louisko</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="../../assets/louisko-theme.css" />
 </head>
 <body>
   <header class="app-header">
@@ -40,7 +41,7 @@
           <label class="drop-zone" for="fileInput">
             <i class="fa-solid fa-file-arrow-up"></i>
             <strong>選擇或拖曳照片</strong>
-            <span>點擊選檔，或把照片拖到這裡。JPG / PNG / WEBP 於瀏覽器處理，HEIC 會送至後端轉成 JPG。</span>
+            <span>JPG / PNG / WEBP / HEIC</span>
           </label>
           <div class="mobile-pickers">
             <label class="picker-button" for="fileInput"><i class="fa-solid fa-images"></i><span>照片圖庫</span></label>
@@ -100,7 +101,7 @@
 
   <div id="lightbox" class="lightbox" aria-hidden="true">
     <button id="closeLightbox" class="lightbox-close" title="關閉"><i class="fa-solid fa-xmark"></i></button>
-    <button id="stopSlideshow" class="lightbox-stop" title="停止連續播放" hidden><i class="fa-solid fa-pause"></i></button>
+    <button id="stopSlideshow" class="lightbox-stop" title="暫停輪播" aria-label="暫停輪播" hidden><i class="fa-solid fa-pause"></i></button>
     <button id="prevPhoto" class="lightbox-nav prev" title="上一張"><i class="fa-solid fa-chevron-left"></i></button>
     <img id="lightboxImage" alt="" />
     <button id="nextPhoto" class="lightbox-nav next" title="下一張"><i class="fa-solid fa-chevron-right"></i></button>
@@ -110,7 +111,6 @@
   <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="./assets/louis-logo-data.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

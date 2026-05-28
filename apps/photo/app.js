@@ -34,6 +34,7 @@ const state = {
   lightboxIndex: 0,
   lightboxPhotos: [],
   slideshowTimer: null,
+  slideshowPaused: false,
   logo: null,
 };
 
@@ -62,7 +63,7 @@ const els = {
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
-  const logoSrc = window.LOUIS_LOGO_DATA_URL || "./assets/louis-logo.png";
+  const logoSrc = "../../assets/louis-logo-transparent.png";
   els.brandLogo.src = logoSrc;
   state.logo = await loadImage(logoSrc);
   state.db = await openDb();
@@ -100,7 +101,7 @@ function bindEvents() {
   $("#cloudPullButton").addEventListener("click", () => pullCloudLibraryAndRender({ targetView: "albums" }));
   $("#cloudRefreshButton").addEventListener("click", () => pullCloudLibraryAndRender({ targetView: "detail" }));
   $("#closeLightbox").addEventListener("click", closeLightbox);
-  $("#stopSlideshow").addEventListener("click", stopSlideshow);
+  $("#stopSlideshow").addEventListener("click", toggleSlideshowPlayback);
   $("#prevPhoto").addEventListener("click", () => moveLightbox(-1));
   $("#nextPhoto").addEventListener("click", () => moveLightbox(1));
   document.addEventListener("keydown", handleKeys);
@@ -1154,21 +1155,55 @@ function updateLightbox() {
 function startSlideshow() {
   const photos = getActionPhotos();
   if (!photos.length) return setCloudStatus("目前相簿沒有可播放的照片。");
-  stopSlideshow();
+  clearSlideshowTimer();
   state.lightboxPhotos = photos;
   state.lightboxIndex = 0;
+  state.slideshowPaused = false;
   updateLightbox();
   els.lightbox.classList.add("is-open");
   els.lightbox.setAttribute("aria-hidden", "false");
-  els.stopSlideshow.hidden = false;
+  setSlideshowControl({ hidden: false, paused: false });
   state.slideshowTimer = setInterval(() => moveLightbox(1), SLIDESHOW_INTERVAL_MS);
   setCloudStatus(`連續播放中：${photos.length} 張照片。`);
 }
 
 function stopSlideshow() {
+  clearSlideshowTimer();
+  state.slideshowPaused = false;
+  setSlideshowControl({ hidden: true, paused: false });
+}
+
+function clearSlideshowTimer() {
   if (state.slideshowTimer) clearInterval(state.slideshowTimer);
   state.slideshowTimer = null;
-  if (els.stopSlideshow) els.stopSlideshow.hidden = true;
+}
+
+function toggleSlideshowPlayback() {
+  const photos = state.lightboxPhotos.length ? state.lightboxPhotos : state.detailPhotos;
+  if (!els.lightbox.classList.contains("is-open") || !photos.length) return;
+
+  if (state.slideshowTimer) {
+    clearSlideshowTimer();
+    state.slideshowPaused = true;
+    setSlideshowControl({ hidden: false, paused: true });
+    setCloudStatus("輪播已暫停。");
+    return;
+  }
+
+  state.slideshowPaused = false;
+  setSlideshowControl({ hidden: false, paused: false });
+  state.slideshowTimer = setInterval(() => moveLightbox(1), SLIDESHOW_INTERVAL_MS);
+  setCloudStatus(`繼續輪播：${photos.length} 張照片。`);
+}
+
+function setSlideshowControl({ hidden, paused }) {
+  if (!els.stopSlideshow) return;
+  els.stopSlideshow.hidden = hidden;
+  els.stopSlideshow.title = paused ? "繼續輪播" : "暫停輪播";
+  els.stopSlideshow.setAttribute("aria-label", paused ? "繼續輪播" : "暫停輪播");
+  els.stopSlideshow.innerHTML = paused
+    ? '<i class="fa-solid fa-play"></i>'
+    : '<i class="fa-solid fa-pause"></i>';
 }
 
 function photoImageSrc(photo, size = "thumb") {

@@ -1,0 +1,781 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@450;500;550;650;700;760&family=Noto+Sans+TC:wght@400;500;700;800&display=swap");
+
+:root {
+  --louisko-base: #F8F6EF;
+  --louisko-soft: #F1EFE8;
+  --louisko-mint: #DDE8D2;
+  --louisko-ink: #26302F;
+  --louisko-muted: #6F7F84;
+  --louisko-accent: #A66F63;
+  --louisko-line: rgba(38, 48, 47, .13);
+  --louisko-page-background: radial-gradient(circle at 50% 46%, rgba(221, 232, 210, .84) 0%, rgba(221, 232, 210, .48) 28%, rgba(248, 246, 239, .88) 64%, #F8F6EF 100%);
+  --louisko-font-body: Manrope, "Noto Sans TC", "Helvetica Neue", -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+  --louisko-font-heading: Manrope, "Noto Sans TC", "Helvetica Neue", -apple-system, BlinkMacSystemFont, "PingFang TC", sans-serif;
+  --louisko-heading-weight: 650;
+  --louisko-body-weight: 500;
+  --louisko-label-weight: 760;
+  --louisko-button-weight: 700;
+  --louisko-card-weight: 760;
+  --louisko-display: clamp(72px, 9vw, 128px);
+  --louisko-page-title: clamp(64px, 8vw, 104px);
+  --louisko-card-title: clamp(22px, 1.7vw, 28px);
+  --louisko-action-height: 64px;
+  --louisko-action-pad-x: 28px;
+  --louisko-panel-pad: clamp(28px, 3vw, 42px);
+  --louisko-section-gap: clamp(44px, 6vw, 84px);
+}
+
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+body {
+  min-height: 100%;
+  color: var(--louisko-ink);
+  background: var(--louisko-page-background) !important;
+  font-family: var(--louisko-font-body) !important;
+  font-weight: var(--louisko-body-weight);
+  letter-spacing: .02em;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body::before {
+  opacity: .08 !important;
+}
+
+a {
+  color: inherit;
+}
+
+.louisko-logo,
+.brand-logo,
+.brand-link img {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  display: block;
+}
+
+.louisko-page-brand,
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  text-decoration: none;
+}
+
+.louisko-brand-text,
+.brand-text strong {
+  color: var(--louisko-ink);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: .22em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.brand-text span,
+.louisko-brand-subtitle,
+.eyebrow,
+.label,
+.kicker {
+  color: var(--louisko-accent) !important;
+  font-weight: var(--louisko-label-weight) !important;
+  letter-spacing: .18em !important;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  color: var(--louisko-ink);
+  font-family: var(--louisko-font-heading) !important;
+  font-weight: var(--louisko-heading-weight) !important;
+  letter-spacing: -.03em !important;
+}
+
+p,
+.lead,
+.subtitle,
+.muted,
+.photo-meta {
+  color: var(--louisko-muted);
+}
+
+.site,
+.shell,
+.app-header,
+.app-shell,
+main {
+  position: relative;
+}
+
+.site,
+.shell,
+.app-header,
+.app-shell,
+body > main {
+  width: min(1180px, calc(100% - 44px)) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+body > main,
+.shell,
+.app-shell {
+  padding-top: 56px !important;
+  padding-bottom: 120px !important;
+}
+
+.site.topbar,
+.app-header,
+.top,
+.page-top,
+.bazi-analysis-page .topbar {
+  min-height: auto !important;
+  padding: 0 !important;
+  margin: 0 auto var(--louisko-section-gap) !important;
+  border-bottom: 0 !important;
+}
+
+.site.topbar,
+.app-header,
+.top,
+.page-top {
+  display: flex !important;
+}
+
+.top,
+.topbar,
+.page-top {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bazi-analysis-page .topbar {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+}
+
+.bazi-analysis-page .back-link {
+  margin-left: auto;
+}
+
+.site.hero {
+  min-height: 72vh !important;
+  display: grid !important;
+  place-items: end start !important;
+  padding: 0 0 80px !important;
+  text-align: left !important;
+  border-bottom: 1px solid var(--louisko-line);
+}
+
+.hero-inner {
+  width: min(980px, 100%) !important;
+}
+
+.hero-inner h1,
+.app-header h1,
+.bazi-input-hero h1,
+.bazi-analysis-page h1,
+.shell h1 {
+  font-size: var(--louisko-display) !important;
+  line-height: .92 !important;
+  margin: 0 0 28px !important;
+}
+
+.hero-inner .lead {
+  max-width: 720px;
+  margin: 0 0 34px !important;
+  font-size: 16px;
+  line-height: 1.9;
+}
+
+.portal-row,
+.toolbar,
+.album-actions,
+.button-row,
+.actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+}
+
+.app-header {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end !important;
+  gap: 22px !important;
+}
+
+.app-header h1 {
+  margin-bottom: 0 !important;
+}
+
+.app-shell {
+  padding-top: 0 !important;
+}
+
+.toolbar {
+  margin: 0 0 var(--louisko-section-gap) !important;
+}
+
+.view.is-active {
+  display: block !important;
+}
+
+.section-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end !important;
+  gap: 24px !important;
+  margin: 0 0 46px !important;
+  padding-bottom: 34px;
+  border-bottom: 1px solid var(--louisko-line);
+}
+
+.section-head h2 {
+  font-size: var(--louisko-page-title) !important;
+  line-height: .96 !important;
+  margin: 0 !important;
+}
+
+.upload-layout {
+  display: grid !important;
+  grid-template-columns: 1fr minmax(0, 11fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.upload-panel {
+  grid-column: 2;
+}
+
+.panel-head {
+  align-items: end !important;
+  margin-bottom: 34px;
+}
+
+.drop-zone {
+  min-height: clamp(440px, 42vw, 600px) !important;
+  margin-top: 28px !important;
+  padding: clamp(32px, 4vw, 64px) !important;
+}
+
+.drop-zone strong {
+  font-size: clamp(44px, 5vw, 72px) !important;
+  font-weight: 300 !important;
+  letter-spacing: -.03em;
+}
+
+.drop-zone i {
+  font-size: clamp(46px, 4vw, 68px) !important;
+}
+
+.drop-zone span {
+  font-size: 18px !important;
+  letter-spacing: .1em;
+}
+
+.album-grid {
+  display: grid !important;
+  grid-template-columns: repeat(12, 1fr) !important;
+  gap: 36px !important;
+}
+
+.album-card {
+  grid-column: span 4;
+}
+
+.album-card:nth-child(3n + 2) {
+  margin-top: 64px;
+}
+
+.album-card:nth-child(3n) {
+  margin-top: 24px;
+}
+
+.photo-grid {
+  display: grid !important;
+  grid-template-columns: repeat(12, 1fr) !important;
+  gap: 36px !important;
+}
+
+.photo-card {
+  grid-column: span 4;
+}
+
+.photo-card:nth-child(3n + 2) {
+  margin-top: 54px;
+}
+
+.photo-card:nth-child(3n) {
+  margin-top: 18px;
+}
+
+.album-card,
+.photo-card {
+  padding: clamp(22px, 2.2vw, 32px);
+}
+
+.album-cover,
+.photo-card img {
+  border-radius: 10px;
+}
+
+.shell .hero {
+  min-height: 58vh;
+  display: grid;
+  align-items: end;
+  padding: 52px 0 82px;
+  border-bottom: 1px solid var(--louisko-line);
+}
+
+.shell .hero h1 {
+  max-width: 900px;
+}
+
+.bazi-input-hero {
+  min-height: 34vh;
+  display: grid;
+  align-content: end;
+  padding-bottom: 64px;
+  margin-bottom: 56px;
+  border-bottom: 1px solid var(--louisko-line);
+}
+
+.bazi-input-hero h1 {
+  margin: 0 !important;
+}
+
+body > main > .form {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 3fr minmax(0, 9fr);
+  gap: 22px 48px !important;
+  padding: 0 !important;
+}
+
+body > main > .form > .row,
+body > main > .form > .quick-time-row,
+body > main > .form > .subhint,
+body > main > .form > .actions {
+  grid-column: 2;
+}
+
+body > main > .form > .row {
+  display: grid !important;
+  grid-template-columns: 150px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 22px !important;
+  min-height: auto !important;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--louisko-line);
+}
+
+body > main > .form .label {
+  width: auto !important;
+  flex: initial !important;
+  text-align: left !important;
+  color: var(--louisko-accent) !important;
+  font-size: 20px !important;
+  font-weight: 500 !important;
+  letter-spacing: .12em !important;
+}
+
+body > main > .form .date-controls {
+  display: grid !important;
+  grid-template-columns: minmax(108px, 1.25fr) repeat(4, minmax(82px, .9fr)) !important;
+  gap: 10px !important;
+}
+
+body > main > .form input,
+body > main > .form select {
+  min-width: 0 !important;
+  height: 58px !important;
+  font-size: clamp(18px, 2vw, 24px) !important;
+}
+
+body > main > .form .quick-time-row,
+body > main > .form .subhint {
+  margin: 0 !important;
+}
+
+body > main > .form .actions {
+  justify-content: flex-start !important;
+  padding-top: 32px !important;
+}
+
+body > main > .form button,
+body > main > .form .secondary-button {
+  min-width: 180px !important;
+  height: var(--louisko-action-height) !important;
+  font-size: 18px !important;
+}
+
+.portal-button,
+.tab-button,
+.home-button,
+.secondary-button,
+.album-actions button,
+.icon-button,
+.picker-button,
+.back,
+.home-link,
+button {
+  min-height: var(--louisko-action-height) !important;
+  padding: 0 var(--louisko-action-pad-x) !important;
+  border: 1px solid var(--louisko-line) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, .62) !important;
+  color: var(--louisko-ink) !important;
+  box-shadow: none !important;
+  transition: transform .3s ease, border-color .3s ease, background .3s ease !important;
+  font-size: clamp(16px, 1.15vw, 19px) !important;
+  font-weight: var(--louisko-button-weight) !important;
+  letter-spacing: .03em !important;
+  gap: 12px !important;
+}
+
+.home-button,
+.icon-button {
+  width: var(--louisko-action-height) !important;
+  min-width: var(--louisko-action-height) !important;
+  padding: 0 !important;
+}
+
+.toolbar .tab-button,
+.toolbar .home-button,
+.album-actions button,
+.secondary-button,
+.picker-button {
+  min-height: var(--louisko-action-height) !important;
+}
+
+.toolbar,
+.album-actions {
+  gap: 18px !important;
+}
+
+.toolbar .tab-button,
+.album-actions button,
+.secondary-button {
+  min-width: 132px !important;
+}
+
+.portal-button:hover,
+.tab-button:hover,
+.home-button:hover,
+.secondary-button:hover,
+.album-actions button:hover,
+.icon-button:hover,
+.picker-button:hover,
+.back:hover,
+.home-link:hover,
+button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(184, 125, 108, .42) !important;
+  background: rgba(255, 255, 255, .82) !important;
+}
+
+.portal-button.primary,
+.tab-button.is-active,
+button.primary,
+.submit {
+  border-color: rgba(184, 125, 108, .38) !important;
+  background: rgba(251, 249, 246, .82) !important;
+  color: var(--louisko-accent) !important;
+}
+
+.panel,
+.dialog,
+.content,
+.hero-copy,
+.summary-panel,
+.section,
+.empty-state,
+.album-card,
+.photo-card,
+.metric,
+.pillar,
+.result {
+  border: 1px solid var(--louisko-line) !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, .58) !important;
+  color: var(--louisko-ink) !important;
+  box-shadow: none !important;
+}
+
+.panel,
+.album-card,
+.photo-card {
+  padding: var(--louisko-panel-pad) !important;
+}
+
+.upload-panel {
+  min-height: 680px;
+}
+
+.album-cover,
+.photo-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.album-body,
+.photo-body {
+  padding: 22px 4px 0 !important;
+}
+
+.album-body h3,
+.photo-body strong {
+  color: var(--louisko-ink) !important;
+  font-size: var(--louisko-card-title) !important;
+  line-height: 1.14 !important;
+  font-weight: var(--louisko-card-weight) !important;
+  letter-spacing: -.01em !important;
+}
+
+.album-body p,
+.photo-meta,
+.check-row {
+  font-size: 17px !important;
+  line-height: 1.55 !important;
+}
+
+.card-actions {
+  gap: 14px !important;
+  margin-top: 22px !important;
+}
+
+.card-actions button {
+  min-height: 54px !important;
+  font-size: 18px !important;
+}
+
+.panel,
+.dialog,
+.content,
+.hero-copy,
+.summary-panel,
+.section,
+.empty-state,
+.album-card,
+.photo-card,
+.metric,
+.pillar,
+.result,
+.monthly-card,
+.shensha-card,
+.timeline-item {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+input,
+select,
+textarea {
+  border: 1px solid var(--louisko-line) !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, .74) !important;
+  color: var(--louisko-ink) !important;
+}
+
+.drop-zone {
+  border-color: rgba(184, 125, 108, .42) !important;
+  background: rgba(255, 255, 255, .48) !important;
+}
+
+.album-cover,
+.photo-card img {
+  background: rgba(44, 51, 51, .06) !important;
+}
+
+.cloud-status,
+.error-list {
+  border: 1px solid rgba(184, 125, 108, .24) !important;
+  border-radius: 16px !important;
+  background: rgba(251, 249, 246, .72) !important;
+  color: var(--louisko-muted) !important;
+}
+
+.danger {
+  color: #A44B4B !important;
+  border-color: rgba(164, 75, 75, .34) !important;
+}
+
+.footer {
+  color: rgba(44, 51, 51, .42) !important;
+}
+
+.bazi-analysis-page {
+  --bg: transparent;
+  --panel: rgba(255, 255, 255, .74);
+  --panel-2: rgba(251, 249, 246, .86);
+  --text: var(--louisko-ink);
+  --muted: #5F6E78;
+  --line: rgba(44, 51, 51, .16);
+  --accent: var(--louisko-accent);
+  --metal: #68717A;
+}
+
+.bazi-analysis-page .hero-copy,
+.bazi-analysis-page .summary-panel,
+.bazi-analysis-page .section,
+.bazi-analysis-page .empty-state,
+.bazi-analysis-page .metric,
+.bazi-analysis-page .pillar,
+.bazi-analysis-page .monthly-card,
+.bazi-analysis-page .shensha-card,
+.bazi-analysis-page .timeline-item {
+  background: rgba(251, 249, 246, .88) !important;
+  color: var(--louisko-ink) !important;
+}
+
+.bazi-analysis-page h1,
+.bazi-analysis-page h2,
+.bazi-analysis-page h3,
+.bazi-analysis-page .monthly-card h3,
+.bazi-analysis-page .timeline-item strong,
+.bazi-analysis-page .metric strong {
+  color: var(--louisko-ink) !important;
+}
+
+.bazi-analysis-page .lead,
+.bazi-analysis-page .subtitle,
+.bazi-analysis-page .pillar-label,
+.bazi-analysis-page .pillar-meta,
+.bazi-analysis-page .metric span,
+.bazi-analysis-page .bar-row,
+.bazi-analysis-page .timeline-item {
+  color: #5F6E78 !important;
+}
+
+.bazi-analysis-page .evidence,
+.bazi-analysis-page .conclusion,
+.bazi-analysis-page .monthly-card p,
+.bazi-analysis-page .shensha-card p {
+  color: #374142 !important;
+}
+
+.bazi-analysis-page .tag {
+  background: rgba(184, 125, 108, .10) !important;
+  border-color: rgba(184, 125, 108, .24) !important;
+  color: #4B5556 !important;
+}
+
+.bazi-analysis-page .bar-track {
+  background: rgba(44, 51, 51, .12) !important;
+}
+
+.bazi-analysis-page .prompt-box {
+  background: rgba(44, 51, 51, .06) !important;
+  color: #2C3333 !important;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --louisko-action-height: 54px;
+    --louisko-action-pad-x: 18px;
+    --louisko-panel-pad: 18px;
+    --louisko-section-gap: 34px;
+  }
+
+  .site,
+  .shell,
+  .app-header,
+  .app-shell,
+  body > main {
+    width: min(100% - 28px, 1180px) !important;
+    padding-top: 28px !important;
+    padding-bottom: 90px !important;
+  }
+
+  .site.topbar,
+  .app-header,
+  .top,
+  .page-top,
+  .bazi-analysis-page .topbar {
+    margin-bottom: 44px !important;
+  }
+
+  .louisko-logo,
+  .brand-logo,
+  .brand-link img {
+    width: 64px;
+    height: 64px;
+  }
+
+  .site.hero,
+  .shell .hero,
+  .bazi-input-hero {
+    min-height: 48vh !important;
+    padding-bottom: 48px !important;
+  }
+
+  .hero-inner h1,
+  .app-header h1,
+  .bazi-input-hero h1,
+  .bazi-analysis-page h1,
+  .shell h1 {
+    font-size: clamp(48px, 16vw, 68px) !important;
+  }
+
+  .section-head h2 {
+    font-size: clamp(46px, 14vw, 64px) !important;
+  }
+
+  .drop-zone {
+    min-height: 330px !important;
+  }
+
+  .drop-zone strong {
+    font-size: clamp(32px, 10vw, 44px) !important;
+  }
+
+  .toolbar .tab-button,
+  .album-actions button,
+  .secondary-button {
+    min-width: 0 !important;
+  }
+
+  .app-header,
+  .section-head,
+  .upload-layout,
+  body > main > .form,
+  body > main > .form > .row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .upload-panel,
+  body > main > .form > .row,
+  body > main > .form > .quick-time-row,
+  body > main > .form > .subhint,
+  body > main > .form > .actions {
+    grid-column: 1 / -1 !important;
+  }
+
+  body > main > .form .date-controls {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .album-grid,
+  .photo-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .album-card,
+  .photo-card,
+  .album-card:nth-child(n),
+  .photo-card:nth-child(n) {
+    grid-column: 1 / -1 !important;
+    margin-top: 0 !important;
+  }
+}
