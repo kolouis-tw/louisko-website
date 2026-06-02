@@ -1,200 +1,132 @@
-# louisko.com 未來開發專案
+# louisko.com
 
-這個資料夾是 `louisko.com` 未來網站開發的主專案資料夾。根目錄保留可直接開發與部署的網站檔案；內部規劃、規格、參考資料與歷史來源統一放在 `_project/`。
+This repository is the main working directory for the future `louisko.com` site.
 
-目前整併位置：`/Users/kolouis/Desktop/AI_Codex/AI_Web/02_louisko.com_未來開發專案/louisko.com_未來開發專案`。這是後續 louisko.com 開發的主專案候選。
+- Root-level files own the home page, shared deployment entry, and cross-site workflow.
+- `apps/<slug>/` owns each subproject.
+- Local working root: `/Users/kolouis/Desktop/AI_Codex/AI_Web`
 
-## 快速入口
+## Quick Map
 
-- 主站首頁：`index.html`
-- 舊八字入口相容頁：`bazi.html`
-- 八字子專案：`apps/bazi/`
-- 攝影照片處理工具：`apps/photo/`
-- 其他預留子頁：`apps/erp/`、`apps/ai/`、`apps/design/`、`apps/photo/`、`apps/docs/`
-- 主站工作流：`scripts/site-workflow/`
-- 小白部署分工手冊：`_project/03_deployment/LOUISKO_DEPLOYMENT_OWNER_MANUAL.md`
-- 八字 TypeScript 引擎：`packages/bazi-engine-ts/`
-- 專案規劃資料：`_project/`
+- Main governance hub: `AGENTS.md`
+- Governance modules: `docs/agent-governance/`
+- Main site home: `index.html`
+- Legacy Bazi compatibility entry: `bazi.html`
+- Bazi app: `apps/bazi/`
+- Photo app: `apps/photo/`
+- Site workflow scripts: `scripts/site-workflow/`
+- Project manifest: `manifest.json`
 
-## 本機預覽
+If you are routing agent work, start with `AGENTS.md`. If you are onboarding a human developer, use this README first and then jump to the matching app or workflow folder.
+
+## Repository Structure
+
+- Root: main site, shared assets, deployment entry, and shared workflow
+- `apps/bazi/`: Bazi charting app
+- `apps/photo/`: Louis Image Processor and Photo cloud front end
+- `apps/erp/`, `apps/ai/`, `apps/design/`, `apps/docs/`: reserved or lightweight app roots
+- `scripts/site-workflow/`: page-management and publish workflow
+- `docs/agent-governance/`: governance modules referenced by `AGENTS.md`
+
+## Local Preview
 
 ```sh
 npm start
 ```
 
-預設 port 是 `8080`，也可指定：
+Default port is `8080`. To override:
 
 ```sh
 PORT=3000 npm start
 ```
 
-## 攝影照片處理工具
+## Common Workflows
 
-`apps/photo/` 是 Louis Image Processor，提供相簿建立、照片上傳、EXIF 資訊列、Louis Logo 浮水印、相簿內旋轉、刪除、Lightbox 預覽與 ZIP 下載。
-
-HEIC / HEIF 檔案會透過同一個 Node / Express 服務的 `POST /api/convert-heic` 轉成 JPG。後端使用 `multer` memory storage，優先以 `sharp` 轉檔，若 HEIC codec 不完整則 fallback 到 `heic-convert`。單檔上限 50MB，不寫入磁碟，也不永久保存使用者照片。
-
-相簿詳情頁提供「同步雲端」流程。同步時會把已處理照片上傳到後端，後端再轉成網頁適合版本：
-
-- 單一成品 JPG，已含 EXIF 資訊列與 Louis Logo 浮水印。
-- 前端先壓縮到小於 600KB；後端再確認一次，確保 R2 最終檔案小於 600KB。
-- 後端長邊上限 1800px，必要時會降低 JPEG quality 與尺寸。
-- 本機開發保存位置：`_storage/photo-cloud`。
-
-`_storage/` 已排除在 Git 與 Docker image 外。正式上線使用 Cloudflare R2，不建議依賴 Zeabur container disk 長期保存照片。Cloudflare R2 只保存單一成品 JPG，不再另外建立縮圖檔。
-
-Cloudflare R2 可用下列環境變數啟用：
-
-```text
-PHOTO_STORAGE_PROVIDER=r2
-R2_ACCOUNT_ID=...
-R2_ACCESS_KEY_ID=...
-R2_SECRET_ACCESS_KEY=...
-R2_BUCKET=...
-R2_PUBLIC_BASE_URL=https://media.louisko.com
-```
-
-實際 key 只放 Zeabur environment variables 或本機 `.env`，不要寫進 repository。
-
-目前部署狀態：
-
-- 正式 `https://louisko.com/` 已綁到 Zeabur Node service：`louisko-node-photo`。
-- 正式 Photo 頁：`https://louisko.com/apps/photo/`
-- 正式 Photo API：`https://louisko.com/api/photo-cloud/albums`
-- 備援 generated domain：`https://louisko-node-photo.zeabur.app/`
-- R2 bucket：`louisko-photo`。
-- `media.louisko.com` 尚未接 R2，目前先使用 R2 development public URL。
-
-截至 2026-05-24，`louisko.com` 已從舊 `bazi-website` 靜態 service 移到 Node service，首頁、子頁與 `/api/*` 共用同一個正式入口。
-
-iPhone / iPad 使用時，手機版頁面提供兩個上傳入口：
-
-- 「照片圖庫」：使用 `accept="image/*,.heic,.heif,image/heic,image/heif"` 與 `multiple`，可從 iOS Photos 選取多張照片。
-- 「直接拍照」：使用 `capture="environment"`，可叫出後鏡頭拍照後上傳。
-
-### 資料儲存說明
-
-本工具採用「本地端相簿模式」，並可手動同步到雲端保留區。
-
-所有相簿與已處理照片會先儲存在目前瀏覽器的 IndexedDB 中。未按下「同步雲端」前，照片不會永久上傳至 GitHub、Zeabur 或任何雲端資料庫。
-
-請注意：
-
-- 清除瀏覽器資料會刪除相簿。
-- 不同瀏覽器資料不互通。
-- 不同裝置資料不互通。
-- 建議定期使用 ZIP 下載功能備份照片。
-
-### HEIC 支援說明
-
-一般 iPhone HEIC 會透過 Zeabur 後端自動轉換為 JPG。少數 Apple 特殊格式，例如 ProRAW、HDR、Live Photo 衍生 HEIC，可能仍無法轉換。
-
-若轉換失敗，請在 iPhone 或 Mac 先匯出 JPEG：
-
-- iPhone：設定 → 相機 → 格式 → 最相容
-- iPhone 照片 App：分享 / 儲存為 JPEG
-- Mac 預覽程式：檔案 → 輸出 → JPEG
-
-## 常用工作流
+List site pages:
 
 ```sh
 npm run site:list
+```
+
+Verify main-site entry wiring:
+
+```sh
 npm run site:verify
+```
+
+Add a new page:
+
+```sh
 npm run site -- add-page --slug my-tool --title "我的新工具" --description "我的新工具"
 ```
 
-## 專案分工
-
-- 根目錄：主站、部署設定、入口頁與全站工作流。
-- `apps/<slug>/`：各功能頁或子產品。
-- `apps/bazi/`：目前線上八字功能頁。
-- `packages/bazi-engine-ts/`：未來 Web / App / API 可共用的八字核心引擎。
-- `_project/01_roadmap/`：未來開發方向與架構規劃。
-- `_project/02_specs/`：八字頁、流月、神煞、次頁等規格。
-- `_project/03_deployment/`：部署與網域資料。若要理解 GitHub、Zeabur、Cloudflare、R2 的角色，先讀 `_project/03_deployment/LOUISKO_DEPLOYMENT_OWNER_MANUAL.md`。
-- `_project/04_references/`：命理 PDF、舊整理索引、研究資料。
-- `_project/05_archive/`：未來放舊版備份或封存包。
-- `_project/06_assets/`：未來放品牌、圖片、影片與設計素材。
-
-## 三資料夾連動
-
-若有 louisko.com 站台、八字頁、排盤引擎、規格、樣板、測試或部署相關更新，務必同步檢查並視需要連動更新：
-
-- `01_Louisko_Website_目前站台/Louisko_Website`
-- `02_louisko.com_未來開發專案/louisko.com_未來開發專案`
-- `03_bazi-engine-ts/bazi-engine-ts`
-
-若只更新其中一處，需記錄或說明沒有同步其他處的原因。
-
-## 網域說明
-
-此資料夾以 `louisko.com` 作為未來目標站名。部分歷史文件保留 `Louisko Website`、`louisko.com`、`bazi-website` 等名稱，代表舊專案來源與部署紀錄。
-
-## 共用腳本
-
-優先使用站台工作流腳本：
+You can also call the script directly:
 
 ```sh
 node scripts/site-workflow/manage-site.mjs add-page --slug my-tool --title "我的新工具" --description "我的新工具"
 node scripts/site-workflow/manage-site.mjs verify
 ```
 
-若 shell 有載入 npm，也可用：
+## Photo App
 
-```sh
-npm run site:list
-npm run site:verify
-npm run site -- add-page --slug my-tool --title "我的新工具" --description "我的新工具"
-```
+`apps/photo/` is the Louis Image Processor.
 
-## 視覺風格定案
+It supports albums, photo upload, EXIF info bars, Louis Logo watermarking, rotation, deletion, lightbox preview, and ZIP download. HEIC / HEIF files are converted through the shared Node service at `POST /api/convert-heic`.
 
-目前網站定案為「苔原綠 / System」：
+For storage, sync, HEIC, and cloud-delivery constraints, read:
 
-- 背景：暖白 `#F8F6EF` + 苔原綠 `#DDE8D2`
-- 字體：Manrope + Noto Sans TC
-- 語氣：較厚、圓潤、穩定的北歐簡約風
+- `apps/photo/AGENTS.md`
+- `apps/photo/INDEX.md`
+- `docs/agent-governance/deployment-reference.md`
+- `docs/agent-governance/cloudflare-r2-operations.md`
 
-若需要重新套用最終顏色與字體 token：
+## Bazi App
+
+`apps/bazi/` is the production Bazi subproject. Root-level `bazi.html` is only a compatibility entry.
+
+Before changing Bazi logic, read:
+
+- `../重要資料_八字規格入口.md`
+- `docs/agent-governance/bazi-guardrails.md`
+- `apps/bazi/INDEX.md`
+
+## Deployment
+
+Current canonical targets:
+
+- Production domain: `https://louisko.com/`
+- Production Photo page: `https://louisko.com/apps/photo/`
+- Production Bazi page: `https://louisko.com/apps/bazi/`
+- Production Photo API: `https://louisko.com/api/photo-cloud/albums`
+- Repository: `https://github.com/kolouis-tw/louisko-website`
+
+The current production entry uses the Node service `louisko-node-photo`, which serves the main site, app pages, and Photo API from the same runtime entry.
+
+For Zeabur, Docker, and dated operational snapshots, read `docs/agent-governance/deployment-reference.md`.
+
+## Cloudflare R2
+
+Use Wrangler CLI for Cloudflare / R2 tasks in this repo.
+
+Do not place Cloudflare tokens, R2 access keys, Zeabur tokens, or other secrets into repository files, commit messages, issues, or chat replies.
+
+For commands and domain-setup notes, read `docs/agent-governance/cloudflare-r2-operations.md`.
+
+## Style System
+
+The current shared site direction is the `苔原綠 / System` palette:
+
+- Background: `#F8F6EF` + `#DDE8D2`
+- Fonts: `Manrope` + `Noto Sans TC`
+
+To reapply the shared style tokens:
 
 ```sh
 npm run style:final
 ```
 
-此腳本只重套 `assets/louisko-theme.css` 的顏色與字體，不應改動已確認的頁面佈局與功能。
+This should update shared color and typography tokens only, not established page structure or functionality.
 
-## 部署
+## Public Content Rule
 
-Zeabur 使用 Dockerfile：
-
-```Dockerfile
-FROM nginx:alpine
-COPY . /usr/share/nginx/html/
-EXPOSE 80
-```
-
-部署目標：
-
-```text
-Project: louisko-website
-Service: louisko-website
-Server: Tencent Tokyo 2C 2GB
-Custom domain: louisko.com
-Public port: HTTP:80
-```
-
-Zeabur token 只保存在本機 Codex 設定檔或安全 secret store，不要寫入 repository、README、AGENTS、commit message 或 chat 回覆。
-
-## 頁面規則
-
-除非使用者明確要求，不要在公開頁面加入提示詞、說明提醒、使用說明、安全提醒或教學文字。必要提醒只寫在 `README.md`、`AGENTS.md` 或其他內部文件。
-
-## 八字子專案
-
-八字排盤的維護文件已移到 `apps/bazi/`。修改排盤、流年、大運、六柱或十神邏輯時，請先閱讀：
-
-- `apps/bazi/README.md`
-- `apps/bazi/docs_algorithm.md`
-- `apps/bazi/docs_overview.md`
-- `apps/bazi/SMOKE_TEST.md`
-- `apps/bazi/docs/regression_cases.md`
+Unless the user explicitly asks, do not add prompts, usage instructions, safety reminders, or tutorial copy to public-facing pages. Keep that material in internal docs such as `README.md` or `AGENTS.md`.
