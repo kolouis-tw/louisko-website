@@ -13,6 +13,7 @@ https://louisko.com/apps/bazi/
 - `index.html`: 八字排盤主頁與核心程式。
 - `docs_algorithm.md`: 演算法說明。
 - `docs_overview.md`: 功能總覽。
+- `docs/script_blueprint.md`: 八字運算、大運流年、payload 與產出流程的腳本化整合藍圖。
 - `SMOKE_TEST.md`: 基本測試清單。
 - `docs/regression_cases.md`: 回歸案例。
 - `changelog/`: 版本紀錄。
@@ -44,4 +45,10 @@ chart.hour.pillar
 ```text
 2024/03/10 00:20 => 甲辰 丁卯 癸酉 壬子
 1974/10/03 04:00 女命 2026流年 => 六柱大運需為戊辰
+```
+
+若要把目前八字運算拆成 Node.js、TypeScript、CLI、API 或跨平台共用核心，先讀：
+
+```text
+docs/script_blueprint.md
 ```

@@ -10,8 +10,9 @@ Use this file before changing Bazi calculation logic, luck-cycle behavior, regre
 2. `apps/bazi/README.md`
 3. `apps/bazi/docs_algorithm.md`
 4. `apps/bazi/docs_overview.md`
-5. `apps/bazi/SMOKE_TEST.md`
-6. `apps/bazi/docs/regression_cases.md`
+5. `apps/bazi/docs/script_blueprint.md` when extracting or restructuring the calculation flow
+6. `apps/bazi/SMOKE_TEST.md`
+7. `apps/bazi/docs/regression_cases.md`
 
 ## Change Boundary
 

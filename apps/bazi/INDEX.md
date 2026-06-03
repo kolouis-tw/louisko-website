@@ -8,6 +8,7 @@
 | `bazi-analysis.html` | Alternate or legacy analysis surface | The task explicitly mentions analysis page behavior | Large and easy to over-read |
 | `docs_algorithm.md` | Algorithm explanation | You are changing calculation rules | Highest-value doc for logic changes |
 | `docs_overview.md` | Product and feature map | You need conceptual orientation first | Faster than opening app code |
+| `docs/script_blueprint.md` | Script-ready end-to-end calculation blueprint | You are extracting the Bazi logic into CLI, API, TypeScript, or another shared core | Includes contracts, flow, modules, limitations, and tests |
 | `SMOKE_TEST.md` | Quick verification list | You already changed behavior and need checks | Short |
 | `docs/regression_cases.md` | Regression anchors | You touched Bazi logic | Short, mandatory for logic work |
 | `examples/` | Sample payloads | You need example structures or output shape | Optional |
@@ -42,6 +43,13 @@
 - Trigger: use for quick orientation when you do not yet know which file to inspect.
 - Inputs / outputs: feature inventory, terminology, and presentation scope.
 - Caution: overview is not sufficient for algorithm edits by itself.
+
+### `docs/script_blueprint.md`
+
+- Summary: end-to-end script blueprint covering input validation, four pillars, luck cycles, annual flow, payload, analysis, and output.
+- Trigger: read before extracting the current HTML logic into a standalone script, API, or shared engine.
+- Inputs / outputs: structured birth input in, reusable JSON / prompt / report data out.
+- Caution: resolve the listed calendar and precision decisions before treating the script as a commercial-grade almanac.
 
 ### `SMOKE_TEST.md`
 
