@@ -48,6 +48,13 @@
       margin-bottom: 24px;
     }
 
+    .topbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
     .back-link,
     button {
       display: inline-flex;
@@ -66,6 +73,12 @@
     }
 
     button.primary {
+      background: var(--accent);
+      color: #15120a;
+      border-color: transparent;
+    }
+
+    button.active {
       background: var(--accent);
       color: #15120a;
       border-color: transparent;
@@ -373,6 +386,43 @@
       line-height: 1.6;
     }
 
+    .prompt-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .prompt-mode-group,
+    .prompt-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .prompt-meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .prompt-status {
+      display: inline-flex;
+      min-height: 28px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 10px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .prompt-status.safe { color: var(--wood); }
+    .prompt-status.near { color: var(--earth); }
+    .prompt-status.over { color: var(--fire); }
+
     .empty-state {
       padding: 28px;
       text-align: center;
@@ -433,7 +483,10 @@
         <span class="louisko-brand-text">Louisko</span>
       </a>
       <a class="back-link" href="./">返回排盤</a>
-      <button class="primary" id="copy-prompt" type="button" hidden>複製 AI Prompt</button>
+      <div class="topbar-actions">
+        <button class="primary" id="copy-prompt" type="button" hidden>複製 Prompt</button>
+        <button id="download-prompt" type="button" hidden>下載 .md</button>
+      </div>
     </div>
 
     <div id="app"></div>
@@ -450,6 +503,7 @@
     const branchElement = { 子: "水", 丑: "土", 寅: "木", 卯: "木", 辰: "土", 巳: "火", 午: "火", 未: "土", 申: "金", 酉: "金", 戌: "土", 亥: "水" };
     const elementGenerates = { 木: "火", 火: "土", 土: "金", 金: "水", 水: "木" };
     const elementControls = { 木: "土", 土: "水", 水: "火", 火: "金", 金: "木" };
+    const MAX_PROMPT_CHARS = 6000;
     const solarTermMonthLabels = [
       { monthIndex: 1, branch: "寅", solarTermName: "立春", approximateGregorianRange: "約 2/4-3/5" },
       { monthIndex: 2, branch: "卯", solarTermName: "驚蟄", approximateGregorianRange: "約 3/5-4/4" },
@@ -482,6 +536,7 @@
       正印: ["學習、保護、正統資源", "依賴、保守、慢熱"],
       偏印: ["靈感、研究、非主流", "孤僻、想太多、不穩定"]
     };
+    let latestPromptExport = null;
 
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -930,18 +985,86 @@
       };
     }
 
+    function uniqueList(items) {
+      return [...new Set((items ?? []).filter(Boolean))];
+    }
+
+    function getGenderLabel(payload) {
+      return payload.user.gender === "female" ? "坤造" : "乾造";
+    }
+
+    function getControllerElement(element) {
+      return Object.entries(elementControls).find(([, controlled]) => controlled === element)?.[0] ?? "";
+    }
+
+    function normalizeStrengthLabel(subtitle) {
+      const match = String(subtitle ?? "").match(/^(.*?)｜分數\s*(\d+)/);
+      if (!match) return String(subtitle ?? "待判");
+      return `${match[1]}（${match[2]}）`;
+    }
+
+    function summarizeClimate(climateSection) {
+      const primary = (climateSection?.tags ?? []).find((tag) => tag.startsWith("首重"))?.replace("首重", "");
+      return primary ? `${climateSection.subtitle}，${primary}為調候方向` : String(climateSection?.subtitle ?? "待判");
+    }
+
+    function summarizeFavorableElements(payload, strengthSection) {
+      const dayElement = payload.dayMaster.element;
+      const outputElement = elementGenerates[dayElement];
+      const wealthElement = elementControls[dayElement];
+      const supportElement = Object.entries(elementGenerates).find(([, value]) => value === dayElement)?.[0] ?? dayElement;
+      const controllerElement = getControllerElement(dayElement);
+      const strong = Number(strengthSection?.score ?? 0) >= 61;
+      return {
+        favorable: uniqueList(strong ? [outputElement, wealthElement] : [supportElement, dayElement]),
+        avoid: uniqueList(strong ? [supportElement, dayElement] : [controllerElement, wealthElement]),
+        neutral: strong ? controllerElement : outputElement
+      };
+    }
+
+    function formatCompactInteractions(payload) {
+      const branches = getPillarList(payload).map((pillar) => pillar.branch);
+      const pairs = [
+        ["合", "子", "丑"], ["合", "寅", "亥"], ["合", "卯", "戌"], ["合", "辰", "酉"], ["合", "巳", "申"], ["合", "午", "未"],
+        ["沖", "子", "午"], ["沖", "丑", "未"], ["沖", "寅", "申"], ["沖", "卯", "酉"], ["沖", "辰", "戌"], ["沖", "巳", "亥"],
+        ["害", "子", "未"], ["害", "丑", "午"], ["害", "寅", "巳"], ["害", "卯", "辰"], ["害", "申", "亥"], ["害", "酉", "戌"]
+      ];
+      const tags = pairs
+        .filter(([, a, b]) => branches.includes(a) && branches.includes(b))
+        .map(([type, a, b]) => `${a}${b}${type}`);
+      return tags.length ? tags.join("｜") : "原局未見明顯合沖害成組";
+    }
+
+    function formatHiddenStemList(pillar) {
+      return (pillar.hiddenStems ?? []).map((hidden) => `${hidden.stem}${hidden.tenGod}`).join("、") || "無";
+    }
+
+    function formatCompactShenSha(result, options = {}) {
+      const hits = result?.hits ?? [];
+      if (!hits.length) return "未見主要神煞明顯成象";
+      const shortPillarLabel = { year: "年", month: "月", day: "日", hour: "時" };
+      const grouped = new Map();
+      hits.forEach((hit) => {
+        const values = grouped.get(hit.name) ?? [];
+        values.push(`${hit.target}${shortPillarLabel[hit.position] ?? ""}`);
+        grouped.set(hit.name, uniqueList(values));
+      });
+      const entries = [...grouped.entries()].map(([name, values]) => `${name}${values.join("、")}`);
+      return (options.short ? entries.slice(0, 6) : entries).join("｜");
+    }
+
     function buildPromptChartHeader(payload) {
-      const chartGenderLabel = payload.user.gender === "female" ? "坤造" : "乾造";
       const pillars = [
         `年柱 ${payload.pillars.year.pillar}`,
         `月柱 ${payload.pillars.month.pillar}`,
         `日柱 ${payload.pillars.day.pillar}`,
         `時柱 ${payload.pillars.hour.pillar}`
       ].join("，");
-      return `${chartGenderLabel}：${pillars}。日主為 ${payload.dayMaster.stem}${payload.dayMaster.element}，出生資料：${payload.user.birthSolar}，換日法：${payload.user.dayChangeRule}。`;
+      return `${getGenderLabel(payload)}：${pillars}。日主為 ${payload.dayMaster.stem}${payload.dayMaster.element}，出生資料：${payload.user.birthSolar}，換日法：${payload.user.dayChangeRule}。`;
     }
 
-    function buildAiPrompt(payload, sections) {
+    function buildFullBaziPrompt(data) {
+      const { payload, sections } = data;
       return `你是一位精通《淵海子平》、《滴天髓》、《窮通寶鑑》的八字命理大師。
 
 請在輸出第一段先定盤，明確寫出乾造或坤造與四柱：
@@ -971,6 +1094,118 @@ ${JSON.stringify(sections.map(({ id, title, subtitle, evidence, conclusion }) =>
 ${JSON.stringify(payload, null, 2)}`;
     }
 
+    function buildCompactPromptSections(data, options = {}) {
+      const { payload, sections, annualMonths, shenShaResult } = data;
+      const sectionMap = Object.fromEntries((sections ?? []).map((section) => [section.id, section]));
+      const strength = sectionMap["day-master-strength"] ?? {};
+      const pattern = sectionMap["structure-pattern"] ?? {};
+      const climate = sectionMap["climate-adjustment"] ?? {};
+      const favorable = summarizeFavorableElements(payload, strength);
+      const currentLuckCycle = (payload.luckCycles ?? []).find((cycle) =>
+        payload.currentLuck && cycle.pillar === payload.currentLuck.pillar && cycle.ageStart === payload.currentLuck.ageStart
+      );
+      const compactRules = options.shortRules
+        ? "繁中、半文半白；每段含依據與結論；不可只看五行數量；不可說缺什麼補什麼；健康只談五行傾向；神煞只作輔助。"
+        : [
+            "使用繁體中文，風格半文言半白話。",
+            "每段都要有「依據」與「結論」。",
+            "不可只看五行數量判斷吉凶。",
+            "不可說缺什麼補什麼。",
+            "健康只談五行傾向，不做醫療診斷。",
+            "神煞只作輔助，不可凌駕旺衰、格局、用神。"
+          ].join("\n");
+      const lines = [
+        "你是一位精通《淵海子平》、《滴天髓》、《窮通寶鑑》的八字命理研究者。",
+        "",
+        "【論命規則】",
+        compactRules,
+        "",
+        "【命盤】",
+        `${getGenderLabel(payload)}：${payload.pillars.year.pillar} ${payload.pillars.month.pillar} ${payload.pillars.day.pillar} ${payload.pillars.hour.pillar}`,
+        `日主：${payload.dayMaster.stem}${payload.dayMaster.element}`,
+        `出生：${payload.user.birthSolar}`,
+        `時區：${payload.user.timezone}`,
+        `換日法：${payload.user.dayChangeRule}`,
+        "",
+        "【十神藏干】",
+        `年${payload.pillars.year.pillar}：${payload.pillars.year.stem}${payload.pillars.year.tenGodStem}｜${payload.pillars.year.branch}藏${formatHiddenStemList(payload.pillars.year)}`,
+        `月${payload.pillars.month.pillar}：${payload.pillars.month.stem}${payload.pillars.month.tenGodStem}｜${payload.pillars.month.branch}藏${formatHiddenStemList(payload.pillars.month)}`,
+        `日${payload.pillars.day.pillar}：${payload.pillars.day.stem}${payload.pillars.day.tenGodStem}｜${payload.pillars.day.branch}藏${formatHiddenStemList(payload.pillars.day)}`,
+        `時${payload.pillars.hour.pillar}：${payload.pillars.hour.stem}${payload.pillars.hour.tenGodStem}｜${payload.pillars.hour.branch}藏${formatHiddenStemList(payload.pillars.hour)}`,
+        "",
+        "【引擎初判】",
+        `旺衰：${normalizeStrengthLabel(strength.subtitle)}`,
+        `格局：${pattern.subtitle ?? "待判"}`,
+        `調候：${summarizeClimate(climate)}`,
+        `喜：${favorable.favorable.join("、") || "待判"}`,
+        `忌：${favorable.avoid.join("、") || "待判"}${favorable.avoid.length ? "過旺" : ""}`,
+        `土：${favorable.neutral === "土" ? "視流通判斷" : "視流通判斷"}`,
+        "",
+        "【原局作用】",
+        formatCompactInteractions(payload),
+        "",
+        "【大運】",
+        (payload.luckCycles ?? []).map((cycle) => `${cycle.ageStart}-${cycle.ageEnd}${cycle.pillar}`).join("｜") || "目前缺少大運資料",
+        "",
+        `目前大運：${currentLuckCycle ? `${currentLuckCycle.pillar}（${currentLuckCycle.yearStart}-${currentLuckCycle.yearEnd}）` : "待定"}`,
+        "",
+        "【流年】",
+        payload.annualLuck ? `${payload.annualLuck.year} ${payload.annualLuck.pillar}` : "待定",
+        "",
+        `【${payload.annualLuck?.year ?? ""}流月】`,
+        annualMonths.length ? annualMonths.map((month) => `${month.solarTermName}${month.pillar}`).join("｜") : "目前缺少流月資料",
+        "流月以節氣為界，請自行結合原局、大運、流年分析十神與合沖刑害。",
+        "",
+        "【神煞】",
+        formatCompactShenSha(shenShaResult, { short: options.shortShenSha }),
+        "",
+        "【分析要求】",
+        "請依序分析：命盤總論、日主旺衰、月令與通根、五行氣勢、十神結構、干支合沖刑害、格局、調候、用神喜忌、性格、事業、財運、感情婚姻、健康五行傾向、大運、目前大運、指定流年、十二流月、神煞輔助、最終建議。"
+      ];
+      return options.ultraCompact ? lines.filter((line) => !line.startsWith("土：")).join("\n").trim() : lines.join("\n").trim();
+    }
+
+    function validatePromptLength(prompt) {
+      const chars = String(prompt ?? "").length;
+      return {
+        chars,
+        max: MAX_PROMPT_CHARS,
+        status: chars > MAX_PROMPT_CHARS ? "超過上限" : chars >= Math.round(MAX_PROMPT_CHARS * 0.85) ? "接近上限" : "安全"
+      };
+    }
+
+    function buildCompactBaziPrompt(data) {
+      const variants = [
+        { shortRules: false, shortShenSha: false, ultraCompact: false },
+        { shortRules: true, shortShenSha: false, ultraCompact: false },
+        { shortRules: true, shortShenSha: true, ultraCompact: false },
+        { shortRules: true, shortShenSha: true, ultraCompact: true }
+      ];
+      let lastPrompt = "";
+      for (const options of variants) {
+        const prompt = buildCompactPromptSections(data, options);
+        lastPrompt = prompt;
+        if (validatePromptLength(prompt).chars <= MAX_PROMPT_CHARS) return prompt;
+      }
+      return lastPrompt;
+    }
+
+    function buildPromptExportState(payload, sections, annualMonths, shenShaResult) {
+      const fullPayload = { ...payload, monthlyLuck: annualMonths, shenSha: shenShaResult };
+      const data = { payload: fullPayload, sections, annualMonths, shenShaResult };
+      const fullPrompt = buildFullBaziPrompt(data);
+      const compactPrompt = buildCompactBaziPrompt(data);
+      return {
+        full: { label: "完整 Prompt", filenameSuffix: "full", prompt: fullPrompt, validation: validatePromptLength(fullPrompt) },
+        compact: { label: "精簡 AI Prompt", filenameSuffix: "compact", prompt: compactPrompt, validation: validatePromptLength(compactPrompt) },
+        mode: "compact"
+      };
+    }
+
+    function buildAiPrompt(payload, sections, annualMonths, shenShaResult) {
+      return buildPromptExportState(payload, sections, annualMonths, shenShaResult).compact.prompt;
+    }
+
     function analyzeBazi(payload) {
       const annualMonths = analyzeAnnualMonths(payload);
       const shenShaResult = calculateShenShaStatic(getPillarsForShenSha(payload));
@@ -987,7 +1222,13 @@ ${JSON.stringify(payload, null, 2)}`;
       const domains = analyzeDomains(payload, tenGod, favorable);
       const shenSha = analyzeShenSha(payload, shenShaResult);
       const sections = [strength, elementFlow, tenGod, interactions, pattern, climate, favorable, domains, luck, annual, monthly, shenSha];
-      return { sections, annualMonths, shenShaResult, aiPrompt: buildAiPrompt({ ...payload, monthlyLuck: annualMonths, shenSha: shenShaResult }, sections) };
+      return {
+        sections,
+        annualMonths,
+        shenShaResult,
+        promptExport: buildPromptExportState(payload, sections, annualMonths, shenShaResult),
+        aiPrompt: buildAiPrompt({ ...payload, monthlyLuck: annualMonths, shenSha: shenShaResult }, sections, annualMonths, shenShaResult)
+      };
     }
 
     function renderPillar(pillar, title) {
@@ -1091,14 +1332,91 @@ ${JSON.stringify(payload, null, 2)}`;
       `;
     }
 
+    function renderPromptPanel(exportState) {
+      const current = exportState[exportState.mode];
+      const statusClass = current.validation.status === "超過上限"
+        ? "over"
+        : current.validation.status === "接近上限"
+          ? "near"
+          : "safe";
+      return `
+        <div class="prompt-toolbar">
+          <div class="prompt-mode-group">
+            <button id="prompt-mode-compact" class="${exportState.mode === "compact" ? "active" : ""}" type="button">精簡 AI Prompt</button>
+            <button id="prompt-mode-full" class="${exportState.mode === "full" ? "active" : ""}" type="button">完整 Prompt</button>
+          </div>
+          <div class="prompt-meta">
+            <span id="prompt-char-count">Prompt 字數：${current.validation.chars} / ${MAX_PROMPT_CHARS}</span>
+            <span id="prompt-status" class="prompt-status ${statusClass}">狀態：${current.validation.status}</span>
+          </div>
+        </div>
+        <pre id="prompt-output" class="prompt-box">${escapeHtml(current.prompt)}</pre>
+      `;
+    }
+
+    function getPromptFilename(mode, payload) {
+      const birthDate = String(payload.user?.birthSolar ?? "prompt").slice(0, 10);
+      return `bazi-${mode}-prompt-${birthDate}.md`;
+    }
+
+    async function copyCurrentPrompt() {
+      const current = latestPromptExport?.[latestPromptExport.mode];
+      if (!current) return;
+      await navigator.clipboard.writeText(current.prompt);
+      const button = document.getElementById("copy-prompt");
+      if (!button) return;
+      button.textContent = "已複製";
+      setTimeout(() => {
+        const latestButton = document.getElementById("copy-prompt");
+        if (latestButton) latestButton.textContent = "複製 Prompt";
+      }, 1200);
+    }
+
+    function downloadCurrentPrompt(payload) {
+      const current = latestPromptExport?.[latestPromptExport.mode];
+      if (!current) return;
+      const blob = new Blob([current.prompt], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = getPromptFilename(current.filenameSuffix, payload);
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function syncTopbarPromptButtons(payload) {
+      const copyButton = document.getElementById("copy-prompt");
+      const downloadButton = document.getElementById("download-prompt");
+      if (!copyButton || !downloadButton) return;
+      copyButton.hidden = false;
+      downloadButton.hidden = false;
+      copyButton.onclick = () => { copyCurrentPrompt().catch(() => {}); };
+      downloadButton.onclick = () => downloadCurrentPrompt(payload);
+    }
+
+    function bindPromptModeSwitch(payload) {
+      document.getElementById("prompt-mode-compact")?.addEventListener("click", () => {
+        latestPromptExport.mode = "compact";
+        updatePromptPanel(payload);
+      });
+      document.getElementById("prompt-mode-full")?.addEventListener("click", () => {
+        latestPromptExport.mode = "full";
+        updatePromptPanel(payload);
+      });
+    }
+
+    function updatePromptPanel(payload) {
+      const container = document.getElementById("ai-prompt-panel");
+      if (!container || !latestPromptExport) return;
+      container.innerHTML = renderPromptPanel(latestPromptExport);
+      bindPromptModeSwitch(payload);
+      syncTopbarPromptButtons(payload);
+    }
+
     function renderBaziAnalysis(payload) {
       const analysis = analyzeBazi(payload);
       const annual = payload.annualLuck;
-      document.getElementById("copy-prompt").hidden = false;
-      document.getElementById("copy-prompt").addEventListener("click", async () => {
-        await navigator.clipboard.writeText(analysis.aiPrompt);
-        document.getElementById("copy-prompt").textContent = "已複製";
-      });
+      latestPromptExport = analysis.promptExport;
 
       document.getElementById("app").innerHTML = `
         <section class="hero">
@@ -1147,11 +1465,14 @@ ${JSON.stringify(payload, null, 2)}`;
             ${renderShenSha(analysis.shenShaResult)}
           </section>
           <section class="section wide" id="ai-master-reading">
-            <h2>AI 綜合論命 Prompt</h2>
-            <pre class="prompt-box">${escapeHtml(analysis.aiPrompt)}</pre>
+            <h2>AI Prompt 匯出</h2>
+            <p class="subtitle">預設顯示精簡 AI Prompt；完整 Prompt 與內部 JSON 仍完整保留於系統輸出層。</p>
+            <div id="ai-prompt-panel">${renderPromptPanel(latestPromptExport)}</div>
           </section>
         </div>
       `;
+      bindPromptModeSwitch(payload);
+      syncTopbarPromptButtons(payload);
     }
 
     try {

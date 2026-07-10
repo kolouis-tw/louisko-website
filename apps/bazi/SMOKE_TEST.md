@@ -33,4 +33,9 @@
 - [ ] 點擊「論命」可開啟 `bazi-analysis.html`
 - [ ] 改流年年份後，payload 的 `annualLuck` 與 `currentLuck` 會同步切換
 - [ ] 論命頁可顯示大運、流年、十二流月與 AI prompt
+- [ ] 論命頁預設顯示「精簡 AI Prompt」
+- [ ] 可在「精簡 AI Prompt」與「完整 Prompt」間切換
+- [ ] Prompt 字數與狀態顯示正常
+- [ ] 可複製 Prompt
+- [ ] 可下載 `.md`
 - [ ] A4 列印預覽不顯示按鈕

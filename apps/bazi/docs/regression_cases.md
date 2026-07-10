@@ -95,3 +95,10 @@
 - 五行統計
 - 十二流月
 - 神煞輔助
+
+並且：
+
+- 預設輸出模式為「精簡 AI Prompt」
+- 可切換回「完整 Prompt」
+- 精簡模式保留四柱、出生時間、timezone、dayChangeRule、藏干、目前大運、指定流年、流月干支
+- 精簡模式不得輸出完整 JSON、monthlyLuck JSON、shenSha rule / meaning / aiHint
