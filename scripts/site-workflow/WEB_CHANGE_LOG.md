@@ -53,3 +53,27 @@
 - 線上驗證：不適用。
 - 三資料夾同步：已同步新增到目前站台與未來主專案候選；`03_bazi-engine-ts` 未改，因本流程屬於網站與部署工作流，非 engine 程式或測試。
 - 備註：後續每次站台變更都應先看 `WEB_CHANGE_DEPLOYMENT_WORKFLOW.md`，完成後補本檔。
+
+## 2026-07-10 16:30 Asia/Taipei - 新增八字精簡 AI Prompt 匯出模式
+
+- 變更目的：在 `bazi-analysis.html` 保留完整 Prompt 的前提下，新增預設顯示的「精簡 AI Prompt」匯出模式，讓內容可貼入 ChatGPT、Gemini 等 AI 輸入框。
+- 修改檔案：`apps/bazi/bazi-analysis.html`、`apps/bazi/SMOKE_TEST.md`、`apps/bazi/docs/regression_cases.md`、`scripts/site-workflow/WEB_CHANGE_LOG.md`
+- 本機驗證：`/opt/homebrew/bin/node --check /private/tmp/bazi-analysis-check.js`、`/opt/homebrew/bin/node scripts/site-workflow/manage-site.mjs verify`、自製 harness 驗證測試命盤四柱 / 目前大運 / 2026 流年 / 2026 流月 / compact prompt 字數。
+- GitHub commit：`Fix bazi lifetime prompt consistency`（以本段對應的最新 `main` commit 為準）
+- GitHub push：待補
+- Zeabur 部署：待補
+- 線上驗證：待補
+- 三資料夾同步：本工作區目前以 `AI_Web` 單一 repo 為正式來源；本次僅更新八字 Prompt Export Layer 與對應測試文件。
+- 備註：未修改四柱、十神、藏干、起運、大運、流年、流月、五虎遁與神煞判定邏輯；完整 JSON 與完整 Prompt 仍保留。
+
+## 2026-07-13 00:35 Asia/Taipei - 修正終身八字 Prompt 一致性與防污染
+
+- 變更目的：修正終身八字 AI 顧問 Prompt 的單一資料來源、跨命盤污染、原局 / 大運作用誤判、人生領域舊 fixture 殘留，並加入生成前後驗證與 UI 阻斷。
+- 修改檔案：`apps/bazi/bazi-analysis.html`、`apps/bazi/SMOKE_TEST.md`、`apps/bazi/scripts/lifetime-prompt-consistency-check.mjs`、`scripts/site-workflow/WEB_CHANGE_LOG.md`
+- 本機驗證：`/opt/homebrew/bin/node` 語法檢查 `apps/bazi/bazi-analysis.html`、`/opt/homebrew/bin/node --check apps/bazi/scripts/lifetime-prompt-consistency-check.mjs`、`/opt/homebrew/bin/node apps/bazi/scripts/lifetime-prompt-consistency-check.mjs`、`PATH=/opt/homebrew/bin:$PATH /opt/homebrew/bin/npm run site:verify`
+- GitHub commit：待補
+- GitHub push：待補
+- Zeabur 部署：待補
+- 線上驗證：待補
+- 三資料夾同步：本工作區目前以 `AI_Web` 單一 repo 為正式來源；本次僅更新 `apps/bazi/` 與站台變更紀錄。
+- 備註：已移除終身 Prompt 內的「動態時運資料包」段落；未修改四柱、日主、十神、藏干、起運、大運、流年、流月等核心計算入口。
