@@ -1761,6 +1761,11 @@ ${JSON.stringify(payload, null, 2)}`;
       syncTopbarPromptButtons(payload);
     }
 
+    function getVisibleAnalysisSections(sections) {
+      const hiddenIds = new Set(["life-domains", "luck-cycle-analysis"]);
+      return (sections ?? []).filter((section) => !hiddenIds.has(section.id));
+    }
+
     function renderBaziAnalysis(payload) {
       const analysis = analyzeBazi(payload);
       const annual = payload.annualLuck;
@@ -1796,7 +1801,7 @@ ${JSON.stringify(payload, null, 2)}`;
         </section>
 
         <div class="section-grid">
-          ${analysis.sections.map(renderSection).join("")}
+          ${getVisibleAnalysisSections(analysis.sections).map(renderSection).join("")}
           <section class="section wide" id="luck-timeline">
             <h2>大運時間軸</h2>
             <p class="subtitle">每步十年。</p>
