@@ -423,18 +423,13 @@
     .prompt-status.near { color: var(--earth); }
     .prompt-status.over { color: var(--fire); }
 
-    .shensha-disclaimer,
-    .dynamic-query-panel,
-    .dynamic-output-panel,
-    .attention-card {
+    .shensha-disclaimer {
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--panel-2);
     }
 
-    .shensha-disclaimer,
-    .dynamic-query-panel,
-    .dynamic-output-panel {
+    .shensha-disclaimer {
       padding: 14px;
     }
 
@@ -444,103 +439,6 @@
       font-size: 14px;
       line-height: 1.7;
       font-weight: 700;
-    }
-
-    .dynamic-query-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .field {
-      display: grid;
-      gap: 6px;
-    }
-
-    .field.span-2 {
-      grid-column: span 2;
-    }
-
-    .field.span-3 {
-      grid-column: 1 / -1;
-    }
-
-    .field label {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .field input,
-    .field textarea,
-    .field select {
-      width: 100%;
-      min-height: 42px;
-      padding: 10px 12px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: #151922;
-      color: var(--text);
-      font: inherit;
-    }
-
-    .field textarea {
-      min-height: 96px;
-      resize: vertical;
-    }
-
-    .dynamic-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .dynamic-summary-list {
-      display: grid;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .dynamic-summary-item {
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    .dynamic-summary-item strong {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 15px;
-    }
-
-    .attention-list {
-      display: grid;
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .attention-card {
-      padding: 14px;
-    }
-
-    .attention-card h3 {
-      margin: 0 0 8px;
-      font-size: 18px;
-    }
-
-    .attention-card p,
-    .attention-card li {
-      color: #ddd7c8;
-      font-size: 14px;
-      line-height: 1.7;
-      font-weight: 650;
-    }
-
-    .attention-card ul {
-      margin: 8px 0 0;
-      padding-left: 18px;
     }
 
     .empty-state {
@@ -615,17 +513,8 @@
   <script>
     const elementClassByElement = { 木: "wood", 火: "fire", 土: "earth", 金: "metal", 水: "water" };
     const stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
-    const branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
     const monthBranches = ["寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑"];
-    const tigerStartStemByYearStem = {
-      甲: "丙", 己: "丙",
-      乙: "戊", 庚: "戊",
-      丙: "庚", 辛: "庚",
-      丁: "壬", 壬: "壬",
-      戊: "甲", 癸: "甲"
-    };
     const firstMonthStemByYearStem = { 甲: "丙", 己: "丙", 乙: "戊", 庚: "戊", 丙: "庚", 辛: "庚", 丁: "壬", 壬: "壬", 戊: "甲", 癸: "甲" };
-    const ratStartStemByDayStem = { 甲: "甲", 己: "甲", 乙: "丙", 庚: "丙", 丙: "戊", 辛: "戊", 丁: "庚", 壬: "庚", 戊: "壬", 癸: "壬" };
     const branchMainStem = { 子: "癸", 丑: "己", 寅: "甲", 卯: "乙", 辰: "戊", 巳: "丙", 午: "丁", 未: "己", 申: "庚", 酉: "辛", 戌: "戊", 亥: "壬" };
     const stemElement = { 甲: "木", 乙: "木", 丙: "火", 丁: "火", 戊: "土", 己: "土", 庚: "金", 辛: "金", 壬: "水", 癸: "水" };
     const stemYinYang = { 甲: "陽", 乙: "陰", 丙: "陽", 丁: "陰", 戊: "陽", 己: "陰", 庚: "陽", 辛: "陰", 壬: "陽", 癸: "陰" };
@@ -638,13 +527,6 @@
     const PERMANENT_PROMPT_TARGET_MIN = 5000;
     const PERMANENT_PROMPT_TARGET_MAX = 8000;
     const PERMANENT_PROMPT_HARD_MAX = 10000;
-    const DYNAMIC_PROMPT_TARGET_MIN = 500;
-    const DYNAMIC_PROMPT_TARGET_MAX = 2000;
-    const engineTimezoneOffset = 8;
-    const jiaZiYear = 1984;
-    const jiaZiDayOffset = 49;
-    const msPerMinute = 60 * 1000;
-    const msPerDay = 24 * 60 * 60 * 1000;
     const solarTermMonthLabels = [
       { monthIndex: 1, branch: "寅", solarTermName: "立春", approximateGregorianRange: "約 2/4-3/5" },
       { monthIndex: 2, branch: "卯", solarTermName: "驚蟄", approximateGregorianRange: "約 3/5-4/4" },
@@ -658,20 +540,6 @@
       { monthIndex: 10, branch: "亥", solarTermName: "立冬", approximateGregorianRange: "約 11/7-12/7" },
       { monthIndex: 11, branch: "子", solarTermName: "大雪", approximateGregorianRange: "約 12/7-隔年 1/5" },
       { monthIndex: 12, branch: "丑", solarTermName: "小寒", approximateGregorianRange: "約 1/5-2/4" }
-    ];
-    const solarMonthTerms = [
-      { name: "立春", longitude: 315, month: 2, day: 4, indexFromYin: 0 },
-      { name: "驚蟄", longitude: 345, month: 3, day: 5, indexFromYin: 1 },
-      { name: "清明", longitude: 15, month: 4, day: 5, indexFromYin: 2 },
-      { name: "立夏", longitude: 45, month: 5, day: 5, indexFromYin: 3 },
-      { name: "芒種", longitude: 75, month: 6, day: 5, indexFromYin: 4 },
-      { name: "小暑", longitude: 105, month: 7, day: 7, indexFromYin: 5 },
-      { name: "立秋", longitude: 135, month: 8, day: 7, indexFromYin: 6 },
-      { name: "白露", longitude: 165, month: 9, day: 7, indexFromYin: 7 },
-      { name: "寒露", longitude: 195, month: 10, day: 8, indexFromYin: 8 },
-      { name: "立冬", longitude: 225, month: 11, day: 7, indexFromYin: 9 },
-      { name: "大雪", longitude: 255, month: 12, day: 7, indexFromYin: 10 },
-      { name: "小寒", longitude: 285, month: 1, day: 5, indexFromYin: 11 }
     ];
     const monthSeason = {
       寅: "初春木旺，陽氣始生", 卯: "仲春木旺，木氣純粹", 辰: "季春土濕，木餘土起",
@@ -695,17 +563,6 @@
     const pillarLabels = { year: "年柱", month: "月柱", day: "日柱", hour: "時柱" };
     const shortPillarLabel = { year: "年", month: "月", day: "日", hour: "時" };
     const shenShaOrder = ["tian-yi", "wen-chang", "tian-de", "yue-de", "yi-ma", "tao-hua", "hua-gai", "yang-ren", "gu-chen", "gua-su", "yin-yang-cha-cuo"];
-    const dynamicCategoryOrder = ["事業與權責", "財務與契約", "感情與家庭", "遷移與交通", "健康五行傾向", "人際與合作", "學習與考試", "重大決策"];
-    const stemFiveHe = { 甲: "己", 己: "甲", 乙: "庚", 庚: "乙", 丙: "辛", 辛: "丙", 丁: "壬", 壬: "丁", 戊: "癸", 癸: "戊" };
-    const branchLiuHe = { 子: "丑", 丑: "子", 寅: "亥", 亥: "寅", 卯: "戌", 戌: "卯", 辰: "酉", 酉: "辰", 巳: "申", 申: "巳", 午: "未", 未: "午" };
-    const branchLiuChong = { 子: "午", 午: "子", 丑: "未", 未: "丑", 寅: "申", 申: "寅", 卯: "酉", 酉: "卯", 辰: "戌", 戌: "辰", 巳: "亥", 亥: "巳" };
-    const branchLiuHai = { 子: "未", 未: "子", 丑: "午", 午: "丑", 寅: "巳", 巳: "寅", 卯: "辰", 辰: "卯", 申: "亥", 亥: "申", 酉: "戌", 戌: "酉" };
-    const branchLiuPo = { 子: "酉", 酉: "子", 午: "卯", 卯: "午", 辰: "丑", 丑: "辰", 未: "戌", 戌: "未", 寅: "亥", 亥: "寅", 巳: "申", 申: "巳" };
-    const branchSanHeGroups = [["申", "子", "辰"], ["寅", "午", "戌"], ["亥", "卯", "未"], ["巳", "酉", "丑"]];
-    const branchSanHuiGroups = [["寅", "卯", "辰"], ["巳", "午", "未"], ["申", "酉", "戌"], ["亥", "子", "丑"]];
-    const branchSanXingPairs = [["寅", "巳"], ["巳", "申"], ["申", "寅"], ["丑", "未"], ["未", "戌"], ["戌", "丑"]];
-    const branchSelfXing = ["辰", "午", "酉", "亥"];
-    const tombBranchesByElement = { 木: "未", 火: "戌", 土: "戌", 金: "丑", 水: "辰" };
     const shenShaRuleMaps = {
       tianYi: { 甲: ["丑", "未"], 戊: ["丑", "未"], 庚: ["丑", "未"], 乙: ["子", "申"], 己: ["子", "申"], 丙: ["亥", "酉"], 丁: ["亥", "酉"], 壬: ["卯", "巳"], 癸: ["卯", "巳"], 辛: ["午", "寅"] },
       wenChang: { 甲: "巳", 乙: "午", 丙: "申", 丁: "酉", 戊: "申", 己: "酉", 庚: "亥", 辛: "子", 壬: "寅", 癸: "卯" },
@@ -775,189 +632,6 @@
           branchElement: branchElement[branch]
         };
       });
-    }
-
-    function ganzhiFromIndex(index) {
-      const normalized = ((index % 60) + 60) % 60;
-      const stem = stems[normalized % 10];
-      const branch = branches[normalized % 12];
-      return { stem, branch, ganzhi: `${stem}${branch}` };
-    }
-
-    function toJulianDayNumber(year, month, day) {
-      const a = Math.floor((14 - month) / 12);
-      const y = year + 4800 - a;
-      const m = month + 12 * a - 3;
-      return day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
-    }
-
-    function utcTime(year, monthIndex, day, hour = 0, minute = 0) {
-      const date = new Date(Date.UTC(0, monthIndex, day, hour, minute));
-      date.setUTCFullYear(year);
-      return date.getTime();
-    }
-
-    function localTimeToUtcMs(year, month, day, hour = 0, minute = 0, timezoneOffset = engineTimezoneOffset) {
-      return utcTime(year, month - 1, day, hour, minute) - timezoneOffset * 60 * msPerMinute;
-    }
-
-    function normalizeDegrees(value) {
-      return ((value % 360) + 360) % 360;
-    }
-
-    function degreesToRadians(value) {
-      return value * Math.PI / 180;
-    }
-
-    function signedAngleDifference(longitude, target) {
-      return ((normalizeDegrees(longitude - target) + 540) % 360) - 180;
-    }
-
-    function julianDayFromUtcMs(utcMs) {
-      return utcMs / msPerDay + 2440587.5;
-    }
-
-    function getSolarApparentLongitude(utcMs) {
-      const jd = julianDayFromUtcMs(utcMs);
-      const t = (jd - 2451545.0) / 36525;
-      const meanLongitude = normalizeDegrees(280.46646 + 36000.76983 * t + 0.0003032 * t * t);
-      const meanAnomaly = 357.52911 + 35999.05029 * t - 0.0001537 * t * t;
-      const anomalyRad = degreesToRadians(meanAnomaly);
-      const equationOfCenter =
-        (1.914602 - 0.004817 * t - 0.000014 * t * t) * Math.sin(anomalyRad) +
-        (0.019993 - 0.000101 * t) * Math.sin(2 * anomalyRad) +
-        0.000289 * Math.sin(3 * anomalyRad);
-      const trueLongitude = meanLongitude + equationOfCenter;
-      const omega = 125.04 - 1934.136 * t;
-      return normalizeDegrees(trueLongitude - 0.00569 - 0.00478 * Math.sin(degreesToRadians(omega)));
-    }
-
-    function findSolarTermUtcMs(year, term) {
-      const estimate = localTimeToUtcMs(year, term.month, term.day, 12);
-      const target = term.longitude;
-      let lower = estimate - 5 * msPerDay;
-      let upper = estimate + 5 * msPerDay;
-      let lowerDiff = signedAngleDifference(getSolarApparentLongitude(lower), target);
-      let upperDiff = signedAngleDifference(getSolarApparentLongitude(upper), target);
-
-      if (lowerDiff > 0 || upperDiff < 0) {
-        let previousTime = lower;
-        let previousDiff = lowerDiff;
-        for (let time = lower + 6 * 60 * msPerMinute; time <= upper; time += 6 * 60 * msPerMinute) {
-          const diff = signedAngleDifference(getSolarApparentLongitude(time), target);
-          if (previousDiff <= 0 && diff >= 0) {
-            lower = previousTime;
-            upper = time;
-            lowerDiff = previousDiff;
-            upperDiff = diff;
-            break;
-          }
-          previousTime = time;
-          previousDiff = diff;
-        }
-      }
-
-      if (lowerDiff > 0 || upperDiff < 0) {
-        throw new Error(`Cannot bracket solar term ${term.name} for ${year}`);
-      }
-
-      for (let i = 0; i < 50; i += 1) {
-        const mid = (lower + upper) / 2;
-        const diff = signedAngleDifference(getSolarApparentLongitude(mid), target);
-        if (diff >= 0) upper = mid;
-        else lower = mid;
-      }
-
-      return Math.round(upper / 60000) * 60000;
-    }
-
-    function getSolarMonthTermTimes(year) {
-      return solarMonthTerms
-        .map((term) => ({ ...term, utcMs: findSolarTermUtcMs(year, term) }))
-        .sort((a, b) => a.utcMs - b.utcMs);
-    }
-
-    function dateParts(date) {
-      return {
-        year: date.getUTCFullYear(),
-        month: date.getUTCMonth() + 1,
-        day: date.getUTCDate(),
-        hour: date.getUTCHours(),
-        minute: date.getUTCMinutes()
-      };
-    }
-
-    function normalizeBirthDate(input) {
-      const sourceUtcMs = utcTime(input.year, input.month - 1, input.day, input.hour, input.minute) -
-        input.timezoneOffset * 60 * msPerMinute;
-      const engineDate = new Date(sourceUtcMs + engineTimezoneOffset * 60 * msPerMinute);
-      const normalized = dateParts(engineDate);
-      const dayPillarDate = input.lateZiSwitchDay && normalized.hour === 23
-        ? new Date(utcTime(normalized.year, normalized.month - 1, normalized.day) + msPerDay)
-        : engineDate;
-      const dayPillarParts = dateParts(dayPillarDate);
-      return {
-        ...normalized,
-        dayPillarYear: dayPillarParts.year,
-        dayPillarMonth: dayPillarParts.month,
-        dayPillarDay: dayPillarParts.day
-      };
-    }
-
-    function isAfterLiChun(year, month, day, hour, minute, timezoneOffset = engineTimezoneOffset) {
-      const birthUtcMs = localTimeToUtcMs(year, month, day, hour, minute, timezoneOffset);
-      const liChun = getSolarMonthTermTimes(year).find((term) => term.indexFromYin === 0);
-      if (!liChun) throw new Error(`Cannot find Li Chun for ${year}`);
-      return birthUtcMs >= liChun.utcMs;
-    }
-
-    function getYearPillar(year, afterLiChun = true) {
-      return ganzhiFromIndex((afterLiChun ? year : year - 1) - jiaZiYear);
-    }
-
-    function getSolarMonthIndex(year, month, day, hour, minute, timezoneOffset = engineTimezoneOffset) {
-      const birthUtcMs = localTimeToUtcMs(year, month, day, hour, minute, timezoneOffset);
-      let current = 10;
-      for (const term of getSolarMonthTermTimes(year)) {
-        if (birthUtcMs >= term.utcMs) current = term.indexFromYin;
-        else break;
-      }
-      return current;
-    }
-
-    function getMonthPillar(yearStem, year, month, day, hour, minute, timezoneOffset = engineTimezoneOffset) {
-      const monthIndex = getSolarMonthIndex(year, month, day, hour, minute, timezoneOffset);
-      const startStem = tigerStartStemByYearStem[yearStem];
-      const stem = stems[(stems.indexOf(startStem) + monthIndex) % 10];
-      const branch = monthBranches[monthIndex % 12];
-      return { stem, branch, ganzhi: `${stem}${branch}` };
-    }
-
-    function getDayPillar(year, month, day) {
-      return ganzhiFromIndex(toJulianDayNumber(year, month, day) + jiaZiDayOffset);
-    }
-
-    function getHourBranch(hour) {
-      return branches[Math.floor((hour + 1) / 2) % 12];
-    }
-
-    function getHourPillar(dayStem, hour) {
-      const branch = getHourBranch(hour);
-      const startStem = ratStartStemByDayStem[dayStem];
-      const stem = stems[(stems.indexOf(startStem) + branches.indexOf(branch)) % 10];
-      return { stem, branch, ganzhi: `${stem}${branch}` };
-    }
-
-    function getAnnualFlow(year, dayMaster) {
-      const pillar = ganzhiFromIndex(year - jiaZiYear);
-      const mainStem = branchMainStem[pillar.branch];
-      return {
-        year,
-        ...pillar,
-        stemTenGod: getTenGod(dayMaster, pillar.stem),
-        branchMainStem: mainStem,
-        branchMainTenGod: getTenGod(dayMaster, mainStem)
-      };
     }
 
     function enrichAnnualMonthsWithTenGods(annualMonths, dayStem) {
@@ -1658,16 +1332,6 @@
       };
     }
 
-    function validateDynamicPromptLength(prompt) {
-      const chars = String(prompt ?? "").length;
-      return {
-        chars,
-        min: DYNAMIC_PROMPT_TARGET_MIN,
-        max: DYNAMIC_PROMPT_TARGET_MAX,
-        status: chars < DYNAMIC_PROMPT_TARGET_MIN ? "內容偏短" : chars > DYNAMIC_PROMPT_TARGET_MAX ? "超過上限" : "理想範圍"
-      };
-    }
-
     function buildFullBaziPrompt(data) {
       const { payload, sections } = data;
       return `你是一位精通《淵海子平》、《滴天髓》、《窮通寶鑑》的八字命理大師。
@@ -1751,16 +1415,12 @@ ${JSON.stringify(payload, null, 2)}`;
         `規則版本：${shenShaResult.ruleSetVersion}`,
         shenShaResult.disclaimer,
         formatShenShaCompact(shenShaResult),
-        "",
-        "## 動態時運使用方式",
-        "之後若要問某一日期、月份、年份或時段，請在本永久 Prompt 之外，再附上一份「動態時運資料包」。AI 需先看本命原局與目前大運，再看流年、流月、流日、流時，不能讓流日或流時推翻大運與流年的主體結構。",
-        "",
         "## AI回答格式",
         formatAnalysisProtocol(),
         "",
         "## 本次詢問資料",
-        "- 使用本永久 Prompt 時，若另有指定日期、主題、背景、所在地與決策期限，請合併動態資料包一起分析。",
-        "- 若無動態資料包，則只做原局與大運層級的長期分析。",
+        "- 使用本永久 Prompt 時，若另有指定日期、主題或背景，請在提問中明確交代。",
+        "- 若沒有額外時點條件，則以原局與大運層級做長期分析。",
         "- 回答時每段都要有依據與結論，並明示哪些判斷屬條件成立時較可能出現。"
       ].join("\n").trim();
     }
@@ -1871,336 +1531,6 @@ ${JSON.stringify(payload, null, 2)}`;
       };
     }
 
-    function parseTimezoneOffset(value) {
-      const source = String(value ?? "").trim();
-      if (!source) return engineTimezoneOffset;
-      if (source === "Asia/Taipei") return 8;
-      const match = source.match(/([+-]?\d+(?:\.\d+)?)/);
-      return match ? Number(match[1]) : engineTimezoneOffset;
-    }
-
-    function parseTargetDateInput(targetDate) {
-      const raw = String(targetDate ?? "").trim();
-      if (!raw) return null;
-      const parts = raw.split("-").map((part) => Number(part));
-      if (parts.length === 1 && parts[0]) return { precision: "year", year: parts[0] };
-      if (parts.length === 2 && parts[0] && parts[1]) return { precision: "month", year: parts[0], month: parts[1] };
-      if (parts.length >= 3 && parts[0] && parts[1] && parts[2]) return { precision: "day", year: parts[0], month: parts[1], day: parts[2] };
-      return null;
-    }
-
-    function parseTargetTimeInput(targetTime) {
-      const raw = String(targetTime ?? "").trim();
-      if (!raw) return null;
-      const [hourText = "0", minuteText = "0"] = raw.split(":");
-      const hour = Number(hourText);
-      const minute = Number(minuteText);
-      if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
-      return { hour, minute };
-    }
-
-    function findLuckCycleForYear(payload, year) {
-      return (payload.luckCycles ?? []).find((cycle) => year >= cycle.yearStart && year <= cycle.yearEnd) ?? payload.currentLuck ?? null;
-    }
-
-    function enrichFlowPillar(pillar, dayMaster) {
-      if (!pillar) return null;
-      const mainStem = pillar.branch ? branchMainStem[pillar.branch] : "";
-      return {
-        ...pillar,
-        pillar: pillar.ganzhi ?? `${pillar.stem}${pillar.branch}`,
-        stemTenGod: pillar.stem ? getTenGod(dayMaster, pillar.stem) : "",
-        branchMainStem: mainStem,
-        branchTenGod: mainStem ? getTenGod(dayMaster, mainStem) : "",
-        stemElement: pillar.stem ? stemElement[pillar.stem] : "",
-        branchElement: pillar.branch ? branchElement[pillar.branch] : ""
-      };
-    }
-
-    function getDynamicMonthContext(target, dayMaster, timezoneOffset) {
-      if (!target.month) return null;
-      const day = target.day ?? 15;
-      const hour = target.hour ?? 12;
-      const minute = target.minute ?? 0;
-      const yearPillar = getYearPillar(target.year, isAfterLiChun(target.year, target.month, day, hour, minute, timezoneOffset));
-      const monthPillar = getMonthPillar(yearPillar.stem, target.year, target.month, day, hour, minute, timezoneOffset);
-      const monthIndex = getSolarMonthIndex(target.year, target.month, day, hour, minute, timezoneOffset);
-      const label = solarTermMonthLabels[monthIndex];
-      return {
-        ...enrichFlowPillar(monthPillar, dayMaster),
-        solarTermName: label?.solarTermName ?? "節氣",
-        approximateGregorianRange: label?.approximateGregorianRange ?? "",
-        monthIndex
-      };
-    }
-
-    function describeStemRelation(a, b) {
-      if (a === b) return "同干比照";
-      if (stemFiveHe[a] === b) return "天干五合";
-      if (elementControls[stemElement[a]] === stemElement[b]) return "天干相剋";
-      if (elementGenerates[stemElement[a]] === stemElement[b]) return "天干相生";
-      return "";
-    }
-
-    function describeBranchRelation(a, b) {
-      if (a === b) return "伏吟";
-      if (branchLiuChong[a] === b) return "六沖";
-      if (branchLiuHe[a] === b) return "六合";
-      if (branchLiuHai[a] === b) return "六害";
-      if (branchLiuPo[a] === b) return "六破";
-      if (branchSelfXing.includes(a) && a === b) return "自刑";
-      if (branchSanXingPairs.some(([x, y]) => x === a && y === b)) return "三刑";
-      return "";
-    }
-
-    function collectDynamicInteractions(payload, dynamicPillars, currentLuck) {
-      const references = [
-        { scope: "原局", items: pillarOrder.map((key) => ({ key, label: pillarLabels[key], stem: payload.pillars[key].stem, branch: payload.pillars[key].branch })) },
-        currentLuck ? { scope: "大運", items: [{ key: "luck", label: "目前大運", stem: currentLuck.stem, branch: currentLuck.branch }] } : null
-      ].filter(Boolean);
-      const results = [];
-      dynamicPillars.forEach((item) => {
-        references.forEach((group) => {
-          group.items.forEach((reference) => {
-            const stemRelation = item.stem && reference.stem ? describeStemRelation(item.stem, reference.stem) : "";
-            const branchRelation = item.branch && reference.branch ? describeBranchRelation(item.branch, reference.branch) : "";
-            if (stemRelation) {
-              results.push({
-                source: item.label,
-                target: `${group.scope}${reference.label}`,
-                relation: stemRelation,
-                affectedPillars: reference.key === "luck" ? [] : [reference.key]
-              });
-            }
-            if (branchRelation) {
-              results.push({
-                source: item.label,
-                target: `${group.scope}${reference.label}`,
-                relation: branchRelation,
-                affectedPillars: reference.key === "luck" ? [] : [reference.key]
-              });
-            }
-          });
-        });
-      });
-      return results;
-    }
-
-    function buildDynamicConditions(payload, context) {
-      const conditions = [];
-      const dayMasterElement = payload.dayMaster.element;
-      const dynamicStems = [context.annual, context.monthly, context.daily, context.hourly].filter(Boolean);
-      const relationTexts = context.interactions.map((item) => `${item.source}${item.relation}${item.target}`);
-      const dayBranchHits = context.interactions.filter((item) => item.target.includes("日柱"));
-      const monthBranchHits = context.interactions.filter((item) => item.target.includes("月柱"));
-      const wealthGods = ["正財", "偏財"];
-      const officerGods = ["正官", "七殺"];
-      const robberyGods = ["比肩", "劫財"];
-
-      if (dayBranchHits.length >= 2) {
-        conditions.push({
-          category: "感情與家庭",
-          level: "high",
-          title: "夫妻宮連續被引動",
-          evidence: dayBranchHits.slice(0, 3).map((item) => `${item.source}${item.relation}${item.target}`),
-          affectedPillars: ["day"],
-          affectedTenGods: uniqueList(dynamicStems.map((item) => item.branchTenGod).filter(Boolean)),
-          favorableConditions: ["若大運與流年同屬喜用，則可把變動轉為對話、調整與重新定位。"],
-          riskConditions: ["若再遇官殺、財星或沖刑同步加重，感情與家庭節奏較易出現壓力。"],
-          actionAdvice: ["重大溝通宜先確認時間點與共同目標，避免在情緒最高點拍板。"],
-          uncertaintyNote: "需結合實際關係狀態與大運喜忌，不宜單憑一組沖合作定論。"
-        });
-      }
-
-      const wealthTriggered = dynamicStems.filter((item) => wealthGods.includes(item.stemTenGod) || wealthGods.includes(item.branchTenGod));
-      const robberyTriggered = dynamicStems.filter((item) => robberyGods.includes(item.stemTenGod) || robberyGods.includes(item.branchTenGod));
-      if (wealthTriggered.length >= 2 && robberyTriggered.length >= 1) {
-        conditions.push({
-          category: "財務與契約",
-          level: "medium",
-          title: "財星與比劫同時活躍",
-          evidence: [
-            `財星活躍：${wealthTriggered.map((item) => `${item.label}${item.pillar}`).join("、")}`,
-            `比劫同步：${robberyTriggered.map((item) => `${item.label}${item.pillar}`).join("、")}`
-          ],
-          affectedPillars: [],
-          affectedTenGods: uniqueList([...wealthTriggered, ...robberyTriggered].flatMap((item) => [item.stemTenGod, item.branchTenGod]).filter(Boolean)),
-          favorableConditions: ["若原局本就喜財、喜食傷生財，則可用規則化流程把機會落袋。"],
-          riskConditions: ["若同時見比劫爭財或合去喜神，簽約、分帳、投資判斷要更細。"],
-          actionAdvice: ["先做現金流與責任邊界確認，書面條款比口頭承諾更重要。"],
-          uncertaintyNote: "這是結構性風險提示，不代表必定破財。"
-        });
-      }
-
-      const officerTriggered = dynamicStems.filter((item) => officerGods.includes(item.stemTenGod) || officerGods.includes(item.branchTenGod));
-      const sealTriggered = dynamicStems.filter((item) => ["正印", "偏印"].includes(item.stemTenGod) || ["正印", "偏印"].includes(item.branchTenGod));
-      if (officerTriggered.length >= 2) {
-        conditions.push({
-          category: "事業與權責",
-          level: sealTriggered.length ? "medium" : "high",
-          title: sealTriggered.length ? "官殺有印承接" : "官殺壓力上升",
-          evidence: [
-            `官殺活躍：${officerTriggered.map((item) => `${item.label}${item.pillar}`).join("、")}`,
-            sealTriggered.length ? `印星承接：${sealTriggered.map((item) => `${item.label}${item.pillar}`).join("、")}` : "目前印星承接感較弱"
-          ],
-          affectedPillars: monthBranchHits.length ? ["month"] : [],
-          affectedTenGods: uniqueList([...officerTriggered, ...sealTriggered].flatMap((item) => [item.stemTenGod, item.branchTenGod]).filter(Boolean)),
-          favorableConditions: ["若能把要求變成制度、文件、流程，權責反而較易清楚。"],
-          riskConditions: ["若日主偏弱且月令再受沖，容易感到責任過重或壓力集中。"],
-          actionAdvice: ["先釐清授權、節點與可交付標準，別讓責任邊界模糊。"],
-          uncertaintyNote: "官殺活躍可成權責與位置，也可能成壓力，需看是否為喜用。"
-        });
-      }
-
-      const coldBias = dynamicStems.filter((item) => ["水", "金"].includes(item.stemElement) || ["水", "金"].includes(item.branchElement));
-      const warmBias = dynamicStems.filter((item) => ["火", "木"].includes(item.stemElement) || ["火", "木"].includes(item.branchElement));
-      if ((dayMasterElement === "火" || dayMasterElement === "木") && coldBias.length >= 3) {
-        conditions.push({
-          category: "健康五行傾向",
-          level: "medium",
-          title: "寒濕偏氣加重",
-          evidence: [`動態層見較多金水：${coldBias.map((item) => `${item.label}${item.pillar}`).join("、")}`],
-          affectedPillars: [],
-          affectedTenGods: uniqueList(coldBias.flatMap((item) => [item.stemTenGod, item.branchTenGod]).filter(Boolean)),
-          favorableConditions: ["若生活作息穩、運動與作息有節，可把偏寒之氣化為沉著與專注。"],
-          riskConditions: ["若熬夜、久坐、壓力大，體感與精神耗損較容易被放大。"],
-          actionAdvice: ["把睡眠、補水、規律活動與飲食節奏排進行程。"],
-          uncertaintyNote: "僅為五行傾向提醒，不是醫療診斷。"
-        });
-      } else if ((dayMasterElement === "水" || dayMasterElement === "金") && warmBias.length >= 3) {
-        conditions.push({
-          category: "健康五行傾向",
-          level: "medium",
-          title: "燥熱偏氣上升",
-          evidence: [`動態層見較多木火：${warmBias.map((item) => `${item.label}${item.pillar}`).join("、")}`],
-          affectedPillars: [],
-          affectedTenGods: uniqueList(warmBias.flatMap((item) => [item.stemTenGod, item.branchTenGod]).filter(Boolean)),
-          favorableConditions: ["若節奏分配得宜，木火亦可轉為行動力、表達力與推進力。"],
-          riskConditions: ["若再逢沖刑與壓力疊加，容易覺得急躁、上火、消耗快。"],
-          actionAdvice: ["預留降溫與恢復空間，重要事宜不要全擠在同一時段。"],
-          uncertaintyNote: "僅為五行傾向提醒，不是醫療診斷。"
-        });
-      }
-
-      if (relationTexts.filter((text) => text.includes("伏吟")).length >= 1 && relationTexts.filter((text) => text.includes("六沖") || text.includes("三刑") || text.includes("六害")).length >= 1) {
-        conditions.push({
-          category: "重大決策",
-          level: "high",
-          title: "伏吟與沖刑同時出現",
-          evidence: relationTexts.filter((text) => text.includes("伏吟") || text.includes("六沖") || text.includes("三刑") || text.includes("六害")).slice(0, 4),
-          affectedPillars: uniqueList(context.interactions.flatMap((item) => item.affectedPillars)),
-          affectedTenGods: uniqueList(dynamicStems.flatMap((item) => [item.stemTenGod, item.branchTenGod]).filter(Boolean)),
-          favorableConditions: ["若事前資訊完整、可反覆校正，則可把高波動轉成重估與修正。"],
-          riskConditions: ["若倉促拍板、情緒先行，決策誤差會被放大。"],
-          actionAdvice: ["重大簽約、換工作、搬遷或感情定案宜多做一次確認，保留回旋空間。"],
-          uncertaintyNote: "這表示波動與重複檢驗需求增加，不等於必有壞事。"
-        });
-      }
-
-      return conditions.sort((a, b) => dynamicCategoryOrder.indexOf(a.category) - dynamicCategoryOrder.indexOf(b.category));
-    }
-
-    function calculateDynamicLuckContext(payload, query) {
-      const dateInput = parseTargetDateInput(query.targetDate);
-      if (!dateInput) throw new Error("請輸入目標日期");
-      const timeInput = parseTargetTimeInput(query.targetTime);
-      const timezoneOffset = parseTimezoneOffset(query.timezone || payload.user.timezone);
-      const precision = timeInput ? "hour" : dateInput.precision;
-      const target = {
-        ...dateInput,
-        hour: timeInput?.hour ?? 12,
-        minute: timeInput?.minute ?? 0
-      };
-      const currentLuck = findLuckCycleForYear(payload, target.year);
-      const annual = enrichFlowPillar(getAnnualFlow(target.year, payload.dayMaster.stem), payload.dayMaster.stem);
-      const monthly = ["month", "day", "hour"].includes(dateInput.precision) || precision === "hour"
-        ? getDynamicMonthContext(target, payload.dayMaster.stem, timezoneOffset)
-        : null;
-      const daily = ["day", "hour"].includes(dateInput.precision) || precision === "hour"
-        ? enrichFlowPillar(getDayPillar(target.year, target.month, target.day), payload.dayMaster.stem)
-        : null;
-      const hourly = precision === "hour"
-        ? enrichFlowPillar(getHourPillar(daily.stem, target.hour), payload.dayMaster.stem)
-        : null;
-      const dynamicPillars = [
-        { label: "流年", ...annual },
-        monthly ? { label: "流月", ...monthly } : null,
-        daily ? { label: "流日", ...daily } : null,
-        hourly ? { label: "流時", ...hourly } : null
-      ].filter(Boolean);
-      const interactions = collectDynamicInteractions(payload, dynamicPillars, currentLuck);
-      const majorAttentionItems = buildDynamicConditions(payload, { interactions, annual, monthly, daily, hourly });
-      return {
-        query,
-        precision,
-        timezoneOffset,
-        currentLuck,
-        annual,
-        monthly,
-        daily,
-        hourly,
-        interactions,
-        majorAttentionItems
-      };
-    }
-
-    function buildDynamicLuckPackage(payload, context) {
-      const lines = [
-        "# 動態時運資料包",
-        "",
-        "## 目標時間",
-        `日期：${context.query.targetDate || "未提供"}`,
-        `時間：${context.query.targetTime || "未提供"}`,
-        `時區：${context.query.timezone || payload.user.timezone}`,
-        `所在地：${context.query.location || payload.user.birthPlace || "未提供"}`,
-        "",
-        "## 本命基準",
-        `四柱：${payload.pillars.year.pillar} ${payload.pillars.month.pillar} ${payload.pillars.day.pillar} ${payload.pillars.hour.pillar}`,
-        `日主：${payload.dayMaster.stem}${payload.dayMaster.element}`,
-        `所處大運：${context.currentLuck ? `${context.currentLuck.pillar}（${context.currentLuck.yearStart || context.currentLuck.ageStart}-${context.currentLuck.yearEnd || context.currentLuck.ageEnd}）` : "待定"}`,
-        "",
-        "## 動態干支",
-        `流年：${context.annual?.pillar ?? "未提供"}`,
-        `流月：${context.monthly?.pillar ?? "未分析"}`,
-        `流日：${context.daily?.pillar ?? "未分析"}`,
-        `流時：${context.hourly?.pillar ?? "未分析"}`,
-        "",
-        "## 十神",
-        `流年：${context.annual ? `${context.annual.stemTenGod}／${context.annual.branchTenGod}` : "未提供"}`,
-        `流月：${context.monthly ? `${context.monthly.stemTenGod}／${context.monthly.branchTenGod}` : "未分析"}`,
-        `流日：${context.daily ? `${context.daily.stemTenGod}／${context.daily.branchTenGod}` : "未分析"}`,
-        `流時：${context.hourly ? `${context.hourly.stemTenGod}／${context.hourly.branchTenGod}` : "未分析"}`,
-        "",
-        "## 主要引動",
-        ...(context.interactions.length
-          ? context.interactions.slice(0, 8).map((item) => `- ${item.source}${item.relation}${item.target}`)
-          : ["- 目前未見明顯重複引動，以原局與大運主題為主。"]),
-        "",
-        "## 喜忌與調候",
-        `- 分析順序固定為原局 → 大運 → 流年 → 流月 → 流日 → 流時，本次以${context.currentLuck?.pillar ?? "目前所處大運"}為背景。`,
-        `- ${context.annual?.stemElement ?? ""}${context.annual?.branchElement ?? ""}之氣進場，需合看是否扶身、泄身、助官殺、助財或加重偏氣。`,
-        context.monthly ? `- 流月以${context.monthly.solarTermName}為界，月令切換後，主題會較明顯轉向${context.monthly.stemTenGod}與${context.monthly.branchTenGod}。` : "- 本次未指定月份，暫不下流月層級判斷。",
-        "",
-        "## 重大注意事項",
-        ...(context.majorAttentionItems.length
-          ? context.majorAttentionItems.flatMap((item) => [
-              `### ${item.category}`,
-              `依據：${item.evidence.join("；")}`,
-              `風險：${item.riskConditions.join("；")}`,
-              `有利條件：${item.favorableConditions.join("；")}`,
-              `建議：${item.actionAdvice.join("；")}`
-            ])
-          : ["- 目前未達兩個以上獨立條件同時成立，暫以原局與大運主題穩定推進。"]),
-        "",
-        "## AI分析指令",
-        "請將本資料包與永久 Prompt 合併分析，不得只看單一流日、神煞或合沖；回答時需交代原局背景、大運承接、動態干支、十神變化、主要引動與條件式建議。",
-        context.query.topic ? `查詢主題：${context.query.topic}` : "",
-        context.query.context ? `補充背景：${context.query.context}` : "",
-        context.query.decisionDeadline ? `決策期限：${context.query.decisionDeadline}` : ""
-      ].filter(Boolean);
-      return lines.join("\n").trim();
-    }
-
     function buildPromptExportState(payload, sections, annualMonths, shenShaResult) {
       const fullPayload = { ...payload, monthlyLuck: annualMonths, shenSha: shenShaResult };
       const data = { payload: fullPayload, sections, annualMonths, shenShaResult };
@@ -2209,7 +1539,6 @@ ${JSON.stringify(payload, null, 2)}`;
       return {
         debug: createPromptEntry("完整除錯資料", "debug", fullPrompt, validatePromptLength(fullPrompt)),
         permanent: createPromptEntry("永久 AI Prompt", "permanent", permanentPrompt, validatePermanentPromptLength(permanentPrompt)),
-        dynamic: createPromptEntry("動態時運資料包", "dynamic", "請先在下方輸入目標日期、時間與查詢主題，再產生動態時運資料包。", { chars: 0, min: DYNAMIC_PROMPT_TARGET_MIN, max: DYNAMIC_PROMPT_TARGET_MAX, status: "待生成" }, { ready: false }),
         mode: "permanent"
       };
     }
@@ -2357,14 +1686,11 @@ ${JSON.stringify(payload, null, 2)}`;
           : "safe";
       const countLabel = exportState.mode === "permanent"
         ? `永久 Prompt 字數：${current.validation.chars}`
-        : exportState.mode === "debug"
-          ? `Prompt 字數：${current.validation.chars} / ${MAX_PROMPT_CHARS}`
-          : `動態資料包字數：${current.validation.chars}${current.validation.max ? ` / ${current.validation.max}` : ""}`;
+        : `Prompt 字數：${current.validation.chars} / ${MAX_PROMPT_CHARS}`;
       return `
         <div class="prompt-toolbar">
           <div class="prompt-mode-group">
             <button id="prompt-mode-permanent" class="${exportState.mode === "permanent" ? "active" : ""}" type="button">永久 AI Prompt</button>
-            <button id="prompt-mode-dynamic" class="${exportState.mode === "dynamic" ? "active" : ""}" type="button">動態時運資料包</button>
             <button id="prompt-mode-debug" class="${exportState.mode === "debug" ? "active" : ""}" type="button">完整除錯資料</button>
           </div>
           <div class="prompt-meta">
@@ -2421,10 +1747,6 @@ ${JSON.stringify(payload, null, 2)}`;
         latestPromptExport.mode = "permanent";
         updatePromptPanel(payload);
       });
-      document.getElementById("prompt-mode-dynamic")?.addEventListener("click", () => {
-        latestPromptExport.mode = "dynamic";
-        updatePromptPanel(payload);
-      });
       document.getElementById("prompt-mode-debug")?.addEventListener("click", () => {
         latestPromptExport.mode = "debug";
         updatePromptPanel(payload);
@@ -2437,114 +1759,6 @@ ${JSON.stringify(payload, null, 2)}`;
       container.innerHTML = renderPromptPanel(latestPromptExport);
       bindPromptModeSwitch(payload);
       syncTopbarPromptButtons(payload);
-    }
-
-    function renderDynamicLuckQuery(payload) {
-      return `
-        <form id="dynamic-luck-form" class="dynamic-query-panel">
-          <div class="dynamic-query-grid">
-            <label class="field">
-              <span>目標日期</span>
-              <input id="dynamic-target-date" name="targetDate" type="text" placeholder="2026 或 2026-07 或 2026-07-13" required>
-            </label>
-            <label class="field">
-              <span>目標時間</span>
-              <input id="dynamic-target-time" name="targetTime" type="time">
-            </label>
-            <label class="field">
-              <span>時區</span>
-              <input id="dynamic-timezone" name="timezone" type="text" value="${escapeHtml(payload.user.timezone || "Asia/Taipei")}">
-            </label>
-            <label class="field">
-              <span>所在地</span>
-              <input id="dynamic-location" name="location" type="text" value="${escapeHtml(payload.user.birthPlace || "")}" placeholder="例如：台北">
-            </label>
-            <label class="field span-2">
-              <span>查詢主題</span>
-              <input id="dynamic-topic" name="topic" type="text" placeholder="例如：轉職、簽約、感情、考試、搬遷">
-            </label>
-            <label class="field span-3">
-              <span>補充背景</span>
-              <textarea id="dynamic-context" name="context" rows="3" placeholder="補上現況、壓力來源、選項與顧慮。"></textarea>
-            </label>
-            <label class="field span-2">
-              <span>決策期限</span>
-              <input id="dynamic-deadline" name="decisionDeadline" type="text" placeholder="例如：2026-08-01 前">
-            </label>
-          </div>
-          <div class="dynamic-actions">
-            <button class="primary" type="submit">產生動態資料包</button>
-          </div>
-        </form>
-      `;
-    }
-
-    function renderDynamicLuckResult(context) {
-      if (!context) {
-        return `
-          <section class="dynamic-output-panel">
-            <p class="subtitle">填入目標日期後，這裡會整理流年、流月、流日、流時與重大注意事項。</p>
-          </section>
-        `;
-      }
-      return `
-        <section class="dynamic-output-panel">
-          <div class="dynamic-summary-list">
-            <div class="dynamic-summary-item"><strong>所處大運</strong>${escapeHtml(context.currentLuck?.pillar ?? "待定")}</div>
-            <div class="dynamic-summary-item"><strong>流年</strong>${escapeHtml(context.annual?.pillar ?? "未提供")}</div>
-            <div class="dynamic-summary-item"><strong>流月</strong>${escapeHtml(context.monthly?.pillar ?? "未分析")}</div>
-            <div class="dynamic-summary-item"><strong>流日</strong>${escapeHtml(context.daily?.pillar ?? "未分析")}</div>
-            <div class="dynamic-summary-item"><strong>流時</strong>${escapeHtml(context.hourly?.pillar ?? "未分析")}</div>
-            <div class="dynamic-summary-item"><strong>分析層級</strong>${escapeHtml(context.precision)}</div>
-          </div>
-          <div class="attention-list">
-            ${context.majorAttentionItems.length ? context.majorAttentionItems.map((item) => `
-              <article class="section attention-card">
-                <h3>${escapeHtml(item.category)}｜${escapeHtml(item.title)}</h3>
-                <p><strong>依據：</strong>${escapeHtml(item.evidence.join("；"))}</p>
-                <p><strong>風險：</strong>${escapeHtml(item.riskConditions.join("；"))}</p>
-                <p><strong>有利條件：</strong>${escapeHtml(item.favorableConditions.join("；"))}</p>
-                <p><strong>建議：</strong>${escapeHtml(item.actionAdvice.join("；"))}</p>
-                <p><strong>備註：</strong>${escapeHtml(item.uncertaintyNote)}</p>
-              </article>
-            `).join("") : `<article class="section attention-card"><h3>重大注意事項</h3><p>目前未達兩個以上獨立條件同時成立，暫以原局與大運主題穩定推進。</p></article>`}
-          </div>
-        </section>
-      `;
-    }
-
-    function bindDynamicLuckForm(payload) {
-      const form = document.getElementById("dynamic-luck-form");
-      if (!form) return;
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
-        const query = {
-          targetDate: document.getElementById("dynamic-target-date")?.value ?? "",
-          targetTime: document.getElementById("dynamic-target-time")?.value ?? "",
-          timezone: document.getElementById("dynamic-timezone")?.value ?? payload.user.timezone,
-          location: document.getElementById("dynamic-location")?.value ?? "",
-          topic: document.getElementById("dynamic-topic")?.value ?? "",
-          context: document.getElementById("dynamic-context")?.value ?? "",
-          decisionDeadline: document.getElementById("dynamic-deadline")?.value ?? ""
-        };
-        try {
-          const dynamicContext = calculateDynamicLuckContext(payload, query);
-          const prompt = buildDynamicLuckPackage(payload, dynamicContext);
-          latestPromptExport.dynamic = createPromptEntry("動態時運資料包", "dynamic", prompt, validateDynamicPromptLength(prompt), {
-            ready: true,
-            context: dynamicContext
-          });
-          latestPromptExport.mode = "dynamic";
-          updatePromptPanel(payload);
-          const resultContainer = document.getElementById("dynamic-luck-result");
-          if (resultContainer) resultContainer.innerHTML = renderDynamicLuckResult(dynamicContext);
-        } catch (error) {
-          const resultContainer = document.getElementById("dynamic-luck-result");
-          if (resultContainer) {
-            resultContainer.innerHTML = `<section class="dynamic-output-panel"><p class="conclusion">${escapeHtml(error.message || "動態資料產生失敗")}</p></section>`;
-          }
-        }
-      });
     }
 
     function renderBaziAnalysis(payload) {
@@ -2603,17 +1817,10 @@ ${JSON.stringify(payload, null, 2)}`;
             <p class="subtitle">預設顯示永久 AI Prompt；完整除錯資料仍保留於內部輸出層。</p>
             <div id="ai-prompt-panel">${renderPromptPanel(latestPromptExport)}</div>
           </section>
-          <section class="section wide" id="dynamic-luck-tools">
-            <h2>動態時運資料包</h2>
-            <p class="subtitle">輸入目標年月日時後，依原局、大運、流年、流月、流日、流時逐層整理。</p>
-            ${renderDynamicLuckQuery(payload)}
-            <div id="dynamic-luck-result">${renderDynamicLuckResult(latestPromptExport.dynamic.context)}</div>
-          </section>
         </div>
       `;
       bindPromptModeSwitch(payload);
       syncTopbarPromptButtons(payload);
-      bindDynamicLuckForm(payload);
     }
 
     try {
