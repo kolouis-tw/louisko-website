@@ -59,7 +59,7 @@
 - 變更目的：在 `bazi-analysis.html` 保留完整 Prompt 的前提下，新增預設顯示的「精簡 AI Prompt」匯出模式，讓內容可貼入 ChatGPT、Gemini 等 AI 輸入框。
 - 修改檔案：`apps/bazi/bazi-analysis.html`、`apps/bazi/SMOKE_TEST.md`、`apps/bazi/docs/regression_cases.md`、`scripts/site-workflow/WEB_CHANGE_LOG.md`
 - 本機驗證：`/opt/homebrew/bin/node --check /private/tmp/bazi-analysis-check.js`、`/opt/homebrew/bin/node scripts/site-workflow/manage-site.mjs verify`、自製 harness 驗證測試命盤四柱 / 目前大運 / 2026 流年 / 2026 流月 / compact prompt 字數。
-- GitHub commit：`Fix bazi lifetime prompt consistency`（以本段對應的最新 `main` commit 為準）
+- GitHub commit：`Upgrade bazi advisor initial profile flow`（以本段對應的最新 `main` commit 為準）
 - GitHub push：待補
 - Zeabur 部署：待補
 - 線上驗證：待補
@@ -77,3 +77,15 @@
 - 線上驗證：待補
 - 三資料夾同步：本工作區目前以 `AI_Web` 單一 repo 為正式來源；本次僅更新 `apps/bazi/` 與站台變更紀錄。
 - 備註：已移除終身 Prompt 內的「動態時運資料包」段落；未修改四柱、日主、十神、藏干、起運、大運、流年、流月等核心計算入口。
+
+## 2026-07-14 00:25 Asia/Taipei - 調整終身八字 AI 顧問首次完整建檔流程
+
+- 變更目的：讓終身八字 AI 顧問 Prompt 在第一次貼入外部聊天模型時，先完成一次完整本命與終身大運建檔論命，之後再切換成精準顧問模式；同時移除永久 Prompt 對建檔流年的主動分析暗示。
+- 修改檔案：`apps/bazi/bazi-analysis.html`、`scripts/site-workflow/WEB_CHANGE_LOG.md`
+- 本機驗證：`/opt/homebrew/bin/node apps/bazi/scripts/lifetime-prompt-consistency-check.mjs`、`PATH=/opt/homebrew/bin:$PATH /opt/homebrew/bin/npm run site:verify`
+- GitHub commit：待補
+- GitHub push：待補
+- Zeabur 部署：待補
+- 線上驗證：待補
+- 三資料夾同步：本工作區目前以 `AI_Web` 單一 repo 為正式來源；本次僅更新 `apps/bazi/` 與站台變更紀錄。
+- 備註：未修改四柱、十神、藏干、起運、大運、流年、流月等核心計算；主要更新 Prompt Builder、首次行為規則、後續回答規則與品質檢查。

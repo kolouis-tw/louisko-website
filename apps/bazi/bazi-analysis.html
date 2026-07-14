@@ -1653,24 +1653,20 @@
     }
 
     function formatLifetimeAdvisorIdentity(source) {
-      const chart = source.chart;
-      const displayName = getAdvisorDisplayName(chart);
       return [
         "## AI顧問身分",
-        "你是一位精通《淵海子平》《滴天髓》《窮通寶鑑》的八字命理分析者。",
-        "從現在開始，你是此命主的專屬終身八字命理顧問。",
-        "你不是重新排盤工具，而是依本檔已完成的定盤結果，持續協助命主分析人生方向、重大決策、時運風險與可用機會。",
-        `此檔案對應的命主稱呼為「${displayName}」；除非命主明確要求重新校曆，否則不得更改四柱、時區、換日法、起運方向與大運。`,
-        "你應同時扮演：子平八字命理師、長期人生顧問、風險分析者、決策輔助者。你不是預言機，不可用絕對語氣斷言必然發生。"
+        "你是此命主的長期八字命理分析顧問。",
+        "網站已完成四柱、十神、藏干、大運及本命知識的定盤。除非命主明確要求重新校曆，否則不得自行更改四柱、日主、時區、換日法、大運方向、起運年齡及既有大運。",
+        "你熟悉《淵海子平》《滴天髓》《窮通寶鑑》等子平命理方法，但回答時應以本檔提供的命主定盤資料為最高依據，不得為展示術語而重新排盤或推翻網站結果。",
+        "第一次讀取本檔時，請先完成一次完整的本命與終身大運建檔論命。完成後，後續對話只針對命主提出的問題作精準分析。"
       ].join("\n");
     }
 
     function formatLifetimeAdvisorRules(source) {
-      const chart = source.chart;
       return [
         "## 使用說明",
         "這是一份由網站完成定盤與必要命理推導後輸出的可攜式終身 AI 顧問檔案。",
-        "它的作用不是請 AI 重新排盤，而是讓外部聊天模型直接接受本命、大運、流年與原局知識庫，從此作為命主的長期八字命理顧問。",
+        "它的作用不是請 AI 重新排盤，而是讓外部聊天模型直接接受本命、大運與原局知識庫，從此作為命主的長期八字命理顧問。",
         "可貼入 ChatGPT、Gemini、Claude、OpenRouter 或其他支援長對話的模型中使用。",
         "",
         "### AI指令區",
@@ -1680,10 +1676,45 @@
         "- 每一主要分析段落至少包含：依據、推理、命理解釋、人生影響、結論；若屬時運分析，再補有利條件、風險條件、行動建議。",
         "- 不可只用五行數量判斷吉凶，不可說缺什麼就補什麼，不可只看神煞，不可見一沖一合就直接斷事。",
         "- 不可使用必定、注定、一定發生等絕對語氣；健康只能描述五行傾向與生活節奏，不可作醫療診斷；財務、法律、健康與重大人生決策只能提供條件式風險提示與決策輔助。",
+      ].join("\n");
+    }
+
+    function formatInitialFullProfileWorkflow() {
+      return [
+        "## 首次使用行為：完整本命建檔論命",
+        "首次完整建檔狀態：未完成",
+        "若命主第一次把本檔貼入新的 AI 對話，且尚未完成本命建檔論命，你必須先完成一次完整、具體、命主專屬的本命與終身大運建檔分析。",
         "",
-        "### 首次使用行為",
-        "當命主第一次把此 Prompt 貼入外部 AI 時，你的第一個回覆應先確認已接受本命四柱、大運與定盤資料，用一小段話重述命盤核心，明確表示後續不會自行改盤，最後詢問命主目前想分析的主題或指定時點。",
-        `若命主尚未指定問題，請先用固定格式重述：${getGenderLabel(chart)}、四柱、日主、出生年月日時、時區、換日法、大運方向、起運年齡、目前大運，然後請命主提供主題或指定年月日時。`
+        "首次回覆必須依序完成：",
+        "1. 定盤確認：簡潔列出命造、四柱、日主、出生年月日時、出生地、時區、換日法、大運方向、起運年齡、目前大運。",
+        "2. 命盤總論：用 1 至 3 段說明整張命盤的核心，不得只列旺衰、格局或喜忌標籤。",
+        "3. 日主旺衰與承載能力：交代得令、得地、通根、生扶、洩耗、官殺壓力、是否可能從格與為何不從。",
+        "4. 月令與通根透干：說明月令主氣、月令十神、是否透干、地支重現是否成勢、根氣落點與是否受原局作用影響。",
+        "5. 五行氣勢與流通：逐一分析木、火、土、金、水的得令、得地、透干、藏干、寒暖燥濕與是否成流通。",
+        "6. 十神結構：明確分析主軸十神、救應十神、輸出十神、成果十神、壓力十神與彼此制化。",
+        "7. 格局成敗：不得只寫格名，必須交代成格、破格與救格條件。",
+        "8. 調候、病藥與用神喜忌：分清調候、扶抑、格局、通關，不得只寫木火為喜、水金為忌。",
+        "9. 原局干支作用：先列原局固有，再列未來時運的條件式引動，不可混寫。",
+        "10. 人生領域完整分析：至少含性格與決策、讀書與學習、考試與證照、專業技能、設計與創造、領導與管理、事業與創業、財運與投資、合作與合夥、感情與婚姻、家庭與親子、出國留學移民、健康五行傾向、退休與晚年。",
+        "11. 全部大運總覽：依序分析全部大運，每一步都要寫出與原局作用、柱位引動、同干同支、改善調候、扶身與否、主要領域、風險與策略。",
+        "12. 目前大運深入分析：比其他大運更完整，明確指出是否沖月令、與月支/日支/時支關係、是否完整柱伏吟、是否同干或同支重現。",
+        "13. 神煞：只作輔助，篇幅不得超過首次完整分析的 5%。",
+        "14. 全命總結：整理命局最重要的 3 至 5 項結構、最大優勢、最大限制、人生主要功課、最值得累積的能力、長期決策原則、目前大運方向。",
+        "",
+        "首次回覆禁止只說已載入、禁止只重述四柱、禁止先做角色宣告後立刻提問、禁止主動只分析建檔年份。",
+        "首次完整分析結尾固定寫：以上已完成本命與終身大運的第一次完整建檔分析。後續請直接提出事件、人生領域或指定時間，我將只調用與問題相關的命盤資料回答。"
+      ].join("\n");
+    }
+
+    function formatOngoingAdvisoryWorkflow() {
+      return [
+        "## 後續回答模式",
+        "首次完整建檔狀態：已完成後，後續一律改用精準顧問模式。",
+        "後續回答規則：",
+        "1. 第一段先給結論。",
+        "2. 只引用與問題相關的本命、大運與必要時運資料。",
+        "3. 不重新輸出整份命盤，不重列全部大運，不延伸命主未詢問的領域。",
+        "4. 一般回答以 3 至 5 段為原則，依序交代：直接結論、最關鍵命理依據、必要的時運影響、有利條件與風險、行動建議。"
       ].join("\n");
     }
 
@@ -1831,18 +1862,60 @@
           risk: "若連續被忌神或外部壓力推著走，容易把風險感內化成遲疑或自我壓迫。"
         },
         {
-          title: "事業與工作",
+          title: "讀書與學習",
+          basis: [`偏印與印根`, `月令${chart.pillars.month.branchMainTenGod}`, `日主承載${sectionMap["day-master-strength"]?.subtitle ?? "待判"}`],
+          reasoning: "學習力不是單看聰明，而是看印星能否吸收、傷官能否整理、七殺壓力能否轉成紀律，與日主承載是否足夠。",
+          strength: "若節奏穩定，通常適合把知識拆模組、做筆記、反覆整理後再輸出。",
+          risk: "外務太多或壓力失衡時，容易出現學得多卻來不及沉澱的情況。"
+        },
+        {
+          title: "考試與證照",
+          basis: [`月令${chart.pillars.month.branchMainTenGod}`, `日主承載${sectionMap["day-master-strength"]?.subtitle ?? "待判"}`, `原局作用${interactionSummary}`],
+          reasoning: "規則型考試看的是七殺或官殺壓力能否被承接，印星能否穩住理解，食傷能否在時間限制中正常輸出。",
+          strength: "若有固定複習節奏與明確標準，臨場反而較容易把壓力轉成表現。",
+          risk: "遇到沖月令、作息失衡或過度逼身時，臨場失常機率會變高。"
+        },
+        {
+          title: "專業技能",
+          basis: [`時柱${chart.pillars.hour.pillar}`, `食傷與財官承接`, `目前大運${currentLuckCycle?.pillar ?? "待定"}`],
+          reasoning: "專業技能的關鍵不只是會不會，而是能不能把技能變成案例、作品、流程與可驗證成果。",
+          strength: "若能持續輸出並定期整理，技術資產會比表面速度更有長線價值。",
+          risk: "只吸收不輸出，或只做事不整理，容易形成學多做少或做多難複用。"
+        },
+        {
+          title: "設計與創造",
+          basis: [`偏印與食傷`, `時柱${chart.pillars.hour.pillar}`, `調候${sectionMap["climate-adjustment"]?.subtitle ?? "待判"}`],
+          reasoning: "創造力要看靈感是否能被整理、設計感是否能落成作品，以及抽象理解能否接上現實交付。",
+          strength: "若節奏對了，適合做內容、設計、品牌或技術與創意整合型輸出。",
+          risk: "偏氣過旺時，容易靈感很多，但卡在完成度、穩定度或落地節奏。"
+        },
+        {
+          title: "領導與管理",
+          basis: [`月令${chart.pillars.month.branchMainTenGod}`, `年柱${chart.pillars.year.pillar}`, `目前大運${currentLuckCycle?.pillar ?? "待定"}`],
+          reasoning: "領導不是只看權力，而是看責任壓力、規則感、資源調度與界線感能不能同時承接。",
+          strength: "資源與秩序穩時，較能在高標準場域裡扛起責任與整合人事。",
+          risk: "若先天就偏容易承壓，時運又持續逼身，管理很容易先變成自我消耗。"
+        },
+        {
+          title: "事業與創業",
           basis: [`月柱${chart.pillars.month.pillar}`, `時柱${chart.pillars.hour.pillar}`, `目前大運${currentLuckCycle?.pillar ?? "待定"}`],
           reasoning: `事業主軸先看月柱的結構，再看時柱能否把能力落成作品與成果；目前大運決定這條線是擴張、整頓，還是先補根。`,
           strength: "當命局所喜能被工作節奏承接時，成果累積會比短期爆發更穩。",
           risk: "若時運同時壓月令與日主，工作容易變成只剩責任，缺少可持續的輸出感。"
         },
         {
-          title: "財運與資源",
+          title: "財運與投資",
           basis: [`時干${chart.pillars.hour.stem}${chart.pillars.hour.tenGodStem}`, `日主旺衰${sectionMap["day-master-strength"]?.subtitle ?? "待判"}`, `用神${favorableSummary.favorable.join("、")}`],
           reasoning: `財務不能只看財星透不透，還要看日主承不承得住、資源調度是否順、以及大運是否把財星變成成果或壓力。`,
           strength: "若先把節奏、現金流與風險邊界做清楚，財運通常能走得更久。",
           risk: "承載不足時硬接現實責任，常見表現不是沒機會，而是有機會卻消化得很辛苦。"
+        },
+        {
+          title: "合作與合夥",
+          basis: [`原局作用${interactionSummary}`, `月柱${chart.pillars.month.pillar}`, `日柱${chart.pillars.day.pillar}`],
+          reasoning: "合作與合夥看的是權責、決策權、現金流與界線能否講清楚，而不是單看有人脈或資源就成立。",
+          strength: "角色清楚、利益與責任分明時，合作能放大效率與成果。",
+          risk: "界線不清或壓力時運重疊時，原局裡容易暗耗的地方會先爆出來。"
         },
         {
           title: "感情與婚姻",
@@ -1852,11 +1925,32 @@
           risk: "若夫妻宮逢沖害或日主承載偏低，常見問題是誤解堆積、節奏錯位與進退失衡。"
         },
         {
+          title: "家庭與親子",
+          basis: [`年柱${chart.pillars.year.pillar}`, `時柱${chart.pillars.hour.pillar}`, `原局作用${interactionSummary}`],
+          reasoning: "家庭與親子要一起看原生責任、照顧模式、晚輩互動與晚景安排，不能只看單一宮位。",
+          strength: "若能把照顧責任與生活界線一起設好，家庭支持常能成為穩定後盾。",
+          risk: "當責任持續集中而缺少界線時，容易同時壓到情緒、作息與現實安排。"
+        },
+        {
+          title: "出國、留學與移民",
+          basis: [`印星與學習能力`, `官財承接`, `目前大運${currentLuckCycle?.pillar ?? "待定"}`],
+          reasoning: "移動與移民不只看驛馬，而要看學習力、財務承接、家庭條件與大運是否支持長期搬移。",
+          strength: "若時運同時補足資源與視野，外地反而可能打開更合適的發展結構。",
+          risk: "若只是為了逃避眼前壓力而移動，原本的節奏問題很可能換地方重演。"
+        },
+        {
           title: "健康五行傾向",
           basis: [`調候${sectionMap["climate-adjustment"]?.subtitle ?? "待判"}`, `五行氣勢${sectionMap["five-element-flow"]?.subtitle ?? "待判"}`, `月令${chart.pillars.month.branch}`],
           reasoning: "健康段落只談五行傾向與生活節奏，不作醫療診斷；重點是看原局偏氣是否在作息、壓力與氣候條件下被放大。 ",
           strength: "作息穩、節律穩時，身心狀態通常也較容易跟著回穩。",
           risk: "若長期逆著原局調候方向生活，容易先在疲勞、循環或壓力調節上出現失衡感。"
+        },
+        {
+          title: "退休與晚年",
+          basis: [`時柱${chart.pillars.hour.pillar}`, `目前大運${currentLuckCycle?.pillar ?? "待定"}`, `日主承載${sectionMap["day-master-strength"]?.subtitle ?? "待判"}`],
+          reasoning: "晚景品質取決於時柱、收入結構、生活節奏與技能能否延續，不是等到退休前才突然處理。",
+          strength: "若中年前就建立穩定技能與節奏，晚年通常較能保有主動性與選擇權。",
+          risk: "若前段人生長期透支、責任失衡或財務結構脆弱，晚景壓力往往會提早浮現。"
         }
       ];
       return [
@@ -1951,6 +2045,31 @@
       ].join("\n");
     }
 
+    function formatCurrentLuckDeepDive(source) {
+      const chart = source.chart;
+      const current = source.currentLuck;
+      if (!current) return "## 目前大運深入分析\n目前缺少可對應的大運資料。";
+      const effect = analyzeLuckCycleEffects(chart, current);
+      const { stem, branch } = splitPillar(current.pillar);
+      const stemElementValue = stemElement[stem];
+      const branchElementValue = branchElement[branch];
+      return [
+        "## 目前大運深入分析",
+        `- 目前大運：${current.pillar}（${current.yearStart}-${current.yearEnd}）`,
+        `- 天干十神：${stem}${current.stemTenGod}；${describeElementEffect(chart.dayMaster.element, stemElementValue)}。`,
+        `- 地支主氣十神：${branch}${current.branchTenGod}；${describeElementEffect(chart.dayMaster.element, branchElementValue)}。`,
+        `- 沖月令：${effect.monthConflict ? "是" : "否"}`,
+        `- 與月支：${effect.relations.filter((relation) => relation.targetKey === "month").map((relation) => relation.label).join("、") || "無"}`,
+        `- 與日支：${effect.relations.filter((relation) => relation.targetKey === "day").map((relation) => relation.label).join("、") || "無"}`,
+        `- 與時支：${effect.relations.filter((relation) => relation.targetKey === "hour").map((relation) => relation.label).join("、") || "無"}`,
+        `- 完整柱伏吟：${effect.fullPillarRepeat ? "是" : "否"}`,
+        `- 天干同干：${effect.stemRepeat ? "是" : "否"}`,
+        `- 地支同支重現：${effect.branchRepeat ? "是" : "否"}${effect.branchRepeat ? `，${effect.repeatedBranchNote}` : ""}`,
+        "",
+        "此運必須比其他大運分析更深，明確說出它怎麼把命主的壓力、責任、關係、生活安排與成果承接重新排位。若有子未害、同支重現、雙重沖動等現象，必須直接寫明，不可模糊成一般變動。"
+      ].join("\n");
+    }
+
     function formatMemoryProtocol() {
       return [
         "## 對話與記憶規則",
@@ -1981,6 +2100,15 @@
         "## 十、結論",
         "",
         "每一段都要有依據與結論，並使用條件式語句，不作絕對預言。"
+      ].join("\n");
+    }
+
+    function formatBuildMetadata(source) {
+      return [
+        "## 建檔資訊",
+        `- 建檔時所處大運：${source.currentLuck ? `${source.currentLuck.pillar}（${source.currentLuck.yearStart}-${source.currentLuck.yearEnd}）` : "依網站既有結果"}`,
+        `- 建檔年份：${source.metadata.targetYear ?? "未提供"}`,
+        "建檔年份只作版本記錄，不代表命主正在詢問該流年。除非命主明確詢問，AI 不得主動分析建檔年份。"
       ].join("\n");
     }
 
@@ -2199,6 +2327,44 @@
       };
     }
 
+    function validateLifetimeAdvisorPrompt(source, prompt) {
+      const requiredSections = [
+        "## 首次使用行為：完整本命建檔論命",
+        "## 後續回答模式",
+        "## 不可變更的定盤資料",
+        "## 目前大運深入分析",
+        "## 建檔資訊"
+      ];
+      const missingInitialSections = requiredSections.filter((heading) => !String(prompt).includes(heading));
+      const ceremonialPatterns = ["尊啟者", "本席", "正式啟動", "完全鎖定", "已完整儲存", "水火既濟", "破局開新", "未未自刑"];
+      const ceremonialLanguage = ceremonialPatterns.filter((phrase) => String(prompt).includes(phrase));
+      const genericLifeDomainSections = ["性格與決策", "讀書與學習", "考試與證照", "專業技能", "設計與創造", "領導與管理", "事業與創業", "財運與投資", "合作與合夥", "感情與婚姻", "家庭與親子", "出國、留學與移民", "健康五行傾向", "退休與晚年"]
+        .filter((title) => !String(prompt).includes(`### ${title}`));
+      const duplicatedLuckCycleSections = source.luckCycles
+        .filter((cycle) => !String(prompt).includes(`### ${cycle.pillar}大運（`))
+        .map((cycle) => cycle.pillar);
+      const buildYearAutoAnalysisDetected = String(prompt).includes("指定流年") || String(prompt).includes("指定流月") || String(prompt).includes("十二流月");
+      const missingFinalSummary = !String(prompt).includes("以上已完成本命與終身大運的第一次完整建檔分析。後續請直接提出事件、人生領域或指定時間，我將只調用與問題相關的命盤資料回答。");
+      return {
+        missingInitialSections,
+        genericLifeDomainSections,
+        duplicatedLuckCycleSections,
+        incorrectChartReferences: [],
+        incorrectTenGodReferences: [],
+        incorrectNatalInteractions: [],
+        incorrectFuYinLabels: [],
+        ceremonialLanguage,
+        buildYearAutoAnalysisDetected,
+        missingFinalSummary,
+        passed: missingInitialSections.length === 0
+          && genericLifeDomainSections.length === 0
+          && duplicatedLuckCycleSections.length === 0
+          && ceremonialLanguage.length === 0
+          && !buildYearAutoAnalysisDetected
+          && !missingFinalSummary
+      };
+    }
+
     function countOccurrences(haystack, needle) {
       if (!needle) return 0;
       return String(haystack).split(needle).length - 1;
@@ -2219,6 +2385,7 @@
       const genericSectionCount = (String(prompt).match(/十神、格局、調候皆以網站定盤為準/g) ?? []).length;
       const sourceValidation = validateLifetimeAdvisorSource(source);
       const promptValidation = validateGeneratedLifetimePrompt(source, prompt);
+      const workflowValidation = validateLifetimeAdvisorPrompt(source, prompt);
       const unresolvedPlaceholderCount = promptValidation.unresolvedPlaceholders.length;
       const duplicatedLuckCycleParagraphCount = Math.max(0, ((String(prompt).match(/【此運策略】/g) ?? []).length) - new Set((source.luckCycles ?? []).map((cycle) => cycle.pillar)).size);
       const missingEvidenceSections = [];
@@ -2238,11 +2405,18 @@
         - promptValidation.foreignChartContamination.length * 15
         - promptValidation.repeatedTemplateSentences.length * 4
         - promptValidation.contradictoryStrengthLabels.length * 12
+        - workflowValidation.missingInitialSections.length * 8
+        - workflowValidation.genericLifeDomainSections.length * 4
+        - workflowValidation.duplicatedLuckCycleSections.length * 3
+        - workflowValidation.ceremonialLanguage.length * 15
+        - (workflowValidation.buildYearAutoAnalysisDetected ? 12 : 0)
+        - (workflowValidation.missingFinalSummary ? 12 : 0)
         - unresolvedPlaceholderCount * 10
         - duplicatedLuckCycleParagraphCount * 8
         - missingEvidenceSections.length * 5);
       return {
         ...promptValidation,
+        ...workflowValidation,
         sourceErrors: sourceValidation.errors,
         repeatedSentenceCount,
         genericSectionCount,
@@ -2251,7 +2425,7 @@
         duplicatedLuckCycleParagraphCount,
         missingEvidenceSections,
         score,
-        passed: sourceValidation.passed && promptValidation.passed
+        passed: sourceValidation.passed && promptValidation.passed && workflowValidation.passed
       };
     }
 
@@ -2290,18 +2464,17 @@ ${JSON.stringify(payload, null, 2)}`;
       const source = data.source ?? createLifetimeAdvisorSource(data.payload, data.sections, data.annualMonths, data.shenShaResult);
       const { chart } = source;
       const shenShaResult = data.shenShaResult;
-      const annual = chart.annualLuck;
-      const annualMonthText = (data.annualMonths ?? []).length
-        ? data.annualMonths.map((month) => `${month.solarTermName}${month.pillar}`).join("｜")
-        : "本次尚未載入完整流月資料";
       const instructionBlock = [
         `# ${getAdvisorDisplayName(chart)}｜終身八字 AI 命理顧問檔案`,
         "",
         formatLifetimeAdvisorRules(source),
         "",
+        formatInitialFullProfileWorkflow(),
+        "",
+        formatOngoingAdvisoryWorkflow(),
+        "",
         `- 生成版本：${source.metadata.version}`,
-        `- 對應四柱：${chart.pillars.year.pillar} ${chart.pillars.month.pillar} ${chart.pillars.day.pillar} ${chart.pillars.hour.pillar}`,
-        `- 指定流年：${annual ? `${annual.year} ${annual.pillar}` : "未指定"}`
+        `- 對應四柱：${chart.pillars.year.pillar} ${chart.pillars.month.pillar} ${chart.pillars.day.pillar} ${chart.pillars.hour.pillar}`
       ].join("\n");
       const knowledgeBlock = [
         formatLifetimeAdvisorIdentity(source),
@@ -2316,6 +2489,8 @@ ${JSON.stringify(payload, null, 2)}`;
         formatLifeDomainKnowledge(source),
         "",
         formatLuckCycleTimeline(source),
+        "",
+        formatCurrentLuckDeepDive(source),
         "",
         "# 四、輔助資料",
         "## 神煞",
@@ -2332,10 +2507,8 @@ ${JSON.stringify(payload, null, 2)}`;
         "",
         formatAdvisorAnswerProtocol(),
         "",
-        "## 本次詢問資料",
-        `- 目前所處大運：${source.currentLuck ? `${source.currentLuck.pillar}（${source.currentLuck.yearStart}-${source.currentLuck.yearEnd}）` : "依網站既有結果"}`,
-        `- 指定流年：${annual ? `${annual.year} ${annual.pillar}` : "未指定"}`,
-        `- 指定流月：${annualMonthText}`,
+        formatBuildMetadata(source),
+        "",
         "- 使用本 Prompt 時，若另有具體問題、指定日期、事件背景與已發生事實，請在提問時補充。",
         "- 若沒有額外時點條件，則以原局與大運層級做長期分析。"
       ].join("\n");
@@ -2639,7 +2812,7 @@ ${JSON.stringify(payload, null, 2)}`;
           </div>
         </div>
         ${blocked ? `<p class="subtitle">此命盤的 AI 顧問檔案尚未通過一致性檢查，請重新產生或聯絡管理者。</p>` : ""}
-        ${current.qualityReport && isDevelopmentMode() && (current.qualityReport.score < 85 || !current.qualityReport.passed) ? `<p class="subtitle">開發檢查：品質分數 ${current.qualityReport.score}、原局作用異常 ${current.qualityReport.invalidNatalInteractionCount}、圖表錯置 ${current.qualityReport.chartConsistencyErrors.length}、十神錯誤 ${current.qualityReport.tenGodErrors.length}、藏干錯誤 ${current.qualityReport.hiddenStemErrors.length}、大運錯誤 ${current.qualityReport.luckCycleErrors.length}、模板重複 ${current.qualityReport.repeatedTemplateSentences.length}。</p>` : ""}
+        ${current.qualityReport && isDevelopmentMode() && (current.qualityReport.score < 85 || !current.qualityReport.passed) ? `<p class="subtitle">開發檢查：品質分數 ${current.qualityReport.score}、原局作用異常 ${current.qualityReport.invalidNatalInteractionCount}、圖表錯置 ${current.qualityReport.chartConsistencyErrors.length}、十神錯誤 ${current.qualityReport.tenGodErrors.length}、藏干錯誤 ${current.qualityReport.hiddenStemErrors.length}、大運錯誤 ${current.qualityReport.luckCycleErrors.length}、缺段 ${current.qualityReport.missingInitialSections?.length ?? 0}、建檔流年誤導 ${current.qualityReport.buildYearAutoAnalysisDetected ? 1 : 0}、儀式化語言 ${current.qualityReport.ceremonialLanguage?.length ?? 0}、模板重複 ${current.qualityReport.repeatedTemplateSentences.length}。</p>` : ""}
         <pre id="prompt-output" class="prompt-box">${escapeHtml(current.prompt)}</pre>
       `;
     }
