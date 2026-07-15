@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs/promises");
 const crypto = require("crypto");
+const { promisify } = require("util");
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -15,6 +16,7 @@ const photoStorageRoot = process.env.PHOTO_STORAGE_DIR || path.join(root, "_stor
 const photoMetadataPath = path.join(photoStorageRoot, "metadata.json");
 const r2MetadataKey = "_metadata/photo-cloud.json";
 const baziProfileStorageRoot = process.env.BAZI_PROFILE_STORAGE_DIR || path.join(root, "_storage", "bazi-profiles");
+const baziAuthStorageRoot = process.env.BAZI_AUTH_STORAGE_DIR || path.join(root, "_storage", "bazi-auth");
 const storageProvider = (process.env.PHOTO_STORAGE_PROVIDER || "local").toLowerCase();
 const r2Bucket = process.env.R2_BUCKET || "";
 const r2PublicBaseUrl = (process.env.R2_PUBLIC_BASE_URL || "").replace(/\/$/, "");
@@ -22,12 +24,23 @@ const r2Client = createR2Client();
 const activeStorageProvider = storageProvider === "r2" && r2Client ? "r2" : "local";
 const webPhotoMaxBytes = 600 * 1024;
 const webPhotoMaxEdge = 1800;
+const baziSessionCookie = "louisko_bazi_session";
+const baziSessionMaxAgeMs = 30 * 24 * 60 * 60 * 1000;
+const scryptAsync = promisify(crypto.scrypt);
 
 app.disable("x-powered-by");
-app.use(cors());
+app.set("trust proxy", 1);
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || origin === "https://louisko.com" || origin === "https://www.louisko.com" || origin === "https://louisko-node-photo.zeabur.app" || /^https?:\/\/localhost(?::\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(?::\d+)?$/.test(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error("Origin is not allowed."));
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: "1mb" }));
-
-const baziProfileOwnerHeader = "x-bazi-owner-key";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -45,10 +58,87 @@ const photoUpload = multer({
   },
 });
 
+app.get("/api/bazi/auth/me", async (req, res) => {
+  try {
+    const user = await getBaziSessionUser(req, res);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ ok: true, authenticated: Boolean(user), user: user ? publicBaziUser(user) : null });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: "BAZI_AUTH_READ_FAILED", message: "Unable to read the Bazi account session." });
+  }
+});
+
+app.post("/api/bazi/auth/register", async (req, res) => {
+  try {
+    const email = normalizeBaziEmail(req.body?.email);
+    const password = normalizeBaziPassword(req.body?.password);
+    const userKey = baziUserStorageKey(email);
+    const existing = await readBaziJson(userKey);
+    if (existing) throw createBaziProfileError(409, "ACCOUNT_EXISTS", "此電子郵件已建立帳號，請直接登入。");
+
+    const now = new Date().toISOString();
+    const accountId = `acct_${hashBaziValue(email).slice(0, 32)}`;
+    const passwordRecord = await hashBaziPassword(password);
+    const user = {
+      version: 1,
+      accountId,
+      email,
+      passwordSalt: passwordRecord.salt,
+      passwordHash: passwordRecord.hash,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await writeBaziJson(userKey, user);
+
+    const legacyOwnerKey = normalizeLegacyOwnerKey(req.body?.legacyOwnerKey);
+    if (legacyOwnerKey) {
+      const legacyProfiles = await readLegacyBaziProfiles(legacyOwnerKey);
+      if (legacyProfiles.length) await writeBaziProfiles(accountId, legacyProfiles);
+    }
+
+    const token = await createBaziSession(user);
+    setBaziSessionCookie(req, res, token);
+    const profiles = await readBaziProfiles(accountId);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.status(201).json({ ok: true, user: publicBaziUser(user), profiles });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ ok: false, error: error.code || "BAZI_ACCOUNT_REGISTER_FAILED", message: error.message });
+  }
+});
+
+app.post("/api/bazi/auth/login", async (req, res) => {
+  try {
+    const email = normalizeBaziEmail(req.body?.email);
+    const password = normalizeBaziPassword(req.body?.password);
+    const user = await readBaziJson(baziUserStorageKey(email));
+    if (!user || !(await verifyBaziPassword(password, user))) {
+      throw createBaziProfileError(401, "INVALID_CREDENTIALS", "電子郵件或密碼不正確。");
+    }
+    const token = await createBaziSession(user);
+    setBaziSessionCookie(req, res, token);
+    const profiles = await readBaziProfiles(user.accountId);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ ok: true, user: publicBaziUser(user), profiles });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ ok: false, error: error.code || "BAZI_ACCOUNT_LOGIN_FAILED", message: error.message });
+  }
+});
+
+app.post("/api/bazi/auth/logout", async (req, res) => {
+  try {
+    await deleteBaziSession(req);
+    clearBaziSessionCookie(req, res);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: "BAZI_LOGOUT_FAILED", message: "Unable to end the Bazi account session." });
+  }
+});
+
 app.get("/api/bazi/profiles", async (req, res) => {
   try {
-    const ownerKey = getBaziOwnerKey(req);
-    const profiles = await readBaziProfiles(ownerKey);
+    const user = await requireBaziSessionUser(req, res);
+    const profiles = await readBaziProfiles(user.accountId);
     res.setHeader("Cache-Control", "private, no-store");
     res.json({ ok: true, profiles });
   } catch (error) {
@@ -58,9 +148,9 @@ app.get("/api/bazi/profiles", async (req, res) => {
 
 app.post("/api/bazi/profiles", async (req, res) => {
   try {
-    const ownerKey = getBaziOwnerKey(req);
+    const user = await requireBaziSessionUser(req, res);
     const profile = normalizeBaziProfile(req.body?.profile || req.body);
-    const profiles = await readBaziProfiles(ownerKey);
+    const profiles = await readBaziProfiles(user.accountId);
     const identity = baziProfileIdentity(profile);
     const existingIndex = profiles.findIndex((item) => baziProfileIdentity(item) === identity);
     const now = new Date().toISOString();
@@ -73,7 +163,7 @@ app.post("/api/bazi/profiles", async (req, res) => {
     };
     if (existingIndex >= 0) profiles[existingIndex] = record;
     else profiles.push(record);
-    await writeBaziProfiles(ownerKey, profiles);
+    await writeBaziProfiles(user.accountId, profiles);
     res.setHeader("Cache-Control", "private, no-store");
     res.json({ ok: true, profile: record, profiles });
   } catch (error) {
@@ -83,12 +173,12 @@ app.post("/api/bazi/profiles", async (req, res) => {
 
 app.delete("/api/bazi/profiles/:profileId", async (req, res) => {
   try {
-    const ownerKey = getBaziOwnerKey(req);
+    const user = await requireBaziSessionUser(req, res);
     const profileId = normalizeId(req.params.profileId);
     if (!profileId) throw createBaziProfileError(400, "INVALID_PROFILE_ID", "Invalid Bazi profile id.");
-    const profiles = await readBaziProfiles(ownerKey);
+    const profiles = await readBaziProfiles(user.accountId);
     const nextProfiles = profiles.filter((profile) => profile.id !== profileId);
-    await writeBaziProfiles(ownerKey, nextProfiles);
+    await writeBaziProfiles(user.accountId, nextProfiles);
     res.setHeader("Cache-Control", "private, no-store");
     res.json({ ok: true, deletedProfileId: profileId, profiles: nextProfiles });
   } catch (error) {
@@ -411,16 +501,183 @@ function createBaziProfileError(statusCode, code, message) {
   return error;
 }
 
-function getBaziOwnerKey(req) {
-  const ownerKey = String(req.get(baziProfileOwnerHeader) || "").trim();
-  if (!/^[a-zA-Z0-9_-]{16,100}$/.test(ownerKey)) {
-    throw createBaziProfileError(400, "INVALID_OWNER_KEY", "A valid Bazi profile owner key is required.");
-  }
-  return ownerKey;
+function hashBaziValue(value) {
+  return crypto.createHash("sha256").update(String(value), "utf8").digest("hex");
 }
 
-function baziProfileStorageKey(ownerKey) {
-  return `_metadata/bazi-profiles/${ownerKey}.json`;
+function normalizeBaziEmail(value) {
+  const email = String(value || "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+    throw createBaziProfileError(422, "INVALID_EMAIL", "請輸入有效的電子郵件地址。");
+  }
+  return email;
+}
+
+function normalizeBaziPassword(value) {
+  const password = String(value || "");
+  if (password.length < 8 || password.length > 128) {
+    throw createBaziProfileError(422, "INVALID_PASSWORD", "密碼長度必須為 8 至 128 個字元。");
+  }
+  return password;
+}
+
+function normalizeLegacyOwnerKey(value) {
+  const ownerKey = String(value || "").trim();
+  return /^[a-zA-Z0-9_-]{16,100}$/.test(ownerKey) ? ownerKey : "";
+}
+
+function baziAuthStorageKey(relativeKey) {
+  return `_metadata/bazi-auth/${relativeKey}`;
+}
+
+function baziAuthFilePath(relativeKey) {
+  if (!/^[a-zA-Z0-9_/-]+\.json$/.test(relativeKey)) throw new Error("Invalid Bazi auth storage key.");
+  return path.join(baziAuthStorageRoot, relativeKey);
+}
+
+function baziUserStorageKey(email) {
+  return `users/${hashBaziValue(email)}.json`;
+}
+
+function baziSessionStorageKey(token) {
+  return `sessions/${hashBaziValue(token)}.json`;
+}
+
+function baziProfileStorageKey(accountId) {
+  return `_metadata/bazi-profiles/accounts/${accountId}.json`;
+}
+
+async function readBaziJson(relativeKey) {
+  if (activeStorageProvider === "r2") {
+    try {
+      const response = await r2Client.send(new GetObjectCommand({ Bucket: r2Bucket, Key: baziAuthStorageKey(relativeKey) }));
+      return JSON.parse(await streamToString(response.Body));
+    } catch (error) {
+      const code = error?.name || error?.Code || error?.$metadata?.httpStatusCode;
+      if (code !== "NoSuchKey" && code !== 404) console.warn("R2 Bazi auth read failed:", error.message);
+      return null;
+    }
+  }
+
+  try {
+    return JSON.parse(await fs.readFile(baziAuthFilePath(relativeKey), "utf8"));
+  } catch (error) {
+    if (error.code !== "ENOENT") console.warn("Bazi auth read failed:", error.message);
+    return null;
+  }
+}
+
+async function writeBaziJson(relativeKey, value) {
+  const body = `${JSON.stringify(value, null, 2)}\n`;
+  if (activeStorageProvider === "r2") {
+    await r2Client.send(new PutObjectCommand({
+      Bucket: r2Bucket,
+      Key: baziAuthStorageKey(relativeKey),
+      Body: body,
+      ContentType: "application/json; charset=utf-8",
+      CacheControl: "private, no-store",
+    }));
+    return;
+  }
+  const filePath = baziAuthFilePath(relativeKey);
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, body);
+}
+
+async function deleteBaziJson(relativeKey) {
+  if (activeStorageProvider === "r2") {
+    await r2Client.send(new DeleteObjectCommand({ Bucket: r2Bucket, Key: baziAuthStorageKey(relativeKey) }));
+    return;
+  }
+  await fs.rm(baziAuthFilePath(relativeKey), { force: true });
+}
+
+async function hashBaziPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
+  const derivedKey = await scryptAsync(password, salt, 32, { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 });
+  return { salt, hash: Buffer.from(derivedKey).toString("hex") };
+}
+
+async function verifyBaziPassword(password, user) {
+  if (!user?.passwordSalt || !user?.passwordHash) return false;
+  const derived = await hashBaziPassword(password, user.passwordSalt);
+  const expected = Buffer.from(user.passwordHash, "hex");
+  const actual = Buffer.from(derived.hash, "hex");
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
+function publicBaziUser(user) {
+  return { accountId: user.accountId, email: user.email, createdAt: user.createdAt };
+}
+
+function getCookieValue(req, name) {
+  const cookies = String(req.headers.cookie || "").split(";");
+  for (const cookie of cookies) {
+    const separator = cookie.indexOf("=");
+    if (separator < 0) continue;
+    const key = cookie.slice(0, separator).trim();
+    if (key === name) return decodeURIComponent(cookie.slice(separator + 1).trim());
+  }
+  return "";
+}
+
+async function createBaziSession(user) {
+  const token = crypto.randomBytes(32).toString("hex");
+  await writeBaziJson(baziSessionStorageKey(token), {
+    version: 1,
+    accountId: user.accountId,
+    email: user.email,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + baziSessionMaxAgeMs).toISOString(),
+  });
+  return token;
+}
+
+function setBaziSessionCookie(req, res, token) {
+  res.cookie(baziSessionCookie, token, {
+    httpOnly: true,
+    secure: process.env.BAZI_COOKIE_SECURE !== "false",
+    sameSite: "lax",
+    maxAge: baziSessionMaxAgeMs,
+    path: "/",
+  });
+}
+
+function clearBaziSessionCookie(req, res) {
+  res.clearCookie(baziSessionCookie, {
+    httpOnly: true,
+    secure: process.env.BAZI_COOKIE_SECURE !== "false",
+    sameSite: "lax",
+    path: "/",
+  });
+}
+
+async function deleteBaziSession(req) {
+  const token = getCookieValue(req, baziSessionCookie);
+  if (/^[a-f0-9]{64}$/.test(token)) await deleteBaziJson(baziSessionStorageKey(token));
+}
+
+async function getBaziSessionUser(req, res) {
+  const token = getCookieValue(req, baziSessionCookie);
+  if (!/^[a-f0-9]{64}$/.test(token)) return null;
+  const session = await readBaziJson(baziSessionStorageKey(token));
+  if (!session || !session.expiresAt || Date.parse(session.expiresAt) <= Date.now()) {
+    await deleteBaziJson(baziSessionStorageKey(token));
+    clearBaziSessionCookie(req, res);
+    return null;
+  }
+  const user = await readBaziJson(baziUserStorageKey(session.email));
+  if (!user || user.accountId !== session.accountId) {
+    await deleteBaziJson(baziSessionStorageKey(token));
+    clearBaziSessionCookie(req, res);
+    return null;
+  }
+  return user;
+}
+
+async function requireBaziSessionUser(req, res) {
+  const user = await getBaziSessionUser(req, res);
+  if (!user) throw createBaziProfileError(401, "AUTHENTICATION_REQUIRED", "請先登入 Bazi 命主帳號。");
+  return user;
 }
 
 function baziProfileIdentity(profile) {
@@ -498,11 +755,19 @@ function normalizeBaziProfile(value) {
 }
 
 async function readBaziProfiles(ownerKey) {
+  return readBaziProfileFile(baziProfileStorageKey(ownerKey), `${ownerKey}.json`);
+}
+
+async function readLegacyBaziProfiles(ownerKey) {
+  return readBaziProfileFile(`_metadata/bazi-profiles/${ownerKey}.json`, `${ownerKey}.json`);
+}
+
+async function readBaziProfileFile(storageKey, localFileName) {
   if (activeStorageProvider === "r2") {
     try {
       const response = await r2Client.send(new GetObjectCommand({
         Bucket: r2Bucket,
-        Key: baziProfileStorageKey(ownerKey),
+        Key: storageKey,
       }));
       const parsed = JSON.parse(await streamToString(response.Body));
       return Array.isArray(parsed.profiles) ? parsed.profiles.map(normalizeBaziProfile) : [];
@@ -513,7 +778,7 @@ async function readBaziProfiles(ownerKey) {
     }
   }
 
-  const filePath = path.join(baziProfileStorageRoot, `${ownerKey}.json`);
+  const filePath = path.join(baziProfileStorageRoot, localFileName);
   await fs.mkdir(baziProfileStorageRoot, { recursive: true });
   try {
     const parsed = JSON.parse(await fs.readFile(filePath, "utf8"));

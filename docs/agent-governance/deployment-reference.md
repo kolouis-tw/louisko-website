@@ -12,7 +12,8 @@ Use this file when the task touches deployment, domains, runtime entrypoints, Do
 - Production Photo page: `https://louisko.com/apps/photo/`
 - Production Photo albums API: `https://louisko.com/api/photo-cloud/albums`
 - Production Photo object API: `https://louisko.com/api/photo-cloud/object?key=<storageKey>`
-- Production Bazi profiles API: `https://louisko.com/api/bazi/profiles`（需 `X-Bazi-Owner-Key`）
+- Production Bazi auth API: `https://louisko.com/api/bazi/auth/{me,register,login,logout}`（HttpOnly session cookie）
+- Production Bazi profiles API: `https://louisko.com/api/bazi/profiles`（需登入帳號）
 - GitHub Pages mirror: `https://kolouis-tw.github.io/louisko-website/`
 - Repository: `https://github.com/kolouis-tw/louisko-website`
 

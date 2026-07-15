@@ -2,17 +2,16 @@
 
 本文件用來記錄每次 `louisko.com` 網頁修改、GitHub 同步與 Zeabur 部署。
 
-## 2026-07-16 - 命主紀錄改為雲端保存
+## 2026-07-16 - 命主紀錄改為帳號雲端同步
 
-- 變更目的：將命主紀錄從僅 `localStorage` 改為優先同步 Node／R2 雲端，並保留本機 fallback。
+- 變更目的：將命主紀錄從瀏覽器 owner key 雲端保存升級為真正的帳號登入與跨裝置同步，並保留本機 fallback。
 - 修改檔案：`server.js`、`apps/bazi/index.html`、`apps/bazi/README.md`、`apps/bazi/SMOKE_TEST.md`、`docs/agent-governance/deployment-reference.md`。
-- API：`GET/POST/DELETE /api/bazi/profiles`，以 `X-Bazi-Owner-Key` 分隔瀏覽器資料。
-- 隱私邊界：目前沒有帳號登入或跨裝置同步碼；owner key 遺失後無法從另一台裝置取回同一組紀錄。
-- 本機驗證：server 語法、Bazi inline script、API owner 隔離與 `npm run site:verify` 通過。
-- GitHub commit：`8fe48d64166007bc0154c63ac9e40a5f45a54f89`（`Store bazi profiles in cloud API`）。
-- GitHub push：已推送到 `kolouis-tw/louisko-website` 的 `main`。
-- Zeabur 部署：`6a57bcb53d3d099ed2f12557`，狀態 `RUNNING`。
-- 線上驗證：`https://louisko.com/apps/bazi/` 已載入雲端同步程式；未帶 `X-Bazi-Owner-Key` 的 API 請求回傳 `400 INVALID_OWNER_KEY`，帶有效識別碼的 `GET /api/bazi/profiles` 回傳 `200 {"ok":true,"profiles":[]}`。
+- API：`/api/bazi/auth/{me,register,login,logout}` 與登入後的 `GET/POST/DELETE /api/bazi/profiles`。
+- 隱私邊界：密碼以加鹽 scrypt 雜湊保存，登入使用 HttpOnly session cookie；命主資料以帳號 ID 分隔。建立帳號時遷移目前瀏覽器舊 owner key 紀錄。
+- 本機驗證：server 語法、Bazi inline script、帳號註冊／登入／登出／未登入拒絕／跨登入讀取測試與 `git diff --check` 通過。
+- GitHub push：待本次變更確認後處理。
+- Zeabur 部署：待本次變更確認後處理。
+- 線上驗證：待部署後補記。
 
 ## 2026-07-16 - 修正命主姓名輸入框視覺一致性
 

@@ -139,6 +139,54 @@
       margin-bottom: 22px;
     }
 
+    .profile-account {
+      margin-bottom: 24px;
+      padding: 18px;
+      border: 1px solid rgba(47, 51, 56, 0.18);
+      border-radius: 6px;
+      background: #fffdf4;
+    }
+
+    .profile-account .section-title {
+      margin: 0 0 12px;
+      font-size: 25px;
+    }
+
+    .profile-auth-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr);
+      gap: 12px;
+    }
+
+    .profile-auth-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .profile-auth-actions button {
+      min-width: 180px;
+      width: auto;
+      height: 52px;
+      padding: 0 16px;
+      font-size: 19px;
+    }
+
+    .profile-auth-status,
+    .profile-account-label {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .profile-account-label {
+      margin: 0;
+      color: var(--text);
+    }
+
     .profile-search {
       flex: 1;
       height: 58px;
@@ -256,7 +304,9 @@
 
     select,
     input[type="number"],
-    input[type="text"] {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
       width: 100%;
       height: 68px;
       padding: 0 48px 0 18px;
@@ -657,6 +707,18 @@
         display: grid;
       }
 
+      .profile-auth-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-auth-actions {
+        display: grid;
+      }
+
+      .profile-auth-actions button {
+        width: 100%;
+      }
+
       .profile-search {
         width: 100%;
         font-size: 19px;
@@ -677,7 +739,9 @@
 
       select,
       input[type="number"],
-      input[type="text"] {
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
         height: 58px;
         padding-left: 12px;
         font-size: 21px;
@@ -871,6 +935,26 @@
     </section>
 
     <section class="tab-panel" id="profiles-panel" hidden>
+      <section class="profile-account" aria-labelledby="profile-account-heading">
+        <h2 id="profile-account-heading" class="section-title">跨裝置同步</h2>
+        <div id="profile-auth-form">
+          <div class="profile-auth-grid">
+            <input id="bazi-account-email" type="email" autocomplete="email" placeholder="電子郵件" aria-label="電子郵件">
+            <input id="bazi-account-password" type="password" autocomplete="current-password" placeholder="密碼（至少 8 個字元）" aria-label="密碼">
+          </div>
+          <div class="profile-auth-actions">
+            <button id="bazi-login" type="button">登入並同步</button>
+            <button id="bazi-register" class="secondary-button" type="button">建立帳號並同步</button>
+          </div>
+        </div>
+        <div id="profile-account-session" hidden>
+          <p class="profile-account-label" id="profile-account-label"></p>
+          <div class="profile-auth-actions">
+            <button id="bazi-logout" class="secondary-button" type="button">登出</button>
+          </div>
+        </div>
+        <p class="profile-auth-status" id="profile-auth-status" aria-live="polite">登入後，命主紀錄會隨帳號在不同裝置同步。</p>
+      </section>
       <div class="profile-toolbar">
         <input class="profile-search" id="profile-search" type="search" placeholder="搜尋命主姓名或西元出生年" aria-label="搜尋命主">
       </div>
@@ -954,6 +1038,7 @@
     };
     const PROFILE_STORAGE_KEY = "louisko_bazi_profiles_v1";
     const PROFILE_OWNER_KEY_STORAGE_KEY = "louisko_bazi_profile_owner_v1";
+    const BAZI_AUTH_API_PATH = "/api/bazi/auth";
     const BAZI_PROFILE_API_PATH = "/api/bazi/profiles";
     const BAZI_CLOUD_API_BASES = ["https://louisko.com", "https://louisko-node-photo.zeabur.app"];
     const LUNAR_MIN_YEAR = 1900;
@@ -967,7 +1052,9 @@
     const profileCloudState = {
       available: false,
       ownerKey: null,
-      syncing: false
+      syncing: false,
+      user: null,
+      authBusy: false
     };
 
     function getLunarLibrary() {
@@ -1285,6 +1372,37 @@
       status.classList.toggle("is-cloud", isCloud);
     }
 
+    function setProfileAuthStatus(message) {
+      const status = document.getElementById("profile-auth-status");
+      if (status) status.textContent = message;
+    }
+
+    function getBaziAccountCredentials() {
+      return {
+        email: document.getElementById("bazi-account-email").value.trim(),
+        password: document.getElementById("bazi-account-password").value
+      };
+    }
+
+    function setProfileAuthBusy(isBusy) {
+      profileCloudState.authBusy = isBusy;
+      ["bazi-login", "bazi-register", "bazi-logout"].forEach((id) => {
+        const button = document.getElementById(id);
+        if (button) button.disabled = isBusy;
+      });
+    }
+
+    function renderProfileAccount() {
+      const authForm = document.getElementById("profile-auth-form");
+      const session = document.getElementById("profile-account-session");
+      const label = document.getElementById("profile-account-label");
+      const user = profileCloudState.user;
+      if (!authForm || !session || !label) return;
+      authForm.hidden = Boolean(user);
+      session.hidden = !user;
+      label.textContent = user ? `已登入：${user.email}，命主紀錄會在不同裝置同步。` : "";
+    }
+
     function getBaziProfileOwnerKey() {
       if (profileCloudState.ownerKey) return profileCloudState.ownerKey;
       try {
@@ -1310,14 +1428,13 @@
     }
 
     async function fetchBaziCloud(path, options = {}) {
-      const ownerKey = getBaziProfileOwnerKey();
-      const headers = { ...(options.headers || {}), ["X-Bazi-Owner-Key"]: ownerKey };
+      const headers = { ...(options.headers || {}) };
       if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
       let lastResponse = null;
       let lastError = null;
       for (const base of getBaziCloudApiBases()) {
         try {
-          const response = await fetch(`${base}${path}`, { ...options, headers });
+          const response = await fetch(`${base}${path}`, { ...options, headers, credentials: "include" });
           if (response.status === 404 || response.status === 405) {
             lastResponse = response;
             continue;
@@ -1331,10 +1448,41 @@
       throw lastError || new Error("雲端命主紀錄連線失敗。");
     }
 
+    async function fetchBaziAuth(path, options = {}) {
+      const headers = { ...(options.headers || {}) };
+      if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+      let lastResponse = null;
+      let lastError = null;
+      for (const base of getBaziCloudApiBases()) {
+        try {
+          const response = await fetch(`${base}${path}`, { ...options, headers, credentials: "include" });
+          if (response.status === 404 || response.status === 405) {
+            lastResponse = response;
+            continue;
+          }
+          return response;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      if (lastResponse) return lastResponse;
+      throw lastError || new Error("帳號服務連線失敗。");
+    }
+
+    async function readBaziResponse(response, fallbackMessage) {
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (error) {
+        throw new Error(fallbackMessage);
+      }
+      if (!response.ok) throw new Error(data?.message || fallbackMessage);
+      return data;
+    }
+
     async function getBaziCloudProfiles() {
       const response = await fetchBaziCloud(BAZI_PROFILE_API_PATH, { cache: "no-store" });
-      if (!response.ok) throw new Error(`雲端命主紀錄讀取失敗（${response.status}）。`);
-      const data = await response.json();
+      const data = await readBaziResponse(response, `雲端命主紀錄讀取失敗（${response.status}）。`);
       return Array.isArray(data.profiles) ? data.profiles : [];
     }
 
@@ -1343,47 +1491,81 @@
         method: "POST",
         body: JSON.stringify({ profile })
       });
-      if (!response.ok) throw new Error(`雲端命主紀錄儲存失敗（${response.status}）。`);
-      const data = await response.json();
+      const data = await readBaziResponse(response, `雲端命主紀錄儲存失敗（${response.status}）。`);
       return Array.isArray(data.profiles) ? data.profiles : [];
     }
 
     async function deleteBaziCloudProfile(id) {
       const response = await fetchBaziCloud(`${BAZI_PROFILE_API_PATH}/${encodeURIComponent(id)}`, { method: "DELETE" });
-      if (!response.ok) throw new Error(`雲端命主紀錄刪除失敗（${response.status}）。`);
-      const data = await response.json();
+      const data = await readBaziResponse(response, `雲端命主紀錄刪除失敗（${response.status}）。`);
       return Array.isArray(data.profiles) ? data.profiles : [];
+    }
+
+    async function getBaziAuthSession() {
+      const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/me`, { cache: "no-store" });
+      return readBaziResponse(response, `帳號狀態讀取失敗（${response.status}）。`);
+    }
+
+    async function submitBaziAuth(action, credentials, extra = {}) {
+      const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/${action}`, {
+        method: "POST",
+        body: JSON.stringify({ ...credentials, ...extra })
+      });
+      return readBaziResponse(response, action === "register" ? "建立帳號失敗。" : "登入失敗。");
+    }
+
+    async function applyBaziAuthenticatedState(user, profiles, migrateLocal = false) {
+      profileCloudState.user = user;
+      profileCloudState.available = true;
+      renderProfileAccount();
+      let nextProfiles = Array.isArray(profiles) ? profiles : await getBaziCloudProfiles();
+      const localProfiles = getStoredProfiles();
+      if (migrateLocal && !nextProfiles.length && localProfiles.length) {
+        for (const profile of localProfiles) nextProfiles = await postBaziCloudProfile(profile);
+      }
+      writeStoredProfiles(nextProfiles);
+      renderProfiles();
+      setProfileStorageStatus("雲端命主紀錄已同步。", true);
+      setProfileAuthStatus(`已登入：${user.email}。在其他裝置登入同一帳號即可看到相同紀錄。`);
     }
 
     async function initializeBaziProfileCloud() {
       if (profileCloudState.syncing) return;
       profileCloudState.syncing = true;
-      setProfileStorageStatus("正在連線雲端命主紀錄…");
+      setProfileStorageStatus("正在檢查帳號同步狀態…");
       try {
-        const localProfiles = getStoredProfiles();
-        let cloudProfiles = await getBaziCloudProfiles();
-        if (!cloudProfiles.length && localProfiles.length) {
-          for (const profile of localProfiles) cloudProfiles = await postBaziCloudProfile(profile);
+        const session = await getBaziAuthSession();
+        if (session.authenticated && session.user) {
+          await applyBaziAuthenticatedState(session.user, await getBaziCloudProfiles());
+        } else {
+          profileCloudState.user = null;
+          profileCloudState.available = false;
+          renderProfileAccount();
+          setProfileStorageStatus("尚未登入；目前只保留在此瀏覽器，登入後才會跨裝置同步。");
+          setProfileAuthStatus("登入後，命主紀錄會隨帳號在不同裝置同步。已有舊雲端紀錄者，建立帳號時會一併轉入。" );
         }
-        writeStoredProfiles(cloudProfiles);
-        profileCloudState.available = true;
-        setProfileStorageStatus("雲端命主紀錄已連線；目前以此瀏覽器同步識別碼分開，尚未提供帳號跨裝置登入。", true);
         renderProfiles();
       } catch (error) {
         profileCloudState.available = false;
-        setProfileStorageStatus("雲端暫時無法連線，目前只保留在此瀏覽器；連線恢復後可再同步。");
-        console.warn("Bazi cloud profile sync failed:", error);
+        renderProfileAccount();
+        setProfileStorageStatus("帳號服務暫時無法連線，目前只保留在此瀏覽器；請稍後重試登入。");
+        setProfileAuthStatus(error instanceof Error ? error.message : "帳號服務暫時無法連線。" );
+        console.warn("Bazi account session check failed:", error);
       } finally {
         profileCloudState.syncing = false;
       }
     }
 
     async function syncBaziProfileToCloud(profile) {
+      if (!profileCloudState.user) {
+        setProfileStorageStatus("尚未登入；本次紀錄目前只保留在此瀏覽器，登入後才會同步到雲端。");
+        return;
+      }
       try {
         const cloudProfiles = await postBaziCloudProfile(profile);
         writeStoredProfiles(cloudProfiles);
         profileCloudState.available = true;
-        setProfileStorageStatus("雲端命主紀錄已同步；目前以此瀏覽器同步識別碼分開，尚未提供帳號跨裝置登入。", true);
+        setProfileStorageStatus("雲端命主紀錄已同步。", true);
         renderProfiles();
       } catch (error) {
         profileCloudState.available = false;
@@ -1393,6 +1575,10 @@
     }
 
     async function syncDeletedBaziProfileToCloud(id) {
+      if (!profileCloudState.user) {
+        setProfileStorageStatus("已登出；刪除只套用在此瀏覽器的本機紀錄。", false);
+        return;
+      }
       try {
         const cloudProfiles = await deleteBaziCloudProfile(id);
         writeStoredProfiles(cloudProfiles);
@@ -1403,6 +1589,55 @@
         profileCloudState.available = false;
         setProfileStorageStatus("雲端刪除尚未完成；本機紀錄已刪除，請稍後重試。", false);
         console.warn("Bazi cloud profile delete failed:", error);
+      }
+    }
+
+    async function registerBaziAccount() {
+      const credentials = getBaziAccountCredentials();
+      setProfileAuthBusy(true);
+      setProfileAuthStatus("正在建立帳號並同步紀錄…");
+      try {
+        const data = await submitBaziAuth("register", credentials, { legacyOwnerKey: getBaziProfileOwnerKey() });
+        await applyBaziAuthenticatedState(data.user, data.profiles, true);
+        document.getElementById("bazi-account-password").value = "";
+      } catch (error) {
+        setProfileAuthStatus(error instanceof Error ? error.message : "建立帳號失敗，請稍後重試。" );
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    async function loginBaziAccount() {
+      const credentials = getBaziAccountCredentials();
+      setProfileAuthBusy(true);
+      setProfileAuthStatus("正在登入並讀取雲端紀錄…");
+      try {
+        const data = await submitBaziAuth("login", credentials);
+        await applyBaziAuthenticatedState(data.user, data.profiles);
+        document.getElementById("bazi-account-password").value = "";
+      } catch (error) {
+        setProfileAuthStatus(error instanceof Error ? error.message : "登入失敗，請確認帳號與密碼。" );
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    async function logoutBaziAccount() {
+      setProfileAuthBusy(true);
+      try {
+        const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/logout`, { method: "POST", body: "{}" });
+        await readBaziResponse(response, "登出失敗。" );
+        profileCloudState.user = null;
+        profileCloudState.available = false;
+        writeStoredProfiles([]);
+        renderProfileAccount();
+        renderProfiles();
+        setProfileStorageStatus("已登出；請登入後同步命主紀錄。" );
+        setProfileAuthStatus("已登出。為避免共用裝置留下資料，本機快取已清除。" );
+      } catch (error) {
+        setProfileAuthStatus(error instanceof Error ? error.message : "登出失敗，請稍後重試。" );
+      } finally {
+        setProfileAuthBusy(false);
       }
     }
 
@@ -2251,6 +2486,9 @@
     document.getElementById("tab-chart").addEventListener("click", () => showTab("chart"));
     document.getElementById("tab-profiles").addEventListener("click", () => showTab("profiles"));
     document.getElementById("profile-search").addEventListener("input", renderProfiles);
+    document.getElementById("bazi-login").addEventListener("click", loginBaziAccount);
+    document.getElementById("bazi-register").addEventListener("click", registerBaziAccount);
+    document.getElementById("bazi-logout").addEventListener("click", logoutBaziAccount);
     document.getElementById("profile-list").addEventListener("click", (event) => {
       const useButton = event.target.closest("[data-profile-id]");
       if (useButton) {
