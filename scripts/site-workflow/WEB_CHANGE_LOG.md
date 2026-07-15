@@ -2,6 +2,16 @@
 
 本文件用來記錄每次 `louisko.com` 網頁修改、GitHub 同步與 Zeabur 部署。
 
+## 2026-07-16 - 修正命主姓名輸入框視覺一致性
+
+- 變更目的：修正命主姓名 `type=text` 未套用既有表單控制樣式，造成尺寸、內距與日期輸入欄位不一致。
+- 修改檔案：`apps/bazi/index.html`、`apps/bazi/SMOKE_TEST.md`。
+- 資料與演算法：未修改，純 UI 樣式修正。
+- 本機驗證：inline script 語法檢查、曆法回歸檢查與 `npm run site:verify` 待本次完成後補記。
+- GitHub push：待本次變更確認後處理。
+- Zeabur 部署：待本次變更確認後處理。
+- 線上驗證：待部署後補記。
+
 ## 2026-07-16 - 八字命主紀錄與國曆／農曆雙輸入
 
 - 變更目的：在正式八字排盤頁加入命主姓名、命主紀錄分頁、localStorage 儲存與刪除確認，以及國曆／農曆雙向輸入。
@@ -9,10 +19,9 @@
 - 資料邊界：曆法轉換只產生標準陽曆日期；四柱、子時換日、前後節氣起運與十步大運仍沿用原有函式。
 - 儲存方式：`louisko_bazi_profiles_v1`，僅存在目前瀏覽器裝置，不代表雲端同步。
 - 本機驗證：HTML inline script `node --check`、農曆 `2026-06-20 12:30` round-trip、`npm run site:verify` 通過；Playwright CLI 因環境沒有 `npx` 未執行。
-- GitHub commit：`2b957ced1b546c557dc0f1009881b7d6fbff1c03`。
-- GitHub push：已推送 `main`。
-- Zeabur deploy：第一次 deployment `6a57b67d3d3d099ed2f12454` 建置後被取消；第二次 deployment `6a57b6f93d3d099ed2f1245d` 於驗證時仍為 `BUILDING`。
-- 線上驗證：production 仍回傳舊版 ETag `W/"b0e4-19f5f6b5710"`，本次部署尚未上線。
+- GitHub push：待本次變更確認後處理。
+- Zeabur deploy：待本次變更確認後處理。
+- 線上驗證：待部署後補記。
 - 三資料夾同步：目前以 `AI_Web` 單一 repo 為正式來源，本次同步更新此 app 與站台變更紀錄。
 
 ## 記錄格式

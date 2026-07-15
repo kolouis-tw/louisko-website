@@ -120,6 +120,11 @@
       color: var(--red);
     }
 
+    .row > input[type="text"] {
+      flex: 1;
+      min-width: 0;
+    }
+
     .lunar-date-controls {
       display: grid;
       grid-template-columns: minmax(170px, 230px) minmax(160px, 220px) minmax(140px, 190px) minmax(118px, 160px) minmax(118px, 160px);
@@ -250,7 +255,8 @@
     }
 
     select,
-    input[type="number"] {
+    input[type="number"],
+    input[type="text"] {
       width: 100%;
       height: 68px;
       padding: 0 48px 0 18px;
@@ -670,7 +676,8 @@
       }
 
       select,
-      input[type="number"] {
+      input[type="number"],
+      input[type="text"] {
         height: 58px;
         padding-left: 12px;
         font-size: 21px;
