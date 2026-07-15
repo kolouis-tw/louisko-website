@@ -173,6 +173,46 @@
       font-size: 19px;
     }
 
+    .profile-auth-actions .profile-danger-button {
+      border: 2px solid rgba(223, 51, 72, 0.4);
+      background: #ffffff;
+      color: var(--red);
+    }
+
+    .profile-password-reset {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(47, 51, 56, 0.18);
+    }
+
+    .profile-password-reset h3 {
+      margin: 0 0 12px;
+      font-size: 22px;
+    }
+
+    .profile-password-reset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .password-visibility-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .password-visibility-option input {
+      width: 22px;
+      height: 22px;
+      margin: 0;
+      accent-color: var(--blue);
+    }
+
     .profile-auth-status,
     .profile-account-label {
       margin: 12px 0 0;
@@ -711,6 +751,10 @@
         grid-template-columns: 1fr;
       }
 
+      .profile-password-reset-grid {
+        grid-template-columns: 1fr;
+      }
+
       .profile-auth-actions {
         display: grid;
       }
@@ -942,18 +986,34 @@
             <input id="bazi-account-email" type="email" autocomplete="email" placeholder="電子郵件" aria-label="電子郵件">
             <input id="bazi-account-password" type="password" autocomplete="current-password" placeholder="密碼（至少 8 個字元）" aria-label="密碼">
           </div>
+          <label class="password-visibility-option"><input id="bazi-show-password" type="checkbox"> 顯示密碼</label>
           <div class="profile-auth-actions">
             <button id="bazi-login" type="button">登入並同步</button>
             <button id="bazi-register" class="secondary-button" type="button">建立帳號並同步</button>
+            <button id="bazi-forgot-password" class="secondary-button" type="button">忘記密碼</button>
+            <button id="bazi-resend-verification" class="secondary-button" type="button">重新寄驗證信</button>
           </div>
         </div>
         <div id="profile-account-session" hidden>
           <p class="profile-account-label" id="profile-account-label"></p>
           <div class="profile-auth-actions">
             <button id="bazi-logout" class="secondary-button" type="button">登出</button>
+            <button id="bazi-delete-account" class="profile-danger-button" type="button">刪除帳號</button>
           </div>
         </div>
         <p class="profile-auth-status" id="profile-auth-status" aria-live="polite">登入後，命主紀錄會隨帳號在不同裝置同步。</p>
+        <div class="profile-password-reset" id="profile-password-reset" hidden>
+          <h3>重設密碼</h3>
+          <div class="profile-password-reset-grid">
+            <input id="bazi-reset-password" type="password" autocomplete="new-password" placeholder="新密碼（至少 8 個字元）" aria-label="新密碼">
+            <input id="bazi-reset-password-confirm" type="password" autocomplete="new-password" placeholder="再次輸入新密碼" aria-label="確認新密碼">
+          </div>
+          <label class="password-visibility-option"><input id="bazi-show-reset-password" type="checkbox"> 顯示新密碼</label>
+          <div class="profile-auth-actions">
+            <button id="bazi-reset-password-submit" type="button">更新密碼</button>
+          </div>
+          <p class="profile-auth-status" id="profile-reset-status" aria-live="polite"></p>
+        </div>
       </section>
       <div class="profile-toolbar">
         <input class="profile-search" id="profile-search" type="search" placeholder="搜尋命主姓名或西元出生年" aria-label="搜尋命主">
@@ -1049,6 +1109,7 @@
     let activeCalendarType = "solar";
     let lastConvertedSolar = null;
     let lastConvertedLunar = null;
+    let activePasswordResetToken = new URLSearchParams(window.location.search).get("reset") || "";
     const profileCloudState = {
       available: false,
       ownerKey: null,
@@ -1386,7 +1447,7 @@
 
     function setProfileAuthBusy(isBusy) {
       profileCloudState.authBusy = isBusy;
-      ["bazi-login", "bazi-register", "bazi-logout"].forEach((id) => {
+      ["bazi-login", "bazi-register", "bazi-forgot-password", "bazi-resend-verification", "bazi-logout", "bazi-delete-account", "bazi-reset-password-submit"].forEach((id) => {
         const button = document.getElementById(id);
         if (button) button.disabled = isBusy;
       });
@@ -1476,7 +1537,11 @@
       } catch (error) {
         throw new Error(fallbackMessage);
       }
-      if (!response.ok) throw new Error(data?.message || fallbackMessage);
+      if (!response.ok) {
+        const requestError = new Error(data?.message || fallbackMessage);
+        requestError.code = data?.error || "REQUEST_FAILED";
+        throw requestError;
+      }
       return data;
     }
 
@@ -1512,6 +1577,63 @@
         body: JSON.stringify({ ...credentials, ...extra })
       });
       return readBaziResponse(response, action === "register" ? "建立帳號失敗。" : "登入失敗。");
+    }
+
+    async function requestBaziVerificationResend() {
+      const { email } = getBaziAccountCredentials();
+      setProfileAuthBusy(true);
+      setProfileAuthStatus("正在寄送驗證信…");
+      try {
+        const data = await submitBaziAuth("resend-verification", { email });
+        setProfileAuthStatus(data.message || "驗證信已寄出，請檢查信箱。" );
+      } catch (error) {
+        setProfileAuthStatus(error instanceof Error ? error.message : "驗證信寄送失敗。" );
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    async function requestBaziPasswordReset() {
+      const { email } = getBaziAccountCredentials();
+      setProfileAuthBusy(true);
+      setProfileAuthStatus("正在寄送重設密碼信…");
+      try {
+        const data = await submitBaziAuth("forgot-password", { email });
+        setProfileAuthStatus(data.message || "如果帳號存在，重設密碼信已寄出。" );
+      } catch (error) {
+        setProfileAuthStatus(error instanceof Error ? error.message : "重設密碼信寄送失敗。" );
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    async function resetBaziPassword() {
+      const password = document.getElementById("bazi-reset-password").value;
+      const confirmation = document.getElementById("bazi-reset-password-confirm").value;
+      const status = document.getElementById("profile-reset-status");
+      if (password !== confirmation) {
+        status.textContent = "兩次輸入的密碼不一致。";
+        return;
+      }
+      setProfileAuthBusy(true);
+      status.textContent = "正在更新密碼…";
+      try {
+        const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/reset-password`, {
+          method: "POST",
+          body: JSON.stringify({ token: activePasswordResetToken, password })
+        });
+        const data = await readBaziResponse(response, "密碼更新失敗。" );
+        status.textContent = data.message || "密碼已更新，請重新登入。";
+        activePasswordResetToken = "";
+        document.getElementById("profile-password-reset").hidden = true;
+        window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.hash}`);
+        document.getElementById("bazi-reset-password").value = "";
+        document.getElementById("bazi-reset-password-confirm").value = "";
+      } catch (error) {
+        status.textContent = error instanceof Error ? error.message : "密碼更新失敗。";
+      } finally {
+        setProfileAuthBusy(false);
+      }
     }
 
     async function applyBaziAuthenticatedState(user, profiles, migrateLocal = false) {
@@ -1598,7 +1720,11 @@
       setProfileAuthStatus("正在建立帳號並同步紀錄…");
       try {
         const data = await submitBaziAuth("register", credentials, { legacyOwnerKey: getBaziProfileOwnerKey() });
-        await applyBaziAuthenticatedState(data.user, data.profiles, true);
+        profileCloudState.user = null;
+        profileCloudState.available = false;
+        renderProfileAccount();
+        setProfileStorageStatus("尚未完成 Email 驗證；驗證後登入即可跨裝置同步。" );
+        setProfileAuthStatus(`驗證信已寄至 ${data.email}，請點擊信中的連結完成驗證。`);
         document.getElementById("bazi-account-password").value = "";
       } catch (error) {
         setProfileAuthStatus(error instanceof Error ? error.message : "建立帳號失敗，請稍後重試。" );
@@ -1616,7 +1742,11 @@
         await applyBaziAuthenticatedState(data.user, data.profiles);
         document.getElementById("bazi-account-password").value = "";
       } catch (error) {
-        setProfileAuthStatus(error instanceof Error ? error.message : "登入失敗，請確認帳號與密碼。" );
+        if (error?.code === "EMAIL_NOT_VERIFIED") {
+          setProfileAuthStatus("請先完成 Email 驗證，再登入；也可以按「重新寄驗證信」。" );
+        } else {
+          setProfileAuthStatus(error instanceof Error ? error.message : "登入失敗，請確認帳號與密碼。" );
+        }
       } finally {
         setProfileAuthBusy(false);
       }
@@ -1638,6 +1768,43 @@
         setProfileAuthStatus(error instanceof Error ? error.message : "登出失敗，請稍後重試。" );
       } finally {
         setProfileAuthBusy(false);
+      }
+    }
+
+    async function deleteBaziAccount() {
+      if (!window.confirm("刪除帳號後，雲端命主紀錄也會一併刪除，且無法復原。確定要繼續嗎？")) return;
+      const password = window.prompt("請輸入目前密碼以確認刪除帳號：");
+      if (password === null) return;
+      setProfileAuthBusy(true);
+      setProfileAuthStatus("正在刪除帳號與雲端命主紀錄…");
+      try {
+        const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/account`, {
+          method: "DELETE",
+          body: JSON.stringify({ password })
+        });
+        const data = await readBaziResponse(response, "帳號刪除失敗。" );
+        profileCloudState.user = null;
+        profileCloudState.available = false;
+        writeStoredProfiles([]);
+        renderProfileAccount();
+        renderProfiles();
+        setProfileStorageStatus("帳號與雲端命主紀錄已刪除。" );
+        setProfileAuthStatus(data.message || "帳號已刪除。" );
+      } catch (error) {
+        setProfileAuthStatus(error instanceof Error ? error.message : "帳號刪除失敗。" );
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    function initializeBaziAuthLinkState() {
+      const params = new URLSearchParams(window.location.search);
+      const verificationState = params.get("email_verified");
+      if (verificationState === "1") setProfileAuthStatus("Email 已驗證，請使用帳號與密碼登入。" );
+      if (verificationState === "0") setProfileAuthStatus("Email 驗證連結無效或已過期，請重新寄送驗證信。" );
+      if (activePasswordResetToken) {
+        document.getElementById("profile-password-reset").hidden = false;
+        document.getElementById("profile-reset-status").textContent = "請輸入新的密碼。";
       }
     }
 
@@ -2486,9 +2653,21 @@
     document.getElementById("tab-chart").addEventListener("click", () => showTab("chart"));
     document.getElementById("tab-profiles").addEventListener("click", () => showTab("profiles"));
     document.getElementById("profile-search").addEventListener("input", renderProfiles);
+    document.getElementById("bazi-show-password").addEventListener("change", (event) => {
+      document.getElementById("bazi-account-password").type = event.target.checked ? "text" : "password";
+    });
+    document.getElementById("bazi-show-reset-password").addEventListener("change", (event) => {
+      const type = event.target.checked ? "text" : "password";
+      document.getElementById("bazi-reset-password").type = type;
+      document.getElementById("bazi-reset-password-confirm").type = type;
+    });
     document.getElementById("bazi-login").addEventListener("click", loginBaziAccount);
     document.getElementById("bazi-register").addEventListener("click", registerBaziAccount);
+    document.getElementById("bazi-forgot-password").addEventListener("click", requestBaziPasswordReset);
+    document.getElementById("bazi-resend-verification").addEventListener("click", requestBaziVerificationResend);
     document.getElementById("bazi-logout").addEventListener("click", logoutBaziAccount);
+    document.getElementById("bazi-delete-account").addEventListener("click", deleteBaziAccount);
+    document.getElementById("bazi-reset-password-submit").addEventListener("click", resetBaziPassword);
     document.getElementById("profile-list").addEventListener("click", (event) => {
       const useButton = event.target.closest("[data-profile-id]");
       if (useButton) {
@@ -2543,6 +2722,7 @@
       calculateAndRender();
     });
 
+    initializeBaziAuthLinkState();
     void initializeBaziProfileCloud();
   </script>
 </body>

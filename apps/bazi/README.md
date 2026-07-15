@@ -31,6 +31,19 @@ https://louisko.com/apps/bazi/
 
 命主紀錄現在使用帳號登入與 HttpOnly 工作階段 Cookie。`/api/bazi/auth/register`、`/api/bazi/auth/login`、`/api/bazi/auth/logout` 與 `/api/bazi/auth/me` 管理帳號；密碼只以加鹽 scrypt 雜湊保存，命主資料以帳號 ID 分隔。建立帳號時會嘗試將目前瀏覽器舊 owner key 下的既有雲端紀錄轉入新帳號，之後在另一台裝置登入同一電子郵件與密碼即可讀取相同紀錄。未登入時仍可暫存本機資料，但 UI 會明確標示尚未同步到雲端。
 
+帳號安全流程另提供 `GET /api/bazi/auth/verify-email`、`POST /api/bazi/auth/resend-verification`、`POST /api/bazi/auth/forgot-password`、`POST /api/bazi/auth/reset-password` 與 `DELETE /api/bazi/auth/account`。驗證信與重設密碼信使用一次性雜湊 token；重設密碼會使既有工作階段失效；刪除帳號會刪除帳號與該帳號的命主紀錄。正式環境需設定 Cloudflare Email Sending：
+
+```text
+BAZI_EMAIL_PROVIDER=cloudflare
+CLOUDFLARE_EMAIL_API_TOKEN=<Email Sending: Edit token>
+CLOUDFLARE_EMAIL_ACCOUNT_ID=<Cloudflare account id>
+BAZI_EMAIL_FROM=no-reply@louisko.com
+BAZI_EMAIL_FROM_NAME=Louisko 八字排盤
+BAZI_PUBLIC_URL=https://louisko.com
+```
+
+本機可使用 `BAZI_EMAIL_PROVIDER=console` 檢查流程，信件連結會輸出到 server console；正式環境未設定郵件服務時，註冊會拒絕建立帳號，不會產生無法驗證的帳號。Cloudflare 寄件網域必須先完成 Email Sending 啟用，token 只能放在 Zeabur secret，不可寫入 repository。
+
 農曆引擎目前以 1900–2100 年為可選輸入範圍；月份選項會依該年實際閏月建立，日期選項會依該月 29／30 日動態限制。
 
 ## 維護規則

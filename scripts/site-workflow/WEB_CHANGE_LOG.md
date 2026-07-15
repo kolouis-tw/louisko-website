@@ -14,6 +14,18 @@
 - Zeabur 部署：`6a57c15b3c393b66819cc33d`，狀態 `RUNNING`。
 - 線上驗證：`https://louisko.com/apps/bazi/` 已載入「跨裝置同步」帳號介面；未登入 `/api/bazi/auth/me` 回傳 `authenticated:false`，未登入 `/api/bazi/profiles` 回傳 `401 AUTHENTICATION_REQUIRED`。
 
+## 2026-07-16 - 加入 Bazi Email 驗證、忘記密碼與刪除帳號
+
+- 變更目的：為帳號同步加入 Email 驗證、一次性忘記密碼連結、密碼重設後 session 失效，以及要求目前密碼確認的帳號刪除流程。
+- 修改檔案：`server.js`、`apps/bazi/index.html`、`apps/bazi/README.md`、`apps/bazi/SMOKE_TEST.md`、`docs/agent-governance/deployment-reference.md`。
+- API：`GET /api/bazi/auth/verify-email`、`POST /api/bazi/auth/resend-verification`、`POST /api/bazi/auth/forgot-password`、`POST /api/bazi/auth/reset-password`、`DELETE /api/bazi/auth/account`。
+- 郵件服務：Cloudflare Email Sending REST API；本機 `BAZI_EMAIL_PROVIDER=console` 可輸出測試連結，正式環境必須配置 Zeabur secrets。
+- 本機驗證：註冊／驗證／登入／忘記密碼／一次性重設／舊 session 失效／刪除帳號與 profile 檔案清除通過；password 欄位顯示切換語法檢查通過。
+- GitHub commit：待本次變更確認後處理。
+- GitHub push：待本次變更確認後處理。
+- Zeabur 部署：待完成郵件設定與本次變更部署後補記。
+- 線上驗證：待部署後補記；目前正式環境尚未配置 Cloudflare Email Sending secret。
+
 ## 2026-07-16 - 修正命主姓名輸入框視覺一致性
 
 - 變更目的：修正命主姓名 `type=text` 未套用既有表單控制樣式，造成尺寸、內距與日期輸入欄位不一致。

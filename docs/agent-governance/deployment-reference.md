@@ -14,6 +14,7 @@ Use this file when the task touches deployment, domains, runtime entrypoints, Do
 - Production Photo object API: `https://louisko.com/api/photo-cloud/object?key=<storageKey>`
 - Production Bazi auth API: `https://louisko.com/api/bazi/auth/{me,register,login,logout}`（HttpOnly session cookie）
 - Production Bazi profiles API: `https://louisko.com/api/bazi/profiles`（需登入帳號）
+- Production Bazi account security API: `/api/bazi/auth/{verify-email,resend-verification,forgot-password,reset-password,account}`
 - GitHub Pages mirror: `https://kolouis-tw.github.io/louisko-website/`
 - Repository: `https://github.com/kolouis-tw/louisko-website`
 
@@ -57,3 +58,4 @@ The items below are useful context, but they are time-sensitive and should be ve
 
 - Keep Zeabur tokens, Cloudflare credentials, and other secrets in local secure storage only.
 - Never write secrets into the repository, docs, commits, issues, or chat replies.
+- Bazi production email requires Zeabur secrets `BAZI_EMAIL_PROVIDER=cloudflare`, `CLOUDFLARE_EMAIL_API_TOKEN`, `CLOUDFLARE_EMAIL_ACCOUNT_ID`, `BAZI_EMAIL_FROM`, `BAZI_EMAIL_FROM_NAME`, and `BAZI_PUBLIC_URL`; never commit the token.

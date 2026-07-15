@@ -26,6 +26,14 @@ const webPhotoMaxBytes = 600 * 1024;
 const webPhotoMaxEdge = 1800;
 const baziSessionCookie = "louisko_bazi_session";
 const baziSessionMaxAgeMs = 30 * 24 * 60 * 60 * 1000;
+const baziVerificationTokenMaxAgeMs = 24 * 60 * 60 * 1000;
+const baziResetTokenMaxAgeMs = 60 * 60 * 1000;
+const baziEmailProvider = (process.env.BAZI_EMAIL_PROVIDER || "").toLowerCase();
+const baziEmailApiToken = process.env.CLOUDFLARE_EMAIL_API_TOKEN || "";
+const baziEmailAccountId = process.env.CLOUDFLARE_EMAIL_ACCOUNT_ID || process.env.R2_ACCOUNT_ID || "";
+const baziEmailFrom = process.env.BAZI_EMAIL_FROM || "no-reply@louisko.com";
+const baziEmailFromName = process.env.BAZI_EMAIL_FROM_NAME || "Louisko 八字排盤";
+const baziPublicUrl = (process.env.BAZI_PUBLIC_URL || "https://louisko.com").replace(/\/$/, "");
 const scryptAsync = promisify(crypto.scrypt);
 
 app.disable("x-powered-by");
@@ -72,6 +80,7 @@ app.post("/api/bazi/auth/register", async (req, res) => {
   try {
     const email = normalizeBaziEmail(req.body?.email);
     const password = normalizeBaziPassword(req.body?.password);
+    assertBaziEmailServiceConfigured();
     const userKey = baziUserStorageKey(email);
     const existing = await readBaziJson(userKey);
     if (existing) throw createBaziProfileError(409, "ACCOUNT_EXISTS", "此電子郵件已建立帳號，請直接登入。");
@@ -85,24 +94,111 @@ app.post("/api/bazi/auth/register", async (req, res) => {
       email,
       passwordSalt: passwordRecord.salt,
       passwordHash: passwordRecord.hash,
+      passwordVersion: 1,
+      emailVerifiedAt: null,
       createdAt: now,
       updatedAt: now,
     };
     await writeBaziJson(userKey, user);
 
+    let verificationToken = "";
     const legacyOwnerKey = normalizeLegacyOwnerKey(req.body?.legacyOwnerKey);
     if (legacyOwnerKey) {
       const legacyProfiles = await readLegacyBaziProfiles(legacyOwnerKey);
       if (legacyProfiles.length) await writeBaziProfiles(accountId, legacyProfiles);
     }
 
-    const token = await createBaziSession(user);
-    setBaziSessionCookie(req, res, token);
-    const profiles = await readBaziProfiles(accountId);
+    try {
+      verificationToken = await createBaziToken("verify", user, baziVerificationTokenMaxAgeMs);
+      await sendBaziVerificationEmail(user, verificationToken);
+    } catch (error) {
+      await deleteBaziJson(userKey);
+      if (verificationToken) await deleteBaziToken("verify", verificationToken);
+      throw error;
+    }
+
     res.setHeader("Cache-Control", "private, no-store");
-    res.status(201).json({ ok: true, user: publicBaziUser(user), profiles });
+    res.status(201).json({ ok: true, verificationRequired: true, email: user.email });
   } catch (error) {
     res.status(error.statusCode || 400).json({ ok: false, error: error.code || "BAZI_ACCOUNT_REGISTER_FAILED", message: error.message });
+  }
+});
+
+app.get("/api/bazi/auth/verify-email", async (req, res) => {
+  try {
+    const token = normalizeBaziToken(req.query?.token);
+    const record = await consumeBaziToken("verify", token);
+    const user = await readBaziJson(baziUserStorageKey(record.email));
+    if (!user || user.accountId !== record.accountId) throw createBaziProfileError(400, "INVALID_VERIFICATION_TOKEN", "驗證連結無效或已過期。");
+    user.emailVerifiedAt = new Date().toISOString();
+    user.updatedAt = new Date().toISOString();
+    await writeBaziJson(baziUserStorageKey(user.email), user);
+    res.redirect(`${baziPublicUrl}/apps/bazi/?email_verified=1`);
+  } catch (error) {
+    res.redirect(`${baziPublicUrl}/apps/bazi/?email_verified=0`);
+  }
+});
+
+app.post("/api/bazi/auth/resend-verification", async (req, res) => {
+  try {
+    const email = normalizeBaziEmail(req.body?.email);
+    const user = await readBaziJson(baziUserStorageKey(email));
+    if (user && user.emailVerifiedAt === null) {
+      assertBaziEmailServiceConfigured();
+      const token = await createBaziToken("verify", user, baziVerificationTokenMaxAgeMs);
+      try {
+        await sendBaziVerificationEmail(user, token);
+      } catch (error) {
+        await deleteBaziToken("verify", token);
+        throw error;
+      }
+    }
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ ok: true, message: "如果帳號存在且尚未驗證，新的驗證信已寄出。" });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ ok: false, error: error.code || "BAZI_VERIFICATION_RESEND_FAILED", message: error.message });
+  }
+});
+
+app.post("/api/bazi/auth/forgot-password", async (req, res) => {
+  try {
+    const email = normalizeBaziEmail(req.body?.email);
+    const user = await readBaziJson(baziUserStorageKey(email));
+    if (user && user.emailVerifiedAt !== null && user.emailVerifiedAt !== undefined) {
+      assertBaziEmailServiceConfigured();
+      const token = await createBaziToken("reset", user, baziResetTokenMaxAgeMs);
+      try {
+        await sendBaziPasswordResetEmail(user, token);
+      } catch (error) {
+        await deleteBaziToken("reset", token);
+        throw error;
+      }
+    }
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ ok: true, message: "如果帳號存在且已完成 Email 驗證，重設密碼信已寄出。" });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ ok: false, error: error.code || "BAZI_PASSWORD_RESET_REQUEST_FAILED", message: error.message });
+  }
+});
+
+app.post("/api/bazi/auth/reset-password", async (req, res) => {
+  try {
+    const token = normalizeBaziToken(req.body?.token);
+    const password = normalizeBaziPassword(req.body?.password);
+    const record = await consumeBaziToken("reset", token);
+    const userKey = baziUserStorageKey(record.email);
+    const user = await readBaziJson(userKey);
+    if (!user || user.accountId !== record.accountId) throw createBaziProfileError(400, "INVALID_RESET_TOKEN", "重設密碼連結無效或已過期。");
+    const passwordRecord = await hashBaziPassword(password);
+    user.passwordSalt = passwordRecord.salt;
+    user.passwordHash = passwordRecord.hash;
+    user.passwordVersion = (user.passwordVersion || 1) + 1;
+    user.updatedAt = new Date().toISOString();
+    await writeBaziJson(userKey, user);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ ok: true, message: "密碼已更新，請使用新密碼登入。" });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ ok: false, error: error.code || "BAZI_PASSWORD_RESET_FAILED", message: error.message });
   }
 });
 
@@ -113,6 +209,9 @@ app.post("/api/bazi/auth/login", async (req, res) => {
     const user = await readBaziJson(baziUserStorageKey(email));
     if (!user || !(await verifyBaziPassword(password, user))) {
       throw createBaziProfileError(401, "INVALID_CREDENTIALS", "電子郵件或密碼不正確。");
+    }
+    if (user.emailVerifiedAt === null) {
+      throw createBaziProfileError(403, "EMAIL_NOT_VERIFIED", "請先完成 Email 驗證，再登入帳號。");
     }
     const token = await createBaziSession(user);
     setBaziSessionCookie(req, res, token);
@@ -132,6 +231,22 @@ app.post("/api/bazi/auth/logout", async (req, res) => {
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ ok: false, error: "BAZI_LOGOUT_FAILED", message: "Unable to end the Bazi account session." });
+  }
+});
+
+app.delete("/api/bazi/auth/account", async (req, res) => {
+  try {
+    const user = await requireBaziSessionUser(req, res);
+    const password = normalizeBaziPassword(req.body?.password);
+    if (!(await verifyBaziPassword(password, user))) throw createBaziProfileError(401, "INVALID_CREDENTIALS", "密碼不正確，帳號未刪除。");
+    await deleteBaziJson(baziUserStorageKey(user.email));
+    await deleteBaziProfiles(user.accountId);
+    await deleteBaziSession(req);
+    clearBaziSessionCookie(req, res);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ ok: true, message: "帳號與命主紀錄已刪除。" });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ ok: false, error: error.code || "BAZI_ACCOUNT_DELETE_FAILED", message: error.message });
   }
 });
 
@@ -521,6 +636,111 @@ function normalizeBaziPassword(value) {
   return password;
 }
 
+function normalizeBaziToken(value) {
+  const token = String(value || "").trim();
+  if (!/^[a-f0-9]{64}$/.test(token)) throw createBaziProfileError(400, "INVALID_TOKEN", "連結無效或已過期。");
+  return token;
+}
+
+function baziTokenStorageKey(type, token) {
+  if (!/^(verify|reset)$/.test(type)) throw new Error("Invalid Bazi token type.");
+  return `tokens/${type}/${hashBaziValue(token)}.json`;
+}
+
+function assertBaziEmailServiceConfigured() {
+  if (baziEmailProvider === "console") return;
+  if (baziEmailProvider === "cloudflare" && baziEmailApiToken && baziEmailAccountId && baziEmailFrom) return;
+  throw createBaziProfileError(503, "EMAIL_SERVICE_NOT_CONFIGURED", "Email 寄送服務尚未設定，請稍後再試。");
+}
+
+async function createBaziToken(type, user, maxAgeMs) {
+  const token = crypto.randomBytes(32).toString("hex");
+  await writeBaziJson(baziTokenStorageKey(type, token), {
+    version: 1,
+    type,
+    accountId: user.accountId,
+    email: user.email,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + maxAgeMs).toISOString(),
+  });
+  return token;
+}
+
+async function deleteBaziToken(type, token) {
+  await deleteBaziJson(baziTokenStorageKey(type, token));
+}
+
+async function consumeBaziToken(type, token) {
+  const record = await readBaziJson(baziTokenStorageKey(type, token));
+  if (!record || record.type !== type || !record.expiresAt || Date.parse(record.expiresAt) <= Date.now()) {
+    await deleteBaziToken(type, token);
+    throw createBaziProfileError(400, type === "verify" ? "INVALID_VERIFICATION_TOKEN" : "INVALID_RESET_TOKEN", "連結無效或已過期。");
+  }
+  await deleteBaziToken(type, token);
+  return record;
+}
+
+function escapeBaziHtml(value) {
+  return String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
+}
+
+function baziActionUrl(queryName, token) {
+  const pathname = queryName === "verify" ? "/api/bazi/auth/verify-email" : "/apps/bazi/";
+  const url = new URL(`${baziPublicUrl}${pathname}`);
+  url.searchParams.set(queryName === "verify" ? "token" : "reset", token);
+  return url.toString();
+}
+
+async function sendBaziEmail({ to, subject, text, html }) {
+  assertBaziEmailServiceConfigured();
+  if (baziEmailProvider === "console") {
+    console.log(`[Bazi email console] to=${to} subject=${subject}\n${text}`);
+    return;
+  }
+
+  const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(baziEmailAccountId)}/email/sending/send`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${baziEmailApiToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: { address: baziEmailFrom, name: baziEmailFromName },
+      to: [to],
+      subject,
+      text,
+      html,
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.success === false) {
+    console.error("Bazi email delivery failed:", response.status, payload.errors || payload.messages || "unknown error");
+    throw createBaziProfileError(502, "EMAIL_DELIVERY_FAILED", "Email 寄送失敗，請稍後再試。");
+  }
+}
+
+async function sendBaziVerificationEmail(user, token) {
+  const url = baziActionUrl("verify", token);
+  const safeUrl = escapeBaziHtml(url);
+  await sendBaziEmail({
+    to: user.email,
+    subject: "請驗證你的 Louisko 八字排盤帳號",
+    text: `請開啟以下連結完成 Email 驗證：\n${url}\n\n此連結 24 小時內有效。`,
+    html: `<p>您好，</p><p>請點擊以下連結完成 Louisko 八字排盤帳號的 Email 驗證：</p><p><a href="${safeUrl}">${safeUrl}</a></p><p>此連結 24 小時內有效。</p>`,
+  });
+}
+
+async function sendBaziPasswordResetEmail(user, token) {
+  const url = baziActionUrl("reset", token);
+  const safeUrl = escapeBaziHtml(url);
+  await sendBaziEmail({
+    to: user.email,
+    subject: "重設你的 Louisko 八字排盤密碼",
+    text: `請開啟以下連結重設密碼：\n${url}\n\n此連結 1 小時內有效，且只能使用一次。`,
+    html: `<p>您好，</p><p>請點擊以下連結重設 Louisko 八字排盤密碼：</p><p><a href="${safeUrl}">${safeUrl}</a></p><p>此連結 1 小時內有效，且只能使用一次。</p>`,
+  });
+}
+
 function normalizeLegacyOwnerKey(value) {
   const ownerKey = String(value || "").trim();
   return /^[a-zA-Z0-9_-]{16,100}$/.test(ownerKey) ? ownerKey : "";
@@ -606,7 +826,7 @@ async function verifyBaziPassword(password, user) {
 }
 
 function publicBaziUser(user) {
-  return { accountId: user.accountId, email: user.email, createdAt: user.createdAt };
+  return { accountId: user.accountId, email: user.email, emailVerifiedAt: user.emailVerifiedAt || null, createdAt: user.createdAt };
 }
 
 function getCookieValue(req, name) {
@@ -626,6 +846,7 @@ async function createBaziSession(user) {
     version: 1,
     accountId: user.accountId,
     email: user.email,
+    passwordVersion: user.passwordVersion || 1,
     createdAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + baziSessionMaxAgeMs).toISOString(),
   });
@@ -666,7 +887,7 @@ async function getBaziSessionUser(req, res) {
     return null;
   }
   const user = await readBaziJson(baziUserStorageKey(session.email));
-  if (!user || user.accountId !== session.accountId) {
+  if (!user || user.accountId !== session.accountId || (user.passwordVersion || 1) !== (session.passwordVersion || 1)) {
     await deleteBaziJson(baziSessionStorageKey(token));
     clearBaziSessionCookie(req, res);
     return null;
@@ -804,6 +1025,14 @@ async function writeBaziProfiles(ownerKey, profiles) {
 
   await fs.mkdir(baziProfileStorageRoot, { recursive: true });
   await fs.writeFile(path.join(baziProfileStorageRoot, `${ownerKey}.json`), body);
+}
+
+async function deleteBaziProfiles(accountId) {
+  if (activeStorageProvider === "r2") {
+    await r2Client.send(new DeleteObjectCommand({ Bucket: r2Bucket, Key: baziProfileStorageKey(accountId) }));
+    return;
+  }
+  await fs.rm(path.join(baziProfileStorageRoot, `${accountId}.json`), { force: true });
 }
 
 async function readPhotoObject(key) {
