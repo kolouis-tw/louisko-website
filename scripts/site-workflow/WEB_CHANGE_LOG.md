@@ -9,9 +9,10 @@
 - API：`GET/POST/DELETE /api/bazi/profiles`，以 `X-Bazi-Owner-Key` 分隔瀏覽器資料。
 - 隱私邊界：目前沒有帳號登入或跨裝置同步碼；owner key 遺失後無法從另一台裝置取回同一組紀錄。
 - 本機驗證：server 語法、Bazi inline script、API owner 隔離與 `npm run site:verify` 通過。
-- GitHub push：待本次變更確認後處理。
-- Zeabur 部署：待本次變更確認後處理。
-- 線上驗證：待部署後補記。
+- GitHub commit：`8fe48d64166007bc0154c63ac9e40a5f45a54f89`（`Store bazi profiles in cloud API`）。
+- GitHub push：已推送到 `kolouis-tw/louisko-website` 的 `main`。
+- Zeabur 部署：`6a57bcb53d3d099ed2f12557`，狀態 `RUNNING`。
+- 線上驗證：`https://louisko.com/apps/bazi/` 已載入雲端同步程式；未帶 `X-Bazi-Owner-Key` 的 API 請求回傳 `400 INVALID_OWNER_KEY`，帶有效識別碼的 `GET /api/bazi/profiles` 回傳 `200 {"ok":true,"profiles":[]}`。
 
 ## 2026-07-16 - 修正命主姓名輸入框視覺一致性
 
