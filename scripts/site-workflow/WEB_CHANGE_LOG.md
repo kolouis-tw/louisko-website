@@ -9,9 +9,10 @@
 - 資料邊界：曆法轉換只產生標準陽曆日期；四柱、子時換日、前後節氣起運與十步大運仍沿用原有函式。
 - 儲存方式：`louisko_bazi_profiles_v1`，僅存在目前瀏覽器裝置，不代表雲端同步。
 - 本機驗證：HTML inline script `node --check`、農曆 `2026-06-20 12:30` round-trip、`npm run site:verify` 通過；Playwright CLI 因環境沒有 `npx` 未執行。
-- GitHub push：待本次變更確認後處理。
-- Zeabur deploy：待本次變更確認後處理。
-- 線上驗證：待部署後補記。
+- GitHub commit：`2b957ced1b546c557dc0f1009881b7d6fbff1c03`。
+- GitHub push：已推送 `main`。
+- Zeabur deploy：第一次 deployment `6a57b67d3d3d099ed2f12454` 建置後被取消；第二次 deployment `6a57b6f93d3d099ed2f1245d` 於驗證時仍為 `BUILDING`。
+- 線上驗證：production 仍回傳舊版 ETag `W/"b0e4-19f5f6b5710"`，本次部署尚未上線。
 - 三資料夾同步：目前以 `AI_Web` 單一 repo 為正式來源，本次同步更新此 app 與站台變更紀錄。
 
 ## 記錄格式
