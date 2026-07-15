@@ -9,9 +9,10 @@
 - API：`/api/bazi/auth/{me,register,login,logout}` 與登入後的 `GET/POST/DELETE /api/bazi/profiles`。
 - 隱私邊界：密碼以加鹽 scrypt 雜湊保存，登入使用 HttpOnly session cookie；命主資料以帳號 ID 分隔。建立帳號時遷移目前瀏覽器舊 owner key 紀錄。
 - 本機驗證：server 語法、Bazi inline script、帳號註冊／登入／登出／未登入拒絕／跨登入讀取測試與 `git diff --check` 通過。
-- GitHub push：待本次變更確認後處理。
-- Zeabur 部署：待本次變更確認後處理。
-- 線上驗證：待部署後補記。
+- GitHub commit：`6c6d460 Add bazi account sync across devices`。
+- GitHub push：已推送到 `kolouis-tw/louisko-website` 的 `main`。
+- Zeabur 部署：`6a57c15b3c393b66819cc33d`，狀態 `RUNNING`。
+- 線上驗證：`https://louisko.com/apps/bazi/` 已載入「跨裝置同步」帳號介面；未登入 `/api/bazi/auth/me` 回傳 `authenticated:false`，未登入 `/api/bazi/profiles` 回傳 `401 AUTHENTICATION_REQUIRED`。
 
 ## 2026-07-16 - 修正命主姓名輸入框視覺一致性
 
