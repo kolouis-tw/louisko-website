@@ -14,6 +14,7 @@ const root = __dirname;
 const photoStorageRoot = process.env.PHOTO_STORAGE_DIR || path.join(root, "_storage", "photo-cloud");
 const photoMetadataPath = path.join(photoStorageRoot, "metadata.json");
 const r2MetadataKey = "_metadata/photo-cloud.json";
+const baziProfileStorageRoot = process.env.BAZI_PROFILE_STORAGE_DIR || path.join(root, "_storage", "bazi-profiles");
 const storageProvider = (process.env.PHOTO_STORAGE_PROVIDER || "local").toLowerCase();
 const r2Bucket = process.env.R2_BUCKET || "";
 const r2PublicBaseUrl = (process.env.R2_PUBLIC_BASE_URL || "").replace(/\/$/, "");
@@ -25,6 +26,8 @@ const webPhotoMaxEdge = 1800;
 app.disable("x-powered-by");
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
+
+const baziProfileOwnerHeader = "x-bazi-owner-key";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -40,6 +43,57 @@ const photoUpload = multer({
     fileSize: 12 * 1024 * 1024,
     files: 1,
   },
+});
+
+app.get("/api/bazi/profiles", async (req, res) => {
+  try {
+    const ownerKey = getBaziOwnerKey(req);
+    const profiles = await readBaziProfiles(ownerKey);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ ok: true, profiles });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ ok: false, error: error.code || "BAZI_PROFILE_READ_FAILED", message: error.message });
+  }
+});
+
+app.post("/api/bazi/profiles", async (req, res) => {
+  try {
+    const ownerKey = getBaziOwnerKey(req);
+    const profile = normalizeBaziProfile(req.body?.profile || req.body);
+    const profiles = await readBaziProfiles(ownerKey);
+    const identity = baziProfileIdentity(profile);
+    const existingIndex = profiles.findIndex((item) => baziProfileIdentity(item) === identity);
+    const now = new Date().toISOString();
+    const record = {
+      ...profile,
+      id: existingIndex >= 0 ? profiles[existingIndex].id : profile.id,
+      createdAt: existingIndex >= 0 ? profiles[existingIndex].createdAt : profile.createdAt || now,
+      updatedAt: now,
+      version: 1,
+    };
+    if (existingIndex >= 0) profiles[existingIndex] = record;
+    else profiles.push(record);
+    await writeBaziProfiles(ownerKey, profiles);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ ok: true, profile: record, profiles });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ ok: false, error: error.code || "BAZI_PROFILE_WRITE_FAILED", message: error.message });
+  }
+});
+
+app.delete("/api/bazi/profiles/:profileId", async (req, res) => {
+  try {
+    const ownerKey = getBaziOwnerKey(req);
+    const profileId = normalizeId(req.params.profileId);
+    if (!profileId) throw createBaziProfileError(400, "INVALID_PROFILE_ID", "Invalid Bazi profile id.");
+    const profiles = await readBaziProfiles(ownerKey);
+    const nextProfiles = profiles.filter((profile) => profile.id !== profileId);
+    await writeBaziProfiles(ownerKey, nextProfiles);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ ok: true, deletedProfileId: profileId, profiles: nextProfiles });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ ok: false, error: error.code || "BAZI_PROFILE_DELETE_FAILED", message: error.message });
+  }
 });
 
 function isHeicFile(file) {
@@ -348,6 +402,143 @@ async function deleteAlbumObjects(albumId) {
   }
 
   await fs.rm(path.join(photoStorageRoot, prefix), { recursive: true, force: true });
+}
+
+function createBaziProfileError(statusCode, code, message) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  error.code = code;
+  return error;
+}
+
+function getBaziOwnerKey(req) {
+  const ownerKey = String(req.get(baziProfileOwnerHeader) || "").trim();
+  if (!/^[a-zA-Z0-9_-]{16,100}$/.test(ownerKey)) {
+    throw createBaziProfileError(400, "INVALID_OWNER_KEY", "A valid Bazi profile owner key is required.");
+  }
+  return ownerKey;
+}
+
+function baziProfileStorageKey(ownerKey) {
+  return `_metadata/bazi-profiles/${ownerKey}.json`;
+}
+
+function baziProfileIdentity(profile) {
+  const solar = profile.birthSolar || {};
+  return [
+    profile.name || "",
+    solar.year,
+    solar.month,
+    solar.day,
+    solar.hour,
+    solar.minute,
+    profile.gender,
+    profile.hemisphere,
+    profile.dayChangeRule,
+    profile.birthPlace || "",
+    profile.timezone || "Asia/Taipei",
+  ].join("|");
+}
+
+function normalizeBaziSolarDate(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const solar = {
+    year: Number(source.year),
+    month: Number(source.month),
+    day: Number(source.day),
+    hour: Number(source.hour),
+    minute: Number(source.minute),
+  };
+  const valid = Number.isInteger(solar.year) && solar.year >= 1 && solar.year <= 9999 &&
+    Number.isInteger(solar.month) && solar.month >= 1 && solar.month <= 12 &&
+    Number.isInteger(solar.day) && solar.day >= 1 && solar.day <= 31 &&
+    Number.isInteger(solar.hour) && solar.hour >= 0 && solar.hour <= 23 &&
+    Number.isInteger(solar.minute) && solar.minute >= 0 && solar.minute <= 59;
+  if (!valid) throw createBaziProfileError(422, "INVALID_BIRTH_SOLAR", "Invalid standard solar birth date.");
+  return solar;
+}
+
+function normalizeBaziLunarDate(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const lunar = {
+    year: Number(source.year),
+    month: Number(source.month),
+    day: Number(source.day),
+    isLeap: Boolean(source.isLeap),
+    ganzhiYear: String(source.ganzhiYear || "").slice(0, 12),
+  };
+  const valid = Number.isInteger(lunar.year) && lunar.year >= 1 && lunar.year <= 9999 &&
+    Number.isInteger(lunar.month) && lunar.month >= 1 && lunar.month <= 12 &&
+    Number.isInteger(lunar.day) && lunar.day >= 1 && lunar.day <= 30;
+  if (!valid) throw createBaziProfileError(422, "INVALID_BIRTH_LUNAR", "Invalid standard lunar birth date.");
+  return lunar;
+}
+
+function normalizeBaziProfile(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const birthSolar = normalizeBaziSolarDate(source.birthSolar);
+  const birthLunar = normalizeBaziLunarDate(source.birthLunar);
+  const profile = {
+    id: normalizeId(source.id) || crypto.randomUUID(),
+    name: String(source.name || "").trim().slice(0, 100),
+    inputCalendarType: source.inputCalendarType === "lunar" ? "lunar" : "solar",
+    birthSolar,
+    birthLunar,
+    gender: source.gender === "female" ? "female" : "male",
+    hemisphere: source.hemisphere === "south" ? "south" : "north",
+    dayChangeRule: source.dayChangeRule === "midnight" ? "midnight" : "lateZiHour",
+    birthPlace: String(source.birthPlace || "").trim().slice(0, 100),
+    timezone: String(source.timezone || "Asia/Taipei").trim().slice(0, 80),
+    timezoneOffset: Number.isFinite(Number(source.timezoneOffset)) ? Number(source.timezoneOffset) : 8,
+    createdAt: String(source.createdAt || "").slice(0, 40),
+    updatedAt: String(source.updatedAt || "").slice(0, 40),
+    version: 1,
+  };
+  return profile;
+}
+
+async function readBaziProfiles(ownerKey) {
+  if (activeStorageProvider === "r2") {
+    try {
+      const response = await r2Client.send(new GetObjectCommand({
+        Bucket: r2Bucket,
+        Key: baziProfileStorageKey(ownerKey),
+      }));
+      const parsed = JSON.parse(await streamToString(response.Body));
+      return Array.isArray(parsed.profiles) ? parsed.profiles.map(normalizeBaziProfile) : [];
+    } catch (error) {
+      const code = error?.name || error?.Code || error?.$metadata?.httpStatusCode;
+      if (code !== "NoSuchKey" && code !== 404) console.warn("R2 Bazi profile read failed:", error.message);
+      return [];
+    }
+  }
+
+  const filePath = path.join(baziProfileStorageRoot, `${ownerKey}.json`);
+  await fs.mkdir(baziProfileStorageRoot, { recursive: true });
+  try {
+    const parsed = JSON.parse(await fs.readFile(filePath, "utf8"));
+    return Array.isArray(parsed.profiles) ? parsed.profiles.map(normalizeBaziProfile) : [];
+  } catch (error) {
+    if (error.code !== "ENOENT") console.warn("Bazi profile read failed:", error.message);
+    return [];
+  }
+}
+
+async function writeBaziProfiles(ownerKey, profiles) {
+  const body = `${JSON.stringify({ version: 1, updatedAt: new Date().toISOString(), profiles }, null, 2)}\n`;
+  if (activeStorageProvider === "r2") {
+    await r2Client.send(new PutObjectCommand({
+      Bucket: r2Bucket,
+      Key: baziProfileStorageKey(ownerKey),
+      Body: body,
+      ContentType: "application/json; charset=utf-8",
+      CacheControl: "private, no-store",
+    }));
+    return;
+  }
+
+  await fs.mkdir(baziProfileStorageRoot, { recursive: true });
+  await fs.writeFile(path.join(baziProfileStorageRoot, `${ownerKey}.json`), body);
 }
 
 async function readPhotoObject(key) {

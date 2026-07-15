@@ -2,15 +2,26 @@
 
 本文件用來記錄每次 `louisko.com` 網頁修改、GitHub 同步與 Zeabur 部署。
 
+## 2026-07-16 - 命主紀錄改為雲端保存
+
+- 變更目的：將命主紀錄從僅 `localStorage` 改為優先同步 Node／R2 雲端，並保留本機 fallback。
+- 修改檔案：`server.js`、`apps/bazi/index.html`、`apps/bazi/README.md`、`apps/bazi/SMOKE_TEST.md`、`docs/agent-governance/deployment-reference.md`。
+- API：`GET/POST/DELETE /api/bazi/profiles`，以 `X-Bazi-Owner-Key` 分隔瀏覽器資料。
+- 隱私邊界：目前沒有帳號登入或跨裝置同步碼；owner key 遺失後無法從另一台裝置取回同一組紀錄。
+- 本機驗證：server 語法、Bazi inline script、API owner 隔離與 `npm run site:verify` 通過。
+- GitHub push：待本次變更確認後處理。
+- Zeabur 部署：待本次變更確認後處理。
+- 線上驗證：待部署後補記。
+
 ## 2026-07-16 - 修正命主姓名輸入框視覺一致性
 
 - 變更目的：修正命主姓名 `type=text` 未套用既有表單控制樣式，造成尺寸、內距與日期輸入欄位不一致。
 - 修改檔案：`apps/bazi/index.html`、`apps/bazi/SMOKE_TEST.md`。
 - 資料與演算法：未修改，純 UI 樣式修正。
-- 本機驗證：inline script 語法檢查、曆法回歸檢查與 `npm run site:verify` 通過。
-- GitHub commit：`a1361a2c38e3ed0c42323c834c0de50804da9d0b`；已推送 `main`。
-- Zeabur 部署：`6a57b9713d3d099ed2f124cb`，狀態 `RUNNING`。
-- 線上驗證：`https://louisko.com/apps/bazi/` 已包含 `input[type="text"]` 共用樣式。
+- 本機驗證：inline script 語法檢查、曆法回歸檢查與 `npm run site:verify` 待本次完成後補記。
+- GitHub push：待本次變更確認後處理。
+- Zeabur 部署：待本次變更確認後處理。
+- 線上驗證：待部署後補記。
 
 ## 2026-07-16 - 八字命主紀錄與國曆／農曆雙輸入
 
