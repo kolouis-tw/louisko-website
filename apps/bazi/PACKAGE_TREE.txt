@@ -10,4 +10,6 @@ docs_overview.md
 examples/sample_chart.json
 examples/sample_prompt_output.md
 index.html
+vendor/lunar-javascript-1.7.7.js
+vendor/lunar-javascript-LICENSE.txt
 manifest.json

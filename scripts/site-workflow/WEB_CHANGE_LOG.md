@@ -2,6 +2,18 @@
 
 本文件用來記錄每次 `louisko.com` 網頁修改、GitHub 同步與 Zeabur 部署。
 
+## 2026-07-16 - 八字命主紀錄與國曆／農曆雙輸入
+
+- 變更目的：在正式八字排盤頁加入命主姓名、命主紀錄分頁、localStorage 儲存與刪除確認，以及國曆／農曆雙向輸入。
+- 主要檔案：`apps/bazi/index.html`、`apps/bazi/vendor/lunar-javascript-1.7.7.js`、`apps/bazi/scripts/calendar-profile-regression-check.mjs`、`apps/bazi/README.md`、`apps/bazi/SMOKE_TEST.md`。
+- 資料邊界：曆法轉換只產生標準陽曆日期；四柱、子時換日、前後節氣起運與十步大運仍沿用原有函式。
+- 儲存方式：`louisko_bazi_profiles_v1`，僅存在目前瀏覽器裝置，不代表雲端同步。
+- 本機驗證：HTML inline script `node --check`、農曆 `2026-06-20 12:30` round-trip、`npm run site:verify` 通過；Playwright CLI 因環境沒有 `npx` 未執行。
+- GitHub push：待本次變更確認後處理。
+- Zeabur deploy：待本次變更確認後處理。
+- 線上驗證：待部署後補記。
+- 三資料夾同步：目前以 `AI_Web` 單一 repo 為正式來源，本次同步更新此 app 與站台變更紀錄。
+
 ## 記錄格式
 
 ```md
@@ -59,7 +71,7 @@
 - 變更目的：在 `bazi-analysis.html` 保留完整 Prompt 的前提下，新增預設顯示的「精簡 AI Prompt」匯出模式，讓內容可貼入 ChatGPT、Gemini 等 AI 輸入框。
 - 修改檔案：`apps/bazi/bazi-analysis.html`、`apps/bazi/SMOKE_TEST.md`、`apps/bazi/docs/regression_cases.md`、`scripts/site-workflow/WEB_CHANGE_LOG.md`
 - 本機驗證：`/opt/homebrew/bin/node --check /private/tmp/bazi-analysis-check.js`、`/opt/homebrew/bin/node scripts/site-workflow/manage-site.mjs verify`、自製 harness 驗證測試命盤四柱 / 目前大運 / 2026 流年 / 2026 流月 / compact prompt 字數。
-- GitHub commit：`Upgrade bazi advisor initial profile flow`（以本段對應的最新 `main` commit 為準）
+- GitHub commit：待補
 - GitHub push：待補
 - Zeabur 部署：待補
 - 線上驗證：待補

@@ -63,6 +63,144 @@
       gap: 28px;
     }
 
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin: 24px 0 28px;
+    }
+
+    .tab-button {
+      min-width: 0;
+      width: auto;
+      height: 56px;
+      padding: 0 24px;
+      border: 2px solid rgba(47, 51, 56, 0.18);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--text);
+      font-size: 22px;
+    }
+
+    .tab-button.is-active {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #ffffff;
+    }
+
+    .calendar-toggle {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 18px 34px;
+    }
+
+    .calendar-toggle .option {
+      font-size: 26px;
+    }
+
+    .calendar-panel {
+      display: grid;
+      gap: 10px;
+    }
+
+    .calendar-panel[hidden],
+    .tab-panel[hidden] {
+      display: none;
+    }
+
+    .calendar-preview {
+      margin-left: 208px;
+      min-height: 34px;
+      color: var(--muted);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .calendar-preview.is-error {
+      color: var(--red);
+    }
+
+    .lunar-date-controls {
+      display: grid;
+      grid-template-columns: minmax(170px, 230px) minmax(160px, 220px) minmax(140px, 190px) minmax(118px, 160px) minmax(118px, 160px);
+      gap: 0;
+      flex: 1;
+    }
+
+    .profile-toolbar {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .profile-search {
+      flex: 1;
+      height: 58px;
+      padding: 0 16px;
+      border: 2px solid var(--line);
+      border-radius: 5px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+      font-size: 22px;
+      font-weight: 500;
+    }
+
+    .storage-note,
+    .empty-profiles {
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .profile-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .profile-card {
+      padding: 18px;
+      border: 1px solid rgba(47, 51, 56, 0.18);
+      border-radius: 6px;
+      background: #fffdf4;
+    }
+
+    .profile-card h3 {
+      margin: 0 0 12px;
+      font-size: 25px;
+    }
+
+    .profile-card p {
+      margin: 6px 0;
+      color: #4d5258;
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .profile-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .profile-actions button {
+      min-width: 150px;
+      width: auto;
+      height: 52px;
+      padding: 0 16px;
+      font-size: 19px;
+    }
+
+    .profile-delete-button {
+      border: 2px solid rgba(223, 51, 72, 0.4);
+      background: #ffffff;
+      color: var(--red);
+    }
+
     .row {
       display: flex;
       align-items: center;
@@ -481,6 +619,43 @@
         gap: 8px;
       }
 
+      .tabs {
+        margin-top: 18px;
+      }
+
+      .tab-button {
+        flex: 1;
+        padding: 0 10px;
+        font-size: 20px;
+      }
+
+      .calendar-toggle {
+        gap: 14px 22px;
+      }
+
+      .calendar-toggle .option {
+        font-size: 21px;
+      }
+
+      .calendar-preview {
+        margin-left: 0;
+        font-size: 17px;
+      }
+
+      .lunar-date-controls {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .profile-toolbar {
+        display: grid;
+      }
+
+      .profile-search {
+        width: 100%;
+        font-size: 19px;
+      }
+
       .quick-time-row {
         margin-top: -12px;
         margin-left: 0;
@@ -580,77 +755,124 @@
       <p class="kicker">Bazi</p>
       <h1>八字排盤</h1>
     </section>
-    <form class="form" id="birth-form">
-      <div class="row">
-        <div class="label">陽曆生日：</div>
-        <div class="date-controls">
-          <input id="year" type="number" min="1" max="9999" step="1" aria-label="西元年">
-          <select id="month" aria-label="月份"></select>
-          <select id="day" aria-label="日期"></select>
-          <select id="hour" aria-label="時辰"></select>
-          <select id="minute" aria-label="分鐘"></select>
-        </div>
-      </div>
-      <div class="quick-time-row">
-        <button class="quick-time-button" id="set-current-time" type="button">當下時間</button>
-        <span class="quick-time-note" id="current-time-note"></span>
-      </div>
+    <nav class="tabs" aria-label="八字功能分頁">
+      <button class="tab-button is-active" id="tab-chart" type="button" aria-controls="chart-panel" aria-selected="true">八字排盤</button>
+      <button class="tab-button" id="tab-profiles" type="button" aria-controls="profiles-panel" aria-selected="false">命主紀錄</button>
+    </nav>
 
-      <div class="row">
-        <div class="label">性別：</div>
-        <div class="radio-group">
-          <label class="option"><input type="radio" name="gender" value="男" checked>男</label>
-          <label class="option"><input type="radio" name="gender" value="女">女</label>
+    <section class="tab-panel" id="chart-panel">
+      <form class="form" id="birth-form">
+        <div class="row">
+          <div class="label">命主姓名：</div>
+          <input id="profile-name" type="text" maxlength="100" autocomplete="name" placeholder="請輸入全名、英文名或綽號" aria-label="命主姓名">
         </div>
-      </div>
 
-      <div class="row">
-        <div class="label">出生地：</div>
-        <div class="radio-group">
-          <label class="option"><input type="radio" name="birthHemisphere" value="北半球" checked>北半球</label>
-          <label class="option"><input type="radio" name="birthHemisphere" value="南半球">南半球<span class="hint">(例如紐、澳、南美等地)</span></label>
+        <div class="row">
+          <div class="label">曆法輸入：</div>
+          <div class="calendar-toggle">
+            <label class="option"><input type="radio" name="calendarType" value="solar" checked>國曆（陽曆）</label>
+            <label class="option"><input type="radio" name="calendarType" value="lunar">農曆（陰曆）</label>
+          </div>
         </div>
-      </div>
 
-      <div class="row">
-        <div class="label">換日法：</div>
-        <div class="radio-group">
-          <label class="option"><input type="radio" name="dayChangeMethod" value="子初換日" checked>子初換日(建議)</label>
-          <label class="option"><input type="radio" name="dayChangeMethod" value="子正換日">子正換日</label>
+        <div class="calendar-panel" id="solar-input-panel">
+          <div class="row">
+            <div class="label">國曆生日：</div>
+            <div class="date-controls">
+              <input id="year" type="number" min="1900" max="2100" step="1" aria-label="西元年">
+              <select id="month" aria-label="國曆月份"></select>
+              <select id="day" aria-label="國曆日期"></select>
+              <select id="hour" aria-label="出生小時"></select>
+              <select id="minute" aria-label="出生分鐘"></select>
+            </div>
+          </div>
+          <div class="calendar-preview" id="solar-lunar-preview" aria-live="polite"></div>
         </div>
-      </div>
-      <div class="subhint">(換日法差異僅影響23:00~23:59出生者)</div>
 
-      <div class="actions">
-        <button type="submit">開始批算√</button>
-        <button class="secondary-button" id="open-analysis" type="button" disabled>論命</button>
-      </div>
-    </form>
+        <div class="calendar-panel" id="lunar-input-panel" hidden>
+          <div class="row">
+            <div class="label">農曆生日：</div>
+            <div class="lunar-date-controls">
+              <input id="lunar-year" type="number" min="1900" max="2100" step="1" aria-label="農曆年份">
+              <select id="lunar-month" aria-label="農曆月份"></select>
+              <select id="lunar-day" aria-label="農曆日期"></select>
+              <select id="lunar-hour" aria-label="出生小時"></select>
+              <select id="lunar-minute" aria-label="出生分鐘"></select>
+            </div>
+          </div>
+          <div class="calendar-preview" id="lunar-solar-preview" aria-live="polite"></div>
+        </div>
 
-    <section class="result" id="result" hidden>
-      <h2 class="result-title">年月日時八字</h2>
-      <div class="pillars" id="pillars"></div>
-      <div class="analysis-section">
-        <div class="section-heading">
-          <h3>大運</h3>
-          <span class="section-note" id="luck-direction-note"></span>
+        <div class="quick-time-row">
+          <button class="quick-time-button" id="set-current-time" type="button">當下時間</button>
+          <span class="quick-time-note" id="current-time-note"></span>
         </div>
-        <div class="luck-grid" id="luck-cycles"></div>
-      </div>
-      <div class="analysis-section">
-        <div class="section-heading">
-          <h3>流年</h3>
-          <label class="annual-controls">
-            <span>流年當年</span>
-            <input id="annual-target-year" type="number" min="1" max="9999" step="1" aria-label="流年當年">
-            <button class="annual-confirm-button" id="confirm-annual-year" type="button">確認</button>
-          </label>
+
+        <div class="row">
+          <div class="label">性別：</div>
+          <div class="radio-group">
+            <label class="option"><input type="radio" name="gender" value="男" checked>男</label>
+            <label class="option"><input type="radio" name="gender" value="女">女</label>
+          </div>
         </div>
-        <div class="annual-grid" id="annual-flow"></div>
+
+        <div class="row">
+          <div class="label">出生地：</div>
+          <div class="radio-group">
+            <label class="option"><input type="radio" name="birthHemisphere" value="北半球" checked>北半球</label>
+            <label class="option"><input type="radio" name="birthHemisphere" value="南半球">南半球<span class="hint">(例如紐、澳、南美等地)</span></label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label">換日法：</div>
+          <div class="radio-group">
+            <label class="option"><input type="radio" name="dayChangeMethod" value="子初換日" checked>子初換日(建議)</label>
+            <label class="option"><input type="radio" name="dayChangeMethod" value="子正換日">子正換日</label>
+          </div>
+        </div>
+        <div class="subhint">(換日法差異僅影響23:00~23:59出生者)</div>
+
+        <div class="actions">
+          <button type="submit">開始批算√</button>
+          <button class="secondary-button" id="open-analysis" type="button" disabled>論命</button>
+        </div>
+      </form>
+
+      <section class="result" id="result" hidden>
+        <h2 class="result-title">年月日時八字</h2>
+        <div class="pillars" id="pillars"></div>
+        <div class="analysis-section">
+          <div class="section-heading">
+            <h3>大運</h3>
+            <span class="section-note" id="luck-direction-note"></span>
+          </div>
+          <div class="luck-grid" id="luck-cycles"></div>
+        </div>
+        <div class="analysis-section">
+          <div class="section-heading">
+            <h3>流年</h3>
+            <label class="annual-controls">
+              <span>流年當年</span>
+              <input id="annual-target-year" type="number" min="1" max="9999" step="1" aria-label="流年當年">
+              <button class="annual-confirm-button" id="confirm-annual-year" type="button">確認</button>
+            </label>
+          </div>
+          <div class="annual-grid" id="annual-flow"></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="tab-panel" id="profiles-panel" hidden>
+      <div class="profile-toolbar">
+        <input class="profile-search" id="profile-search" type="search" placeholder="搜尋命主姓名或西元出生年" aria-label="搜尋命主">
       </div>
+      <p class="storage-note">目前命主紀錄僅儲存在此瀏覽器裝置中。清除瀏覽器資料後，紀錄可能一併消失。</p>
+      <div class="profile-list" id="profile-list"></div>
     </section>
   </main>
 
+  <script src="./vendor/lunar-javascript-1.7.7.js"></script>
   <script>
     const stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
     const branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
@@ -723,9 +945,81 @@
       minute: 0,
       timezoneOffset: 8
     };
+    const PROFILE_STORAGE_KEY = "louisko_bazi_profiles_v1";
+    const LUNAR_MIN_YEAR = 1900;
+    const LUNAR_MAX_YEAR = 2100;
     let selectedMinute = defaults.minute;
     let latestChart = null;
     let latestInput = null;
+    let activeCalendarType = "solar";
+    let lastConvertedSolar = null;
+    let lastConvertedLunar = null;
+
+    function getLunarLibrary() {
+      if (typeof window.Solar?.fromYmdHms !== "function" || typeof window.Lunar?.fromYmdHms !== "function" || typeof window.LunarYear?.fromYear !== "function") {
+        throw new Error("曆法轉換引擎尚未載入，請重新整理頁面。");
+      }
+      return { Solar: window.Solar, Lunar: window.Lunar, LunarYear: window.LunarYear };
+    }
+
+    function formatLunarMonth(month, isLeap = false) {
+      const names = ["", "正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+      return `${isLeap ? "閏" : ""}${names[month] || `${month}月`}`;
+    }
+
+    function formatLunarDay(day) {
+      const names = ["", "初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十", "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
+      return names[day] || `${day}日`;
+    }
+
+    function formatSolarDate(date) {
+      return `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")} ${String(date.hour).padStart(2, "0")}:${String(date.minute).padStart(2, "0")}`;
+    }
+
+    function formatLunarRecord(lunar) {
+      return `${lunar.ganzhiYear || ""}年 ${formatLunarMonth(lunar.month, lunar.isLeap)}${formatLunarDay(lunar.day)}`;
+    }
+
+    function solarToLunar(solar) {
+      const { Solar } = getLunarLibrary();
+      const lunar = Solar.fromYmdHms(solar.year, solar.month, solar.day, solar.hour, solar.minute, 0).getLunar();
+      return {
+        year: lunar.getYear(),
+        month: Math.abs(lunar.getMonth()),
+        day: lunar.getDay(),
+        isLeap: lunar.getMonth() < 0,
+        ganzhiYear: lunar.getYearInGanZhi()
+      };
+    }
+
+    function lunarToSolar(lunar, hour, minute) {
+      const { Lunar } = getLunarLibrary();
+      const lunarMonth = lunar.isLeap ? -Math.abs(lunar.month) : Math.abs(lunar.month);
+      const source = Lunar.fromYmdHms(lunar.year, lunarMonth, lunar.day, hour, minute, 0);
+      const solar = source.getSolar();
+      return {
+        year: solar.getYear(),
+        month: solar.getMonth(),
+        day: solar.getDay(),
+        hour,
+        minute
+      };
+    }
+
+    function getLunarMonthDays(year, month, isLeap) {
+      const { LunarYear } = getLunarLibrary();
+      const lunarMonth = isLeap ? -Math.abs(month) : Math.abs(month);
+      const lunarMonthRecord = LunarYear.fromYear(year).getMonth(lunarMonth);
+      if (!lunarMonthRecord) {
+        throw new RangeError(`此農曆年份沒有${formatLunarMonth(month, isLeap)}。`);
+      }
+      return lunarMonthRecord.getDayCount();
+    }
+
+    function getLeapMonth(year) {
+      const { LunarYear } = getLunarLibrary();
+      return LunarYear.fromYear(year).getLeapMonth();
+    }
 
     function appendOptions(select, options, selectedValue) {
       select.innerHTML = "";
@@ -757,8 +1051,372 @@
       );
     }
 
+    function updateLunarMonthOptions() {
+      const year = Number(document.getElementById("lunar-year").value);
+      const monthSelect = document.getElementById("lunar-month");
+      const previousMonth = Number(monthSelect.value) || 1;
+      if (!Number.isInteger(year) || year < LUNAR_MIN_YEAR || year > LUNAR_MAX_YEAR) {
+        appendOptions(monthSelect, [], null);
+        updateLunarDayOptions();
+        return;
+      }
+
+      const leapMonth = getLeapMonth(year);
+      const options = [];
+      for (let month = 1; month <= 12; month += 1) {
+        options.push({ value: month, label: formatLunarMonth(month) });
+        if (month === leapMonth) options.push({ value: -month, label: formatLunarMonth(month, true) });
+      }
+      const selectedMonth = options.some((option) => option.value === previousMonth) ? previousMonth : 1;
+      appendOptions(monthSelect, options, selectedMonth);
+      updateLunarDayOptions();
+    }
+
+    function updateLunarDayOptions() {
+      const year = Number(document.getElementById("lunar-year").value);
+      const selectedMonthValue = Number(document.getElementById("lunar-month").value);
+      const daySelect = document.getElementById("lunar-day");
+      if (!Number.isInteger(year) || !selectedMonthValue) {
+        appendOptions(daySelect, [], null);
+        return;
+      }
+
+      try {
+        const month = Math.abs(selectedMonthValue);
+        const isLeap = selectedMonthValue < 0;
+        const maxDay = getLunarMonthDays(year, month, isLeap);
+        const previousDay = Number(daySelect.value) || 1;
+        appendOptions(
+          daySelect,
+          Array.from({ length: maxDay }, (_, index) => ({ value: index + 1, label: formatLunarDay(index + 1) })),
+          Math.min(previousDay, maxDay)
+        );
+      } catch (error) {
+        appendOptions(daySelect, [], null);
+      }
+    }
+
+    function readSolarFields() {
+      return {
+        year: Number(document.getElementById("year").value),
+        month: Number(document.getElementById("month").value),
+        day: Number(document.getElementById("day").value),
+        hour: Number(document.getElementById("hour").value),
+        minute: Number(document.getElementById("minute").value)
+      };
+    }
+
+    function readLunarFields() {
+      const monthValue = Number(document.getElementById("lunar-month").value);
+      return {
+        year: Number(document.getElementById("lunar-year").value),
+        month: Math.abs(monthValue),
+        day: Number(document.getElementById("lunar-day").value),
+        isLeap: monthValue < 0,
+        hour: Number(document.getElementById("lunar-hour").value),
+        minute: Number(document.getElementById("lunar-minute").value)
+      };
+    }
+
+    function setSolarFields(solar) {
+      document.getElementById("year").value = String(solar.year);
+      document.getElementById("month").value = String(solar.month);
+      updateDayOptions();
+      document.getElementById("day").value = String(solar.day);
+      document.getElementById("hour").value = String(solar.hour);
+      document.getElementById("minute").value = String(solar.minute);
+    }
+
+    function setLunarFields(lunar, hour = defaults.hour, minute = defaults.minute) {
+      document.getElementById("lunar-year").value = String(lunar.year);
+      updateLunarMonthOptions();
+      document.getElementById("lunar-month").value = String(lunar.isLeap ? -lunar.month : lunar.month);
+      updateLunarDayOptions();
+      document.getElementById("lunar-day").value = String(lunar.day);
+      document.getElementById("lunar-hour").value = String(hour);
+      document.getElementById("lunar-minute").value = String(minute);
+    }
+
+    function isCompleteSolar(solar) {
+      try {
+        validateBirthInput({ ...solar, timezoneOffset: defaults.timezoneOffset, lateZiSwitchDay: false });
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function isCompleteLunar(lunar) {
+      return Number.isInteger(lunar.year) && lunar.year >= LUNAR_MIN_YEAR && lunar.year <= LUNAR_MAX_YEAR &&
+        Number.isInteger(lunar.month) && lunar.month >= 1 && lunar.month <= 12 && Number.isInteger(lunar.day) &&
+        Number.isInteger(lunar.hour) && lunar.hour >= 0 && lunar.hour <= 23 && Number.isInteger(lunar.minute) &&
+        lunar.minute >= 0 && lunar.minute <= 59;
+    }
+
+    function updateCalendarPreview() {
+      const solarPreview = document.getElementById("solar-lunar-preview");
+      const lunarPreview = document.getElementById("lunar-solar-preview");
+      solarPreview.classList.remove("is-error");
+      lunarPreview.classList.remove("is-error");
+
+      if (activeCalendarType === "solar") {
+        const solar = readSolarFields();
+        if (!isCompleteSolar(solar)) {
+          solarPreview.textContent = "請輸入完整且合法的國曆出生年月日時。";
+          solarPreview.classList.add("is-error");
+          return;
+        }
+        try {
+          lastConvertedSolar = solar;
+          lastConvertedLunar = solarToLunar(solar);
+          solarPreview.textContent = `對應農曆：${formatLunarRecord(lastConvertedLunar)}`;
+        } catch (error) {
+          solarPreview.textContent = error instanceof Error ? error.message : "日期轉換失敗，請確認輸入日期是否合法。";
+          solarPreview.classList.add("is-error");
+        }
+        return;
+      }
+
+      const lunar = readLunarFields();
+      if (!isCompleteLunar(lunar)) {
+        lunarPreview.textContent = "請輸入完整且合法的農曆出生年月日時。";
+        lunarPreview.classList.add("is-error");
+        return;
+      }
+      try {
+        const maxDay = getLunarMonthDays(lunar.year, lunar.month, lunar.isLeap);
+        if (lunar.day > maxDay) throw new RangeError(`農曆${formatLunarMonth(lunar.month, lunar.isLeap)}此年只有${maxDay}天。`);
+        lastConvertedLunar = lunar;
+        lastConvertedSolar = lunarToSolar(lunar, lunar.hour, lunar.minute);
+        lunarPreview.textContent = `對應國曆：${formatSolarDate(lastConvertedSolar)}`;
+      } catch (error) {
+        lunarPreview.textContent = error instanceof Error ? error.message : "日期轉換失敗，請確認輸入日期是否合法。";
+        lunarPreview.classList.add("is-error");
+      }
+    }
+
+    function setCalendarType(type, convert = true) {
+      if (type === activeCalendarType) return;
+      if (convert) {
+        if (type === "lunar") {
+          const solar = readSolarFields();
+          if (isCompleteSolar(solar)) {
+            try {
+              const lunar = solarToLunar(solar);
+              setLunarFields(lunar, solar.hour, solar.minute);
+              lastConvertedSolar = solar;
+              lastConvertedLunar = lunar;
+            } catch (error) {
+              document.getElementById("solar-lunar-preview").textContent = error instanceof Error ? error.message : "日期轉換失敗。";
+            }
+          } else if (lastConvertedLunar) {
+            setLunarFields(lastConvertedLunar, lastConvertedSolar?.hour, lastConvertedSolar?.minute);
+          }
+        } else {
+          const lunar = readLunarFields();
+          if (isCompleteLunar(lunar)) {
+            try {
+              const solar = lunarToSolar(lunar, lunar.hour, lunar.minute);
+              setSolarFields(solar);
+              lastConvertedSolar = solar;
+              lastConvertedLunar = lunar;
+            } catch (error) {
+              document.getElementById("lunar-solar-preview").textContent = error instanceof Error ? error.message : "日期轉換失敗。";
+            }
+          } else if (lastConvertedSolar) {
+            setSolarFields(lastConvertedSolar);
+          }
+        }
+      }
+      activeCalendarType = type;
+      document.getElementById("solar-input-panel").hidden = type !== "solar";
+      document.getElementById("lunar-input-panel").hidden = type !== "lunar";
+      document.querySelectorAll('input[name="calendarType"]').forEach((radio) => {
+        radio.checked = radio.value === type;
+      });
+      updateCalendarPreview();
+    }
+
     function getSelected(name) {
       return document.querySelector(`input[name="${name}"]:checked`).value;
+    }
+
+    function getStoredProfiles() {
+      try {
+        const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter((profile) => profile && typeof profile === "object" && profile.id && profile.birthSolar);
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function writeStoredProfiles(profiles) {
+      try {
+        window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profiles));
+        return true;
+      } catch (error) {
+        alert("命主紀錄無法儲存，請確認瀏覽器允許此網站使用本機儲存空間。");
+        return false;
+      }
+    }
+
+    function createProfileId() {
+      if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+      return `profile-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    function profileIdentity(profile) {
+      const solar = profile.birthSolar;
+      return [
+        profile.name || "",
+        solar.year,
+        solar.month,
+        solar.day,
+        solar.hour,
+        solar.minute,
+        profile.gender,
+        profile.hemisphere,
+        profile.dayChangeRule,
+        profile.birthPlace || "",
+        profile.timezone || "Asia/Taipei"
+      ].join("|");
+    }
+
+    function saveBaziProfile(profile) {
+      const profiles = getStoredProfiles();
+      const identity = profileIdentity(profile);
+      const existingIndex = profiles.findIndex((item) => profileIdentity(item) === identity);
+      const now = new Date().toISOString();
+      const record = {
+        ...profile,
+        id: existingIndex >= 0 ? profiles[existingIndex].id : profile.id || createProfileId(),
+        createdAt: existingIndex >= 0 ? profiles[existingIndex].createdAt : now,
+        updatedAt: now,
+        version: 1
+      };
+      if (existingIndex >= 0) profiles[existingIndex] = record;
+      else profiles.push(record);
+      writeStoredProfiles(profiles);
+      return record;
+    }
+
+    function deleteBaziProfile(id) {
+      return writeStoredProfiles(getStoredProfiles().filter((profile) => profile.id !== id));
+    }
+
+    function buildBaziProfileRecord(input) {
+      const solar = {
+        year: input.year,
+        month: input.month,
+        day: input.day,
+        hour: input.hour,
+        minute: input.minute
+      };
+      const name = input.displayName || `未命名命主 ${formatSolarDate(solar).slice(0, 10)}`;
+      return {
+        id: createProfileId(),
+        name,
+        inputCalendarType: input.calendarType,
+        birthSolar: solar,
+        birthLunar: input.birthLunar,
+        gender: input.gender === "男" ? "male" : "female",
+        hemisphere: input.birthHemisphere === "南半球" ? "south" : "north",
+        dayChangeRule: input.lateZiSwitchDay ? "lateZiHour" : "midnight",
+        birthPlace: input.birthHemisphere,
+        timezone: input.timezoneOffset === 8 ? "Asia/Taipei" : `UTC${input.timezoneOffset >= 0 ? "+" : ""}${input.timezoneOffset}`,
+        timezoneOffset: input.timezoneOffset,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        version: 1
+      };
+    }
+
+    function formatProfileTime(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "未記錄";
+      return date.toLocaleString("zh-TW", { dateStyle: "medium", timeStyle: "short" });
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
+    }
+
+    function renderProfiles() {
+      const container = document.getElementById("profile-list");
+      const query = document.getElementById("profile-search").value.trim().toLowerCase();
+      const profiles = getStoredProfiles()
+        .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
+        .filter((profile) => !query || `${profile.name} ${profile.birthSolar?.year}`.toLowerCase().includes(query));
+
+      if (!profiles.length) {
+        container.innerHTML = `<p class="empty-profiles">${query ? "找不到符合條件的命主紀錄。" : "尚無命主紀錄。完成一次排盤後，資料會自動出現在這裡。"}</p>`;
+        return;
+      }
+
+      container.innerHTML = profiles.map((profile) => {
+        const solar = profile.birthSolar;
+        const lunar = profile.birthLunar;
+        const gender = profile.gender === "female" ? "女" : "男";
+        const hemisphere = profile.hemisphere === "south" ? "南半球" : "北半球";
+        const dayChange = profile.dayChangeRule === "lateZiHour" ? "子初換日" : "子正換日";
+        return `
+          <article class="profile-card">
+            <h3>${escapeHtml(profile.name || "未命名命主")}</h3>
+            <p>陽曆：${escapeHtml(formatSolarDate(solar))}</p>
+            <p>農曆：${escapeHtml(lunar ? formatLunarRecord(lunar) : "未記錄")}</p>
+            <p>性別：${gender}｜出生地：${hemisphere}｜換日法：${dayChange}</p>
+            <p>最後使用：${escapeHtml(formatProfileTime(profile.updatedAt))}</p>
+            <div class="profile-actions">
+              <button class="profile-use-button" type="button" data-profile-id="${escapeHtml(profile.id)}">使用此資料</button>
+              <button class="profile-delete-button" type="button" data-delete-profile-id="${escapeHtml(profile.id)}">刪除</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function setRadioValue(name, value) {
+      const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
+      if (radio) radio.checked = true;
+    }
+
+    function loadBaziProfile(profile) {
+      const solar = profile.birthSolar;
+      const lunar = profile.birthLunar;
+      document.getElementById("profile-name").value = profile.name?.startsWith("未命名命主 ") ? "" : profile.name || "";
+      setRadioValue("gender", profile.gender === "female" ? "女" : "男");
+      setRadioValue("birthHemisphere", profile.hemisphere === "south" ? "南半球" : "北半球");
+      setRadioValue("dayChangeMethod", profile.dayChangeRule === "lateZiHour" ? "子初換日" : "子正換日");
+      setSolarFields(solar);
+      if (lunar) setLunarFields(lunar, solar.hour, solar.minute);
+      lastConvertedSolar = solar;
+      lastConvertedLunar = lunar;
+      activeCalendarType = profile.inputCalendarType === "lunar" ? "lunar" : "solar";
+      document.getElementById("solar-input-panel").hidden = activeCalendarType !== "solar";
+      document.getElementById("lunar-input-panel").hidden = activeCalendarType !== "lunar";
+      document.querySelectorAll('input[name="calendarType"]').forEach((radio) => {
+        radio.checked = radio.value === activeCalendarType;
+      });
+      updateCalendarPreview();
+      showTab("chart");
+      document.getElementById("result").hidden = true;
+      document.getElementById("open-analysis").disabled = true;
+      latestChart = null;
+      latestInput = null;
+    }
+
+    function showTab(tab) {
+      const isChart = tab === "chart";
+      document.getElementById("chart-panel").hidden = !isChart;
+      document.getElementById("profiles-panel").hidden = isChart;
+      document.getElementById("tab-chart").classList.toggle("is-active", isChart);
+      document.getElementById("tab-profiles").classList.toggle("is-active", !isChart);
+      document.getElementById("tab-chart").setAttribute("aria-selected", String(isChart));
+      document.getElementById("tab-profiles").setAttribute("aria-selected", String(!isChart));
+      if (!isChart) renderProfiles();
     }
 
     function getTenGod(dayMaster, targetStem) {
@@ -905,17 +1563,32 @@
 
     function toBirthInput() {
       const dayChangeMethod = getSelected("dayChangeMethod");
+      const calendarType = activeCalendarType;
+      let solar;
+      let lunar;
+
+      if (calendarType === "solar") {
+        solar = readSolarFields();
+        validateBirthInput({ ...solar, timezoneOffset: defaults.timezoneOffset, lateZiSwitchDay: false });
+        lunar = solarToLunar(solar);
+      } else {
+        lunar = readLunarFields();
+        if (!isCompleteLunar(lunar)) throw new RangeError("請輸入完整的農曆出生年月日時。");
+        const maxDay = getLunarMonthDays(lunar.year, lunar.month, lunar.isLeap);
+        if (lunar.day > maxDay) throw new RangeError(`農曆${formatLunarMonth(lunar.month, lunar.isLeap)}此年只有${maxDay}天。`);
+        solar = lunarToSolar(lunar, lunar.hour, lunar.minute);
+      }
+
       return {
-        year: Number(document.getElementById("year").value),
-        month: Number(document.getElementById("month").value),
-        day: Number(document.getElementById("day").value),
-        hour: Number(document.getElementById("hour").value),
-        minute: Number(document.getElementById("minute").value),
+        ...solar,
         gender: getSelected("gender"),
         birthHemisphere: getSelected("birthHemisphere"),
         dayChangeMethod,
         lateZiSwitchDay: dayChangeMethod === "子初換日",
-        timezoneOffset: defaults.timezoneOffset
+        timezoneOffset: defaults.timezoneOffset,
+        displayName: document.getElementById("profile-name").value.trim(),
+        calendarType,
+        birthLunar: lunar
       };
     }
 
@@ -1227,9 +1900,13 @@
           generatedAt: new Date().toISOString()
         },
         user: {
+          name: input.displayName || "",
+          displayName: input.displayName || "",
           gender: input.gender === "男" ? "male" : "female",
           birthSolar: `${input.year}-${String(input.month).padStart(2, "0")}-${String(input.day).padStart(2, "0")} ${String(input.hour).padStart(2, "0")}:${String(input.minute).padStart(2, "0")}`,
-          birthLunar: "",
+          birthLunar: formatLunarRecord(input.birthLunar),
+          birthLunarData: input.birthLunar,
+          inputCalendarType: input.calendarType,
           birthPlace: input.birthHemisphere,
           timezone: input.timezoneOffset === 8 ? "Asia/Taipei" : `UTC${input.timezoneOffset >= 0 ? "+" : ""}${input.timezoneOffset}`,
           dayChangeRule: input.lateZiSwitchDay ? "lateZiHour" : "midnight"
@@ -1358,23 +2035,95 @@
       defaults.minute
     );
 
+    document.getElementById("lunar-year").value = String(defaults.year);
+    appendOptions(
+      document.getElementById("lunar-hour"),
+      Array.from({ length: 24 }, (_, hour) => {
+        const branch = branches[Math.floor((hour + 1) / 2) % 12];
+        return { value: hour, label: `${hour} ${branch}時` };
+      }),
+      defaults.hour
+    );
+    appendOptions(
+      document.getElementById("lunar-minute"),
+      Array.from({ length: 60 }, (_, minute) => ({ value: minute, label: `${String(minute).padStart(2, "0")} 分` })),
+      defaults.minute
+    );
+    updateLunarMonthOptions();
+    setLunarFields(solarToLunar({ ...defaults }), defaults.hour, defaults.minute);
+    updateCalendarPreview();
+
+    document.querySelectorAll('input[name="calendarType"]').forEach((radio) => {
+      radio.addEventListener("change", () => setCalendarType(radio.value));
+    });
+
     document.getElementById("set-current-time").addEventListener("click", () => {
       const now = new Date();
-      document.getElementById("year").value = String(now.getFullYear());
-      document.getElementById("month").value = String(now.getMonth() + 1);
-      updateDayOptions();
-      document.getElementById("day").value = String(now.getDate());
-      document.getElementById("hour").value = String(now.getHours());
-      document.getElementById("minute").value = String(now.getMinutes());
+      const solar = {
+        year: now.getFullYear(),
+        month: now.getMonth() + 1,
+        day: now.getDate(),
+        hour: now.getHours(),
+        minute: now.getMinutes()
+      };
+      setSolarFields(solar);
+      const lunar = solarToLunar(solar);
+      setLunarFields(lunar, solar.hour, solar.minute);
+      lastConvertedSolar = solar;
+      lastConvertedLunar = lunar;
       document.getElementById("annual-target-year").value = String(now.getFullYear());
       selectedMinute = now.getMinutes();
       document.getElementById("current-time-note").textContent =
         `已帶入 ${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(selectedMinute).padStart(2, "0")}`;
+      updateCalendarPreview();
     });
 
-    document.getElementById("year").addEventListener("change", updateDayOptions);
-    document.getElementById("year").addEventListener("input", updateDayOptions);
-    document.getElementById("month").addEventListener("change", updateDayOptions);
+    document.getElementById("year").addEventListener("change", () => {
+      updateDayOptions();
+      updateCalendarPreview();
+    });
+    document.getElementById("year").addEventListener("input", () => {
+      updateDayOptions();
+      updateCalendarPreview();
+    });
+    document.getElementById("month").addEventListener("change", () => {
+      updateDayOptions();
+      updateCalendarPreview();
+    });
+    ["day", "hour", "minute"].forEach((id) => document.getElementById(id).addEventListener("change", updateCalendarPreview));
+    document.getElementById("lunar-year").addEventListener("input", () => {
+      updateLunarMonthOptions();
+      updateCalendarPreview();
+    });
+    document.getElementById("lunar-year").addEventListener("change", () => {
+      updateLunarMonthOptions();
+      updateCalendarPreview();
+    });
+    document.getElementById("lunar-month").addEventListener("change", () => {
+      updateLunarDayOptions();
+      updateCalendarPreview();
+    });
+    ["lunar-day", "lunar-hour", "lunar-minute"].forEach((id) => document.getElementById(id).addEventListener("change", updateCalendarPreview));
+
+    document.getElementById("tab-chart").addEventListener("click", () => showTab("chart"));
+    document.getElementById("tab-profiles").addEventListener("click", () => showTab("profiles"));
+    document.getElementById("profile-search").addEventListener("input", renderProfiles);
+    document.getElementById("profile-list").addEventListener("click", (event) => {
+      const useButton = event.target.closest("[data-profile-id]");
+      if (useButton) {
+        const profile = getStoredProfiles().find((item) => item.id === useButton.dataset.profileId);
+        if (profile) loadBaziProfile(profile);
+        return;
+      }
+      const deleteButton = event.target.closest("[data-delete-profile-id]");
+      if (!deleteButton) return;
+      const profile = getStoredProfiles().find((item) => item.id === deleteButton.dataset.deleteProfileId);
+      if (!profile) return;
+      if (window.confirm(`確定要刪除「${profile.name || "未命名命主"}」的命主紀錄嗎？\n此動作無法復原。`)) {
+        deleteBaziProfile(profile.id);
+        renderProfiles();
+      }
+    });
 
     function calculateAndRender() {
       try {
@@ -1383,6 +2132,7 @@
         const chart = calculateBaziChart(input, getTargetAnnualYear());
         latestChart = chart;
         latestInput = input;
+        saveBaziProfile(buildBaziProfileRecord(input));
         renderPillars(chart, input);
         renderLuckAndAnnual(chart);
         document.getElementById("result").hidden = false;
