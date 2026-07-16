@@ -76,6 +76,11 @@ app.get("/api/bazi/auth/me", async (req, res) => {
   }
 });
 
+app.get("/api/bazi/auth/status", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ ok: true, emailConfigured: baziEmailProvider === "console" || (baziEmailProvider === "cloudflare" && Boolean(baziEmailApiToken && baziEmailAccountId && baziEmailFrom)) });
+});
+
 app.post("/api/bazi/auth/register", async (req, res) => {
   try {
     const email = normalizeBaziEmail(req.body?.email);

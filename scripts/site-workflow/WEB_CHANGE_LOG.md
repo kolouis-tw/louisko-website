@@ -26,6 +26,16 @@
 - Zeabur 部署：`6a5818bf3c393b66819cca84`，狀態 `RUNNING`。
 - 線上驗證：正式頁面已載入 Email 驗證、忘記密碼、刪除帳號與顯示密碼控制；未登入 `/api/bazi/auth/me` 回 `authenticated:false`，未登入 profiles 回 `401 AUTHENTICATION_REQUIRED`。正式註冊目前回 `503 EMAIL_SERVICE_NOT_CONFIGURED`，因 Zeabur 尚未配置 Cloudflare Email Sending secret，未建立測試帳號。
 
+## 2026-07-16 - 顯示 Email 服務未啟用狀態
+
+- 變更目的：修正 Email 相關按鈕看似沒有作用的問題，新增 `/api/bazi/auth/status`，並在 UI 直接以錯誤色提示 Email 驗證、忘記密碼與重寄驗證信尚未啟用的真正原因。
+- 修改檔案：`server.js`、`apps/bazi/index.html`。
+- 本機驗證：server 與 inline script 語法、`git diff --check` 通過。
+- GitHub commit：待本次變更確認後處理。
+- GitHub push：待本次變更確認後處理。
+- Zeabur 部署：待本次變更部署後補記。
+- 線上驗證：待部署後補記。
+
 ## 2026-07-16 - 修正命主姓名輸入框視覺一致性
 
 - 變更目的：修正命主姓名 `type=text` 未套用既有表單控制樣式，造成尺寸、內距與日期輸入欄位不一致。

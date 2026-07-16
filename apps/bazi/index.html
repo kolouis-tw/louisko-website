@@ -222,6 +222,10 @@
       line-height: 1.5;
     }
 
+    .profile-auth-status.is-error {
+      color: var(--red);
+    }
+
     .profile-account-label {
       margin: 0;
       color: var(--text);
@@ -1115,7 +1119,8 @@
       ownerKey: null,
       syncing: false,
       user: null,
-      authBusy: false
+      authBusy: false,
+      emailConfigured: true
     };
 
     function getLunarLibrary() {
@@ -1433,9 +1438,11 @@
       status.classList.toggle("is-cloud", isCloud);
     }
 
-    function setProfileAuthStatus(message) {
+    function setProfileAuthStatus(message, isError = false) {
       const status = document.getElementById("profile-auth-status");
-      if (status) status.textContent = message;
+      if (!status) return;
+      status.textContent = message;
+      status.classList.toggle("is-error", isError);
     }
 
     function getBaziAccountCredentials() {
@@ -1571,6 +1578,11 @@
       return readBaziResponse(response, `帳號狀態讀取失敗（${response.status}）。`);
     }
 
+    async function getBaziEmailServiceStatus() {
+      const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/status`, { cache: "no-store" });
+      return readBaziResponse(response, `Email 服務狀態讀取失敗（${response.status}）。`);
+    }
+
     async function submitBaziAuth(action, credentials, extra = {}) {
       const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/${action}`, {
         method: "POST",
@@ -1587,7 +1599,7 @@
         const data = await submitBaziAuth("resend-verification", { email });
         setProfileAuthStatus(data.message || "驗證信已寄出，請檢查信箱。" );
       } catch (error) {
-        setProfileAuthStatus(error instanceof Error ? error.message : "驗證信寄送失敗。" );
+        setProfileAuthStatus(error instanceof Error ? error.message : "驗證信寄送失敗。", true);
       } finally {
         setProfileAuthBusy(false);
       }
@@ -1601,7 +1613,7 @@
         const data = await submitBaziAuth("forgot-password", { email });
         setProfileAuthStatus(data.message || "如果帳號存在，重設密碼信已寄出。" );
       } catch (error) {
-        setProfileAuthStatus(error instanceof Error ? error.message : "重設密碼信寄送失敗。" );
+        setProfileAuthStatus(error instanceof Error ? error.message : "重設密碼信寄送失敗。", true);
       } finally {
         setProfileAuthBusy(false);
       }
@@ -1656,22 +1668,25 @@
       profileCloudState.syncing = true;
       setProfileStorageStatus("正在檢查帳號同步狀態…");
       try {
+        const emailStatus = await getBaziEmailServiceStatus();
+        profileCloudState.emailConfigured = Boolean(emailStatus.emailConfigured);
         const session = await getBaziAuthSession();
         if (session.authenticated && session.user) {
           await applyBaziAuthenticatedState(session.user, await getBaziCloudProfiles());
+          if (!profileCloudState.emailConfigured) setProfileAuthStatus("Email 驗證與忘記密碼目前尚未啟用；請先完成網站郵件服務設定。", true);
         } else {
           profileCloudState.user = null;
           profileCloudState.available = false;
           renderProfileAccount();
           setProfileStorageStatus("尚未登入；目前只保留在此瀏覽器，登入後才會跨裝置同步。");
-          setProfileAuthStatus("登入後，命主紀錄會隨帳號在不同裝置同步。已有舊雲端紀錄者，建立帳號時會一併轉入。" );
+          setProfileAuthStatus(profileCloudState.emailConfigured ? "登入後，命主紀錄會隨帳號在不同裝置同步。已有舊雲端紀錄者，建立帳號時會一併轉入。" : "Email 驗證、忘記密碼與重寄驗證信目前尚未啟用；建立帳號前請先完成網站郵件服務設定。", !profileCloudState.emailConfigured);
         }
         renderProfiles();
       } catch (error) {
         profileCloudState.available = false;
         renderProfileAccount();
         setProfileStorageStatus("帳號服務暫時無法連線，目前只保留在此瀏覽器；請稍後重試登入。");
-        setProfileAuthStatus(error instanceof Error ? error.message : "帳號服務暫時無法連線。" );
+        setProfileAuthStatus(error instanceof Error ? error.message : "帳號服務暫時無法連線。", true);
         console.warn("Bazi account session check failed:", error);
       } finally {
         profileCloudState.syncing = false;
@@ -1727,7 +1742,7 @@
         setProfileAuthStatus(`驗證信已寄至 ${data.email}，請點擊信中的連結完成驗證。`);
         document.getElementById("bazi-account-password").value = "";
       } catch (error) {
-        setProfileAuthStatus(error instanceof Error ? error.message : "建立帳號失敗，請稍後重試。" );
+        setProfileAuthStatus(error instanceof Error ? error.message : "建立帳號失敗，請稍後重試。", true);
       } finally {
         setProfileAuthBusy(false);
       }
@@ -1743,9 +1758,9 @@
         document.getElementById("bazi-account-password").value = "";
       } catch (error) {
         if (error?.code === "EMAIL_NOT_VERIFIED") {
-          setProfileAuthStatus("請先完成 Email 驗證，再登入；也可以按「重新寄驗證信」。" );
+          setProfileAuthStatus("請先完成 Email 驗證，再登入；也可以按「重新寄驗證信」。", true);
         } else {
-          setProfileAuthStatus(error instanceof Error ? error.message : "登入失敗，請確認帳號與密碼。" );
+          setProfileAuthStatus(error instanceof Error ? error.message : "登入失敗，請確認帳號與密碼。", true);
         }
       } finally {
         setProfileAuthBusy(false);
@@ -1791,7 +1806,7 @@
         setProfileStorageStatus("帳號與雲端命主紀錄已刪除。" );
         setProfileAuthStatus(data.message || "帳號已刪除。" );
       } catch (error) {
-        setProfileAuthStatus(error instanceof Error ? error.message : "帳號刪除失敗。" );
+        setProfileAuthStatus(error instanceof Error ? error.message : "帳號刪除失敗。", true);
       } finally {
         setProfileAuthBusy(false);
       }
