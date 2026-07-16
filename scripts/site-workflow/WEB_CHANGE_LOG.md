@@ -31,10 +31,10 @@
 - 變更目的：修正 Email 相關按鈕看似沒有作用的問題，新增 `/api/bazi/auth/status`，並在 UI 直接以錯誤色提示 Email 驗證、忘記密碼與重寄驗證信尚未啟用的真正原因。
 - 修改檔案：`server.js`、`apps/bazi/index.html`。
 - 本機驗證：server 與 inline script 語法、`git diff --check` 通過。
-- GitHub commit：待本次變更確認後處理。
-- GitHub push：待本次變更確認後處理。
-- Zeabur 部署：待本次變更部署後補記。
-- 線上驗證：待部署後補記。
+- GitHub commit：`079ef8f Show bazi email service status in UI`。
+- GitHub push：已推送到 `kolouis-tw/louisko-website` 的 `main`。
+- Zeabur 部署：`6a5844273d3d099ed2f12df6`，狀態 `RUNNING`。
+- 線上驗證：`GET /api/bazi/auth/status` 回傳 `{"ok":true,"emailConfigured":false}`；正式頁面已載入郵件未啟用的錯誤提示，註冊回傳 `503 EMAIL_SERVICE_NOT_CONFIGURED`，未建立測試帳號。
 
 ## 2026-07-16 - 修正命主姓名輸入框視覺一致性
 
