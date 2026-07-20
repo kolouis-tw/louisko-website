@@ -967,7 +967,7 @@ async function handleLineQuickChart(replyToken, userId, parsed) {
     return;
   }
   if (parsed.status === "needs-fields") {
-    await replyLineMessages(replyToken, [lineBot.buildTextMessage(`還缺少：${parsed.missing.join("、")}。\n例如：排盤 柯耿誌 1975/12/27 00:20 男`)]);
+    await replyLineMessages(replyToken, [lineBot.buildTextMessage(`還缺少：${parsed.missing.join("、")}。\n例如：排盤 王小明 2000/01/01 12:00 男`)]);
     return;
   }
   const sessionId = crypto.randomBytes(16).toString("hex");

@@ -86,8 +86,10 @@ The handler validates the raw request body with HMAC-SHA256, uses LINE `webhookE
 Example:
 
 ```text
-排盤 柯耿誌 1975/12/27 00:20 男
+排盤 王小明 2000/01/01 12:00 男
 ```
+
+公開說明與測試範例只能使用虛構姓名、日期與時間，不得放入真實命主個資。LINE 官方帳號管理後台的「自動回應訊息」必須關閉，讓 `/api/line/webhook` 成為唯一回覆來源；Webhook 開啟即可接收並處理訊息。
 
 The parser applies the website defaults for LINE input: solar calendar, `Asia/Taipei` / UTC+8, north hemisphere, and `子初換日`. Gender is required in the LINE command. The Bot first displays the normalized data and asks for confirmation; only after confirmation does it save/update the owner-scoped profile and generate the artifact.
 
@@ -125,6 +127,7 @@ Before enabling the webhook in production:
 - Confirm `BAZI_LINE_ALLOWED_USER_IDS` contains the intended LINE account only.
 - Confirm no secret value is present in `git diff`, repository files, or logs.
 - Send a LINE `幫助` command and verify a reply.
+- Confirm the LINE Official Account Manager `自動回應訊息` switch is disabled; the default system reply must not be sent alongside Webhook replies.
 - Send an incomplete `排盤` command and verify missing fields are reported.
 - Send the example command and verify the confirmation step appears before generation.
 - Confirm the test chart returns `乙酉 丁亥 丙辰 辛卯` and current luck `己丑` for the 2005 female fixture.
