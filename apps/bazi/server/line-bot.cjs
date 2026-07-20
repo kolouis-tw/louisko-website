@@ -196,6 +196,8 @@ function buildHelpMessage() {
   return buildTextMessage([
     "Louisko 八字命理顧問",
     "",
+    "請輸入命令，或點選下方按鈕：",
+    "",
     "排盤 姓名 YYYY/MM/DD HH:MM 男／女",
     "例如：排盤 王小明 2000/01/01 12:00 男",
     "",
@@ -203,7 +205,13 @@ function buildHelpMessage() {
     "查看 Prompt：查看目前有效 Prompt",
     "取得 Markdown：取得短效下載連結",
     "取消：取消目前操作",
-  ].join("\n"));
+  ].join("\n"), [
+    messageActionItem("排盤格式", "排盤"),
+    messageActionItem("我的命主", "我的命主"),
+    messageActionItem("查看 Prompt", "查看 Prompt"),
+    messageActionItem("取得 Markdown", "取得 Markdown"),
+    messageActionItem("取消", "取消"),
+  ]);
 }
 
 module.exports = {

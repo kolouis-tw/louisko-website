@@ -70,7 +70,7 @@ Enable webhook delivery, copy the channel secret and channel access token into Z
 
 After the Zeabur service restarts with the four LINE variables, use the LINE Developers `Verify` action. A successful result confirms that Cloudflare, louisko.com, Zeabur, and the deployed webhook handler are connected. This console verification does not replace an end-to-end message test from an allowlisted LINE account.
 
-The handler validates the raw request body with HMAC-SHA256, uses LINE `webhookEventId` when available for idempotency, and never logs Prompt content or full personal birth data.
+The handler validates the raw request body with HMAC-SHA256, uses LINE `webhookEventId` when available for idempotency, and never logs Prompt content or full personal birth data. `幫助` and unknown commands return the same command prompt with LINE quick-reply buttons for the main operations.
 
 ## Supported Phase 1 Commands
 
@@ -93,7 +93,7 @@ Example:
 
 The parser applies the website defaults for LINE input: solar calendar, `Asia/Taipei` / UTC+8, north hemisphere, and `子初換日`. Gender is required in the LINE command. The Bot first displays the normalized data and asks for confirmation; only after confirmation does it save/update the owner-scoped profile and generate the artifact.
 
-`查看 Prompt` reads the current saved artifact and does not regenerate it. `重新產生` explicitly generates a new artifact with the current canonical versions. `取得 Markdown` creates a one-time, short-lived, owner/profile/artifact-scoped download token.
+`查看 Prompt` reads the current saved artifact. If a profile was created on the website and has no LINE artifact yet, the first view or download generates one with the current canonical versions. `重新產生` explicitly refreshes the artifact. `取得 Markdown` creates a one-time, short-lived, owner/profile/artifact-scoped download token.
 
 ## Data Records
 
@@ -131,7 +131,7 @@ Before enabling the webhook in production:
 - Send an incomplete `排盤` command and verify missing fields are reported.
 - Send the example command and verify the confirmation step appears before generation.
 - Confirm the test chart returns `乙酉 丁亥 丙辰 辛卯` and current luck `己丑` for the 2005 female fixture.
-- Confirm `查看 Prompt` does not change the artifact hash or generation time.
+- Confirm `查看 Prompt` returns the full Prompt for both a LINE-created profile and an existing website profile.
 - Confirm `取得 Markdown` works once and the same token fails on a second request.
 - Re-send an identical webhook event and verify it is not processed twice.
 - Send a message from a non-allowed LINE user and verify no owner data is returned.

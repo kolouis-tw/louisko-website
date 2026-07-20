@@ -35,6 +35,14 @@ function runLineUtilityChecks() {
   assert.equal(parsed.profile.gender, "male");
   assert.equal(parsed.profile.timezone, "Asia/Taipei");
   assert.equal(parsed.profile.dayChangeRule, "lateZiHour");
+  assert.equal(lineBot.parseLineCommand("查看 Prompt").command, "view-prompt");
+  assert.equal(lineBot.parseLineCommand("取得 Markdown").command, "download-markdown");
+
+  const help = lineBot.buildHelpMessage();
+  assert(help.text.includes("請輸入命令，或點選下方按鈕："));
+  assert.equal(help.quickReply.items.length, 5);
+  assert(help.quickReply.items.some((item) => item.action.text === "查看 Prompt"));
+  assert(help.quickReply.items.some((item) => item.action.text === "取得 Markdown"));
 
   const missing = lineBot.parseLineCommand("排盤 王小明");
   assert.equal(missing.status, "needs-fields");

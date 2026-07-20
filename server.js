@@ -751,6 +751,13 @@ async function readLineArtifact(ownerId, profileId) {
   return readBaziJson(key);
 }
 
+async function ensureLineArtifact(ownerId, profile) {
+  const existing = await readLineArtifact(ownerId, profile.id);
+  if (existing?.content) return existing;
+  const generated = await generateLineArtifact(ownerId, profile, new Date().getFullYear());
+  return generated.artifact;
+}
+
 async function writeLineArtifact(ownerId, profileId, artifact) {
   await writeBaziJson(lineArtifactKey(ownerId, profileId, artifact.artifactId), artifact);
   await writeBaziJson(lineArtifactKey(ownerId, profileId), artifact);
@@ -895,6 +902,17 @@ async function replyLinePrompt(replyToken, content) {
   await replyLineMessages(replyToken, chunks.map((chunk) => lineBot.buildTextMessage(chunk)));
 }
 
+async function replyLineOperationError(replyToken, error) {
+  const message = error?.code === "LINE_PROMPT_TOO_LONG"
+    ? "Prompt 內容較長，請點選「取得 Markdown」下載完整檔案。"
+    : "目前操作未完成，請稍後再試；若仍無回覆，請先輸入「幫助」。";
+  try {
+    await replyLineMessages(replyToken, [lineBot.buildTextMessage(message)]);
+  } catch {
+    // The original reply token may already be invalid; keep the webhook failure observable in server logs.
+  }
+}
+
 async function getSingleLineProfile(ownerId, userId) {
   const session = await readLineSession(userId);
   const profiles = await readBaziProfiles(ownerId);
@@ -915,14 +933,12 @@ async function requireLineProfile(ownerId, userId, profileId) {
 }
 
 async function sendCurrentLinePrompt(replyToken, ownerId, profile) {
-  const artifact = await readLineArtifact(ownerId, profile.id);
-  if (!artifact?.content) throw createLineError(404, "ARTIFACT_NOT_FOUND", "目前尚未保存 Prompt，請先選擇重新產生 Prompt。");
+  const artifact = await ensureLineArtifact(ownerId, profile);
   await replyLinePrompt(replyToken, artifact.content);
 }
 
 async function sendLineMarkdownLink(replyToken, ownerId, profile) {
-  const artifact = await readLineArtifact(ownerId, profile.id);
-  if (!artifact?.content) throw createLineError(404, "ARTIFACT_NOT_FOUND", "目前尚未保存 Prompt，請先選擇重新產生 Prompt。");
+  const artifact = await ensureLineArtifact(ownerId, profile);
   const token = await createLineDownloadToken(ownerId, profile.id, artifact.artifactId);
   await replyLineMessages(replyToken, [lineBot.buildTextMessage([
     "Markdown 已準備完成。",
@@ -1096,13 +1112,18 @@ async function processLineEvent(event, destination) {
       return { denied: true };
     }
     enforceLineRateLimit(userId);
-    if (event.type === "postback") {
-      await handleLinePostback(event.replyToken, userId, event.postback);
-      return { handled: true };
-    }
-    if (event.type === "message" && event.message?.type === "text") {
-      await handleLineMessage(event.replyToken, userId, event.message.text);
-      return { handled: true };
+    try {
+      if (event.type === "postback") {
+        await handleLinePostback(event.replyToken, userId, event.postback);
+        return { handled: true };
+      }
+      if (event.type === "message" && event.message?.type === "text") {
+        await handleLineMessage(event.replyToken, userId, event.message.text);
+        return { handled: true };
+      }
+    } catch (error) {
+      await replyLineOperationError(event.replyToken, error);
+      throw error;
     }
     return { ignored: true };
   });
