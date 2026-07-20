@@ -9,10 +9,10 @@
 - API：新增 `POST /api/line/webhook` 與 owner-scoped、短效一次性 `GET /api/bazi/line/download`。
 - 安全邊界：HMAC signature、LINE User ID allowlist、`kolouis@gmail.com` owner resolver、owner-scoped profile／artifact、session TTL、generation lock、rate limit、PII-safe logging；不讀取或保存網站密碼。
 - 本機驗證：LINE canonical regression、2005／1975 golden chart、農曆閏月轉換、calendar regression 12/12、Prompt consistency、Ziwei 12/12、site verify、HTTP webhook fail-closed smoke 與 `git diff --check` 通過。
-- GitHub commit：待本次變更確認後處理。
-- GitHub push：待本次變更確認後處理。
-- Zeabur 部署：待本次變更確認後處理；正式站目前 `/api/line/webhook` 回 `404`，表示尚未部署。
-- 線上驗證：尚未啟用 LINE，因 channel secret、access token 與 allowlist 尚未配置；程式在未配置時回 `LINE_NOT_CONFIGURED`，不影響網站功能。
+- GitHub commit：`4fd581d Add Bazi LINE Bot adapter and governance`。
+- GitHub push：已推送到 `kolouis-tw/louisko-website` 的 `codex/bazi-compact-prompt` 分支。
+- Zeabur 部署：project `6a008755e6a21fff4d962fee`、service `6a118115a458d428a0ab1ee4`、environment `6a008755e5ed304c1d845a06`，CLI 回報 `Service deployed successfully`。
+- 線上驗證：`https://louisko.com/` 與 `/apps/bazi/` 回 `200`；`/api/bazi/auth/status` 回 `emailConfigured:true`；`POST /api/line/webhook` 無效簽章回 `401 LINE_SIGNATURE_INVALID`，確認 endpoint 已上線。
 - 三資料夾同步：目前以 `AI_Web` 單一 repo 為正式來源；LINE 操作與設定已同步記錄於 `docs/agent-governance/line-bot-operations.md`。
 
 ## 2026-07-16 - 命主紀錄改為帳號雲端同步
