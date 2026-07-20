@@ -56,8 +56,8 @@ function parseQuickBaziInput(text, defaults = {}) {
     .trim();
   const missing = [];
   if (!name) missing.push("姓名");
-  if (!dateMatch) missing.push("出生日期（例如 1975/12/27）");
-  if (!timeMatch) missing.push("出生時間（例如 00:20）");
+  if (!dateMatch) missing.push("出生日期（例如 2000/01/01）");
+  if (!timeMatch) missing.push("出生時間（例如 12:00）");
   if (!genderMatch) missing.push("性別（男或女）");
   if (missing.length) return { command: "quick-chart", status: "needs-fields", missing, partial: { name, dateMatch, timeMatch, genderMatch } };
 
