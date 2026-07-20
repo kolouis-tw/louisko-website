@@ -8,7 +8,7 @@
 4. 五行顏色固定：木綠、火紅、土棕、金灰、水藍。
 5. 十神分析不可全部歸零。
 6. 地支藏干不可出現 undefined。
-7. 大運必須九步，且包含西元年月與年齡。
+7. 大運必須前後節氣起運、十步大運，且包含西元年月與年齡。
 8. 六柱十二字整合分析的大運必須與大運試算同步。
 9. 流年變更時，對應大運也必須同步切換。
 10. AI 分析 Markdown 下載功能不可壞。
@@ -40,6 +40,13 @@
 ```bash
 node --check extracted_script.js
 ```
+
+### 輸入層維護
+
+- 國曆／農曆轉換只負責民用日期互轉，不可把子初／子正換日混入曆法 adapter。
+- 四柱核心仍只接收正規化後的陽曆出生年月日時；農曆輸入必須先轉換，再呼叫同一個 `calculateBaziChart()`。
+- 命主紀錄 key 為 `louisko_bazi_profiles_v1`，只能透過 `getStoredProfiles`、`saveBaziProfile`、`deleteBaziProfile` 等 repository 函式存取。
+- 修改輸入層後，至少執行 `node apps/bazi/scripts/calendar-profile-regression-check.mjs` 與 inline script 語法檢查。
 
 ## 建議下一步工程化
 

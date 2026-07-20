@@ -10,12 +10,11 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const scriptsDir = path.dirname(__filename);
 const aiWebRoot = path.resolve(scriptsDir, "..");
-const nestedFutureProject = path.join(aiWebRoot, "02_louisko.com_未來開發專案", "louisko.com_未來開發專案");
 const rootLooksLikeProject = existsSync(path.join(aiWebRoot, "package.json")) &&
   existsSync(path.join(aiWebRoot, "server.js")) &&
   existsSync(path.join(aiWebRoot, "apps", "photo", "index.html"));
-const futureProject = rootLooksLikeProject ? aiWebRoot : nestedFutureProject;
-const manualPath = path.join(futureProject, "_project", "03_deployment", "LOUISKO_DEPLOYMENT_OWNER_MANUAL.md");
+const futureProject = aiWebRoot;
+const manualPath = path.join(aiWebRoot, "scripts", "site-workflow", "WEB_CHANGE_DEPLOYMENT_WORKFLOW.md");
 const wranglerBin = "/opt/homebrew/bin/npx";
 const wranglerArgs = ["-y", "wrangler@latest"];
 
@@ -127,14 +126,14 @@ Codex:
 async function runCheck() {
   printHeader("Louisko Deployment Check");
   console.log(`AI_Web: ${aiWebRoot}`);
-  console.log(`Future project: ${futureProject}`);
+  console.log(`Project root: ${futureProject}`);
   console.log("");
 
   const results = [];
 
-  results.push(await checkPath("Owner manual", manualPath, { optional: rootLooksLikeProject }));
-  results.push(await checkPath("Future project package.json", path.join(futureProject, "package.json")));
-  results.push(await checkPath("Future project server.js", path.join(futureProject, "server.js")));
+  results.push(await checkPath("Owner manual", manualPath));
+  results.push(await checkPath("Project package.json", path.join(futureProject, "package.json")));
+  results.push(await checkPath("Project server.js", path.join(futureProject, "server.js")));
   results.push(await checkPath("Photo app", path.join(futureProject, "apps", "photo", "index.html")));
   results.push(await checkPhotoSourceRules());
 

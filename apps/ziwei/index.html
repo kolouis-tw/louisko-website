@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>紫微斗數｜Louisko</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="../../assets/louisko-theme.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Ziwei Doushu</p>
+        <h1>全新乾淨的紫微斗數專案</h1>
+        <p class="hero-text">
+          先把輸入、盤面、規則模組邊界與回歸基礎打好。命宮、身宮、主星、四化會在之後逐步補上，
+          在此之前，畫面只會誠實顯示目前真的完成了什麼。
+        </p>
+      </div>
+      <a class="hero-link" href="/">回主站</a>
+    </header>
+
+    <main class="layout">
+      <section class="panel form-panel" aria-labelledby="ziwei-form-title">
+        <div class="panel-head">
+          <p class="panel-kicker">Input</p>
+          <h2 id="ziwei-form-title">出生資料</h2>
+        </div>
+
+        <form id="ziwei-form" class="birth-form">
+          <label>
+            <span>出生年</span>
+            <input type="number" name="year" min="1900" max="2100" value="1990" required />
+          </label>
+          <label>
+            <span>出生月</span>
+            <input type="number" name="month" min="1" max="12" value="1" required />
+          </label>
+          <label>
+            <span>出生日</span>
+            <input type="number" name="day" min="1" max="31" value="1" required />
+          </label>
+          <label>
+            <span>出生時</span>
+            <input type="number" name="hour" min="0" max="23" value="12" required />
+          </label>
+          <label>
+            <span>出生分</span>
+            <input type="number" name="minute" min="0" max="59" value="0" required />
+          </label>
+          <label>
+            <span>性別</span>
+            <select name="gender">
+              <option value="男">男</option>
+              <option value="女">女</option>
+            </select>
+          </label>
+          <label>
+            <span>曆法</span>
+            <select name="calendar">
+              <option value="solar">陽曆</option>
+              <option value="lunar">農曆</option>
+            </select>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit">更新盤面骨架</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel summary-panel" aria-labelledby="summary-title">
+        <div class="panel-head">
+          <p class="panel-kicker">Status</p>
+          <h2 id="summary-title">中央摘要卡</h2>
+        </div>
+
+        <p id="input-summary" class="input-summary"></p>
+
+        <div class="summary-grid">
+          <article class="summary-item">
+            <span class="summary-label">命宮</span>
+            <strong id="summary-ming">待補</strong>
+          </article>
+          <article class="summary-item">
+            <span class="summary-label">身宮</span>
+            <strong id="summary-shen">待補</strong>
+          </article>
+          <article class="summary-item">
+            <span class="summary-label">主星</span>
+            <strong id="summary-stars">待補</strong>
+          </article>
+          <article class="summary-item">
+            <span class="summary-label">四化</span>
+            <strong id="summary-transforms">待補</strong>
+          </article>
+        </div>
+
+        <div class="status-note">
+          <span class="status-dot"></span>
+          第一階段只建立可用骨架，不假裝完成安星結果。
+        </div>
+      </section>
+
+      <section class="panel board-panel" aria-labelledby="board-title">
+        <div class="panel-head board-head">
+          <div>
+            <p class="panel-kicker">Board</p>
+            <h2 id="board-title">十二宮盤面</h2>
+          </div>
+          <p class="board-caption">目前僅顯示宮位容器與未完成狀態。</p>
+        </div>
+        <div id="palace-board" class="palace-board" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

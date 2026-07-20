@@ -2,6 +2,8 @@
 
 這個資料夾保存 `louisko.com` 主站新增入口、建立子頁、驗證、推送 GitHub 與部署 Zeabur 的共用腳本。
 
+本工作區目前以 `AI_Web` 這個 repo 為正式來源；除非使用者明確指定，勿再把舊的平行資料夾當成預設同步對象。
+
 主腳本：
 
 ```sh
@@ -86,15 +88,16 @@ node scripts/site-workflow/manage-site.mjs publish --message "Update Louisko pag
 
 請不要手動刪除這兩個 marker，否則腳本無法更新首頁入口。
 
-## 三資料夾連動
+## 單一 repo 連動
 
-若有 louisko.com 站台、八字頁、排盤引擎、規格、樣板、測試或部署相關更新，務必同步檢查並視需要連動更新：
+若有 louisko.com 站台、八字頁、Photo、測試、工作流或部署相關更新，務必同步檢查這個 repo 內相鄰區塊是否需要連動，例如：
 
-- `01_Louisko_Website_目前站台/Louisko_Website`
-- `02_louisko.com_未來開發專案/louisko.com_未來開發專案`
-- `03_bazi-engine-ts/bazi-engine-ts`
+- 根目錄 `README.md` / `AGENTS.md`
+- `apps/<slug>/`
+- `scripts/site-workflow/`
+- `docs/agent-governance/`
 
-若只更新其中一處，需記錄或說明沒有同步其他處的原因。
+若使用者另外指定外部副本或獨立 engine，再額外同步；否則以本 repo 為準。
 
 ## 安全與頁面規則
 

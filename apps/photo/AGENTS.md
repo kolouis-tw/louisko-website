@@ -15,11 +15,11 @@ https://louisko.com/apps/photo/
 - `index.html`：頁面結構與上傳入口。
 - `styles.css`：暗色攝影工具 UI 與 mobile layout。
 - `app.js`：前端相簿、IndexedDB、Canvas、EXIF、watermark、下載與 Lightbox 邏輯。
-- `assets/louis-logo.png`：浮水印與頁首使用的 Louis Logo。
-- `assets/louis-logo-data.js`：內嵌 Logo data URL，避免本機檔案模式造成 Canvas tainted。
+- 根目錄 `assets/louis-logo-transparent.png`：頁首與 Canvas 浮水印共用的正式 Logo 資產。
 - 根目錄 `server.js`：提供靜態頁面與 `POST /api/convert-heic`。
 - 根目錄 `server.js`：也提供 `POST /api/photo-cloud/albums` 與照片同步 API。
 - 根目錄 `package.json`：管理 Express、Multer、Sharp、heic-convert 等後端依賴。
+- 本工作區目前以 `AI_Web` 這個 repo 為正式來源，不再預設存在舊的平行副本。
 
 ## iPhone / iPad 上傳規則
 
@@ -110,7 +110,7 @@ Stores：
 - R2 公開圖片 URL 回 `200 image/jpeg`。
 - 前端需提供「讀取雲端」功能，將雲端相簿與照片 metadata 同步到本機 IndexedDB；若本機相簿曾經同步過但雲端已不存在，需同步刪除本機殘留，避免 ghost 相簿。
 - Cloudflare R2 Dashboard 看到的 `albums/<uuid>/...jpg` 是 object key prefix，不是相簿名稱；相簿名稱只存在 `_metadata/photo-cloud.json`。
-- 目前 ghost `Louis Album` 已從雲端 metadata 刪除；線上健康狀態應為 2 本相簿、12 張照片、`thumbnailRefs=0`。
+- 不要在文件中寫死當前相簿或照片數量；實際乾淨狀態應以稽核腳本或線上 API 回傳為準。
 
 任何文件中只能記錄 bucket name、public URL、service id 這類非敏感資訊。不可寫入 `R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY`、Zeabur token 或其他 secret。
 
@@ -180,12 +180,12 @@ curl -s -F file=@/Users/kolouis/Desktop/AI_Codex/AI_Web/photos4test/IMG_4674.HEI
   http://127.0.0.1:8084/api/convert-heic
 ```
 
-## 三資料夾連動
+## 單一來源同步
 
-本功能屬於 louisko.com 主站次頁。完成重大修改後，需檢查是否要同步：
+本功能屬於 louisko.com 主站次頁。完成重大修改後，需同步檢查這個 repo 內與 Photo 有關的程式、文件與工作流是否一致，至少包含：
 
-- `01_Louisko_Website_目前站台/Louisko_Website`
-- `02_louisko.com_未來開發專案/louisko.com_未來開發專案`
-- `03_bazi-engine-ts/bazi-engine-ts`
+- `apps/photo/`
+- 根目錄 `README.md` 與 `AGENTS.md`
+- `scripts/site-workflow/` 內與部署、驗證、首頁入口有關的文件或腳本
 
-照片工具通常不涉及 `03_bazi-engine-ts`。若未同步目前站台，回覆中需說明原因。
+若使用者另外指定外部副本、獨立 engine 或其他工作區，再另行同步；不要自行假設舊三資料夾仍是正式來源。

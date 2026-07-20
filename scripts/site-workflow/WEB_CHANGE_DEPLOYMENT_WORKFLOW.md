@@ -28,20 +28,16 @@
 
 ### 2. 編輯與同步檢查
 
-修改時以目前站台為正式部署來源：
+修改時以目前這個 `AI_Web` repo 為正式部署來源。
 
-```text
-01_Louisko_Website_目前站台/Louisko_Website
-```
+同步檢查的重點不是歷史平行資料夾，而是本 repo 內相鄰區塊是否一致，例如：
 
-同時檢查是否需要同步：
+- 根目錄 `README.md`、`AGENTS.md`
+- `apps/<slug>/`
+- `scripts/site-workflow/`
+- `docs/agent-governance/`
 
-```text
-02_louisko.com_未來開發專案/louisko.com_未來開發專案
-03_bazi-engine-ts/bazi-engine-ts
-```
-
-若只更新其中一處，必須在回覆或變更紀錄中說明原因。
+若使用者另外指定外部副本、獨立 engine 或歷史快照，再額外同步；否則不要自行假設舊平行資料夾仍為正式來源。
 
 ### 3. 本機驗證
 

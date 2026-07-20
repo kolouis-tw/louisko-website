@@ -10,6 +10,9 @@
 | `docs_overview.md` | Product and feature map | You need conceptual orientation first | Faster than opening app code |
 | `docs/script_blueprint.md` | Script-ready end-to-end calculation blueprint | You are extracting the Bazi logic into CLI, API, TypeScript, or another shared core | Includes contracts, flow, modules, limitations, and tests |
 | `SMOKE_TEST.md` | Quick verification list | You already changed behavior and need checks | Short |
+| `server/canonical-service.cjs` | Server adapter for the existing website Bazi Core and lifetime Prompt Builder | You need server/API/LINE generation | Must not become a second calculation engine |
+| `server/line-bot.cjs` | LINE parsing, signature, idempotency helpers, chunking, and message builders | You change LINE commands or delivery | Keep LINE platform concerns out of Bazi rules |
+| `scripts/line-bot-regression-check.cjs` | Canonical chart plus LINE utility regression test | You change the LINE adapter or Prompt handoff | Run with `npm run test:bazi:line` |
 | `docs/regression_cases.md` | Regression anchors | You touched Bazi logic | Short, mandatory for logic work |
 | `examples/` | Sample payloads | You need example structures or output shape | Optional |
 | `changelog/` | Historical notes | You need why a prior change happened | Optional history only |

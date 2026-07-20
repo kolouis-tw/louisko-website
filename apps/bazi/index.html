@@ -63,6 +63,253 @@
       gap: 28px;
     }
 
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin: 24px 0 28px;
+    }
+
+    .tab-button {
+      min-width: 0;
+      width: auto;
+      height: 56px;
+      padding: 0 24px;
+      border: 2px solid rgba(47, 51, 56, 0.18);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--text);
+      font-size: 22px;
+    }
+
+    .tab-button.is-active {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #ffffff;
+    }
+
+    .calendar-toggle {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 18px 34px;
+    }
+
+    .calendar-toggle .option {
+      font-size: 26px;
+    }
+
+    .calendar-panel {
+      display: grid;
+      gap: 10px;
+    }
+
+    .calendar-panel[hidden],
+    .tab-panel[hidden] {
+      display: none;
+    }
+
+    .calendar-preview {
+      margin-left: 208px;
+      min-height: 34px;
+      color: var(--muted);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .calendar-preview.is-error {
+      color: var(--red);
+    }
+
+    .row > input[type="text"] {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .lunar-date-controls {
+      display: grid;
+      grid-template-columns: minmax(170px, 230px) minmax(160px, 220px) minmax(140px, 190px) minmax(118px, 160px) minmax(118px, 160px);
+      gap: 0;
+      flex: 1;
+    }
+
+    .profile-toolbar {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .profile-account {
+      margin-bottom: 24px;
+      padding: 18px;
+      border: 1px solid rgba(47, 51, 56, 0.18);
+      border-radius: 6px;
+      background: #fffdf4;
+    }
+
+    .profile-account .section-title {
+      margin: 0 0 12px;
+      font-size: 25px;
+    }
+
+    .profile-auth-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr);
+      gap: 12px;
+    }
+
+    .profile-auth-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .profile-auth-actions button {
+      min-width: 180px;
+      width: auto;
+      height: 52px;
+      padding: 0 16px;
+      font-size: 19px;
+    }
+
+    .profile-auth-actions .profile-danger-button {
+      border: 2px solid rgba(223, 51, 72, 0.4);
+      background: #ffffff;
+      color: var(--red);
+    }
+
+    .profile-password-reset {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(47, 51, 56, 0.18);
+    }
+
+    .profile-account.is-reset-mode {
+      max-width: 760px;
+      margin-right: auto;
+      margin-left: auto;
+    }
+
+    .profile-account.is-reset-mode .profile-password-reset {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .profile-password-reset h3 {
+      margin: 0 0 12px;
+      font-size: 22px;
+    }
+
+    .profile-password-reset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .password-visibility-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .password-visibility-option input {
+      width: 22px;
+      height: 22px;
+      margin: 0;
+      accent-color: var(--blue);
+    }
+
+    .profile-auth-status,
+    .profile-account-label {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .profile-auth-status.is-error {
+      color: var(--red);
+    }
+
+    .profile-account-label {
+      margin: 0;
+      color: var(--text);
+    }
+
+    .profile-search {
+      flex: 1;
+      height: 58px;
+      padding: 0 16px;
+      border: 2px solid var(--line);
+      border-radius: 5px;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+      font-size: 22px;
+      font-weight: 500;
+    }
+
+    .storage-note,
+    .empty-profiles {
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .profile-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .profile-card {
+      padding: 18px;
+      border: 1px solid rgba(47, 51, 56, 0.18);
+      border-radius: 6px;
+      background: #fffdf4;
+    }
+
+    .profile-card h3 {
+      margin: 0 0 12px;
+      font-size: 25px;
+    }
+
+    .profile-card p {
+      margin: 6px 0;
+      color: #4d5258;
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .profile-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .profile-actions button {
+      min-width: 150px;
+      width: auto;
+      height: 52px;
+      padding: 0 16px;
+      font-size: 19px;
+    }
+
+    .profile-delete-button {
+      border: 2px solid rgba(223, 51, 72, 0.4);
+      background: #ffffff;
+      color: var(--red);
+    }
+
     .row {
       display: flex;
       align-items: center;
@@ -112,7 +359,10 @@
     }
 
     select,
-    input[type="number"] {
+    input[type="number"],
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
       width: 100%;
       height: 68px;
       padding: 0 48px 0 18px;
@@ -481,6 +731,59 @@
         gap: 8px;
       }
 
+      .tabs {
+        margin-top: 18px;
+      }
+
+      .tab-button {
+        flex: 1;
+        padding: 0 10px;
+        font-size: 20px;
+      }
+
+      .calendar-toggle {
+        gap: 14px 22px;
+      }
+
+      .calendar-toggle .option {
+        font-size: 21px;
+      }
+
+      .calendar-preview {
+        margin-left: 0;
+        font-size: 17px;
+      }
+
+      .lunar-date-controls {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .profile-toolbar {
+        display: grid;
+      }
+
+      .profile-auth-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-password-reset-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-auth-actions {
+        display: grid;
+      }
+
+      .profile-auth-actions button {
+        width: 100%;
+      }
+
+      .profile-search {
+        width: 100%;
+        font-size: 19px;
+      }
+
       .quick-time-row {
         margin-top: -12px;
         margin-left: 0;
@@ -495,7 +798,10 @@
       }
 
       select,
-      input[type="number"] {
+      input[type="number"],
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
         height: 58px;
         padding-left: 12px;
         font-size: 21px;
@@ -566,91 +872,307 @@
     }
   </style>
   <link rel="stylesheet" href="../../assets/louisko-theme.css">
+  <style>
+    .bazi-input-page .tabs {
+      gap: 16px;
+      margin: 28px 0 36px;
+    }
+
+    .bazi-input-page .tabs .tab-button {
+      flex: 0 1 248px;
+      min-width: 220px !important;
+      height: 72px !important;
+      padding: 0 28px !important;
+      border: 2px solid rgba(166, 111, 99, .28) !important;
+      border-radius: 16px !important;
+      background: rgba(255, 255, 255, .78) !important;
+      color: var(--louisko-ink) !important;
+      box-shadow: 0 8px 18px rgba(38, 48, 47, .08) !important;
+      font-size: 22px !important;
+      font-weight: 700 !important;
+    }
+
+    .bazi-input-page .tabs .tab-button:hover {
+      border-color: rgba(166, 111, 99, .62) !important;
+      background: #fff !important;
+      box-shadow: 0 10px 22px rgba(38, 48, 47, .12) !important;
+      transform: translateY(-2px);
+    }
+
+    .bazi-input-page .tabs .tab-button.is-active {
+      border-color: var(--louisko-accent) !important;
+      background: var(--louisko-accent) !important;
+      color: #fff !important;
+      box-shadow: 0 10px 24px rgba(166, 111, 99, .28) !important;
+    }
+
+    .bazi-input-page #profile-name {
+      width: 100% !important;
+      min-width: 0 !important;
+      height: 58px !important;
+      padding: 0 18px !important;
+      border: 2px solid var(--line) !important;
+      border-radius: 12px !important;
+      background: rgba(255, 255, 255, .86) !important;
+      font-size: clamp(18px, 2vw, 24px) !important;
+    }
+
+    .bazi-input-page .quick-time-row {
+      align-items: center;
+      gap: 16px;
+    }
+
+    .bazi-input-page .quick-time-button {
+      min-width: 200px !important;
+      height: 60px !important;
+      border: 2px solid rgba(166, 111, 99, .42) !important;
+      border-radius: 14px !important;
+      background: rgba(255, 255, 255, .82) !important;
+      color: var(--louisko-accent) !important;
+      box-shadow: 0 8px 18px rgba(38, 48, 47, .08) !important;
+      font-size: 20px !important;
+      font-weight: 700 !important;
+    }
+
+    .bazi-input-page .quick-time-button:hover {
+      background: var(--louisko-accent) !important;
+      color: #fff !important;
+      box-shadow: 0 10px 22px rgba(166, 111, 99, .22) !important;
+      transform: translateY(-2px);
+    }
+
+    .bazi-input-page .actions {
+      align-items: center;
+      gap: 16px;
+    }
+
+    .bazi-input-page .actions > button {
+      min-width: 220px !important;
+      height: 68px !important;
+      border-radius: 16px !important;
+      font-size: 21px !important;
+      box-shadow: 0 8px 18px rgba(38, 48, 47, .08) !important;
+    }
+
+    .bazi-input-page .actions > button[type="submit"] {
+      border: 2px solid var(--louisko-accent) !important;
+      background: var(--louisko-accent) !important;
+      color: #fff !important;
+      box-shadow: 0 10px 24px rgba(166, 111, 99, .28) !important;
+    }
+
+    .bazi-input-page .actions > button[type="submit"]:hover {
+      background: #8f5b52 !important;
+      transform: translateY(-2px);
+    }
+
+    .bazi-input-page .actions > .secondary-button {
+      border: 2px solid rgba(166, 111, 99, .32) !important;
+      background: rgba(255, 255, 255, .82) !important;
+      color: var(--louisko-ink) !important;
+    }
+
+    .bazi-input-page .actions > .secondary-button:not(:disabled):hover {
+      border-color: var(--louisko-accent) !important;
+      background: #fff !important;
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 760px) {
+      .bazi-input-page .tabs {
+        gap: 10px;
+        margin: 20px 0 28px;
+      }
+
+      .bazi-input-page .tabs .tab-button {
+        flex: 1 1 0;
+        min-width: 0 !important;
+        height: 58px !important;
+        padding: 0 10px !important;
+        border-radius: 14px !important;
+        font-size: 18px !important;
+      }
+
+      .bazi-input-page .quick-time-button,
+      .bazi-input-page .actions > button {
+        width: 100%;
+        min-width: 0 !important;
+      }
+
+      .bazi-input-page .actions > button {
+        height: 62px !important;
+        font-size: 20px !important;
+      }
+    }
+  </style>
 </head>
-<body>
+<body class="bazi-input-page">
   <main>
     <div class="page-top">
-      <a class="louisko-page-brand" href="../../index.html" aria-label="Louisko 首頁">
+      <a class="louisko-page-brand" href="/" aria-label="Louisko 首頁">
         <img class="louisko-logo" src="../../assets/louis-logo-transparent.png" alt="Louis">
         <span class="louisko-brand-text">Louisko</span>
       </a>
-      <a class="home-link" href="../../index.html">回首頁</a>
+      <a class="home-link" href="/">回首頁</a>
     </div>
     <section class="bazi-input-hero">
       <p class="kicker">Bazi</p>
       <h1>八字排盤</h1>
     </section>
-    <form class="form" id="birth-form">
-      <div class="row">
-        <div class="label">陽曆生日：</div>
-        <div class="date-controls">
-          <input id="year" type="number" min="1" max="9999" step="1" aria-label="西元年">
-          <select id="month" aria-label="月份"></select>
-          <select id="day" aria-label="日期"></select>
-          <select id="hour" aria-label="時辰"></select>
-          <select id="minute" aria-label="分鐘"></select>
-        </div>
-      </div>
-      <div class="quick-time-row">
-        <button class="quick-time-button" id="set-current-time" type="button">當下時間</button>
-        <span class="quick-time-note" id="current-time-note"></span>
-      </div>
+    <nav class="tabs" aria-label="八字功能分頁">
+      <button class="tab-button is-active" id="tab-chart" type="button" aria-controls="chart-panel" aria-selected="true">八字排盤</button>
+      <button class="tab-button" id="tab-profiles" type="button" aria-controls="profiles-panel" aria-selected="false">命主紀錄</button>
+    </nav>
 
-      <div class="row">
-        <div class="label">性別：</div>
-        <div class="radio-group">
-          <label class="option"><input type="radio" name="gender" value="男" checked>男</label>
-          <label class="option"><input type="radio" name="gender" value="女">女</label>
+    <section class="tab-panel" id="chart-panel">
+      <form class="form" id="birth-form">
+        <div class="row">
+          <div class="label">命主姓名：</div>
+          <input id="profile-name" type="text" maxlength="100" autocomplete="name" placeholder="請輸入全名、英文名或綽號" aria-label="命主姓名">
         </div>
-      </div>
 
-      <div class="row">
-        <div class="label">出生地：</div>
-        <div class="radio-group">
-          <label class="option"><input type="radio" name="birthHemisphere" value="北半球" checked>北半球</label>
-          <label class="option"><input type="radio" name="birthHemisphere" value="南半球">南半球<span class="hint">(例如紐、澳、南美等地)</span></label>
+        <div class="row">
+          <div class="label">曆法輸入：</div>
+          <div class="calendar-toggle">
+            <label class="option"><input type="radio" name="calendarType" value="solar" checked>國曆（陽曆）</label>
+            <label class="option"><input type="radio" name="calendarType" value="lunar">農曆（陰曆）</label>
+          </div>
         </div>
-      </div>
 
-      <div class="row">
-        <div class="label">換日法：</div>
-        <div class="radio-group">
-          <label class="option"><input type="radio" name="dayChangeMethod" value="子初換日" checked>子初換日(建議)</label>
-          <label class="option"><input type="radio" name="dayChangeMethod" value="子正換日">子正換日</label>
+        <div class="calendar-panel" id="solar-input-panel">
+          <div class="row">
+            <div class="label">國曆生日：</div>
+            <div class="date-controls">
+              <input id="year" type="number" min="1900" max="2100" step="1" aria-label="西元年">
+              <select id="month" aria-label="國曆月份"></select>
+              <select id="day" aria-label="國曆日期"></select>
+              <select id="hour" aria-label="出生小時"></select>
+              <select id="minute" aria-label="出生分鐘"></select>
+            </div>
+          </div>
+          <div class="calendar-preview" id="solar-lunar-preview" aria-live="polite"></div>
         </div>
-      </div>
-      <div class="subhint">(換日法差異僅影響23:00~23:59出生者)</div>
 
-      <div class="actions">
-        <button type="submit">開始批算√</button>
-        <button class="secondary-button" id="open-analysis" type="button" disabled>論命</button>
-      </div>
-    </form>
+        <div class="calendar-panel" id="lunar-input-panel" hidden>
+          <div class="row">
+            <div class="label">農曆生日：</div>
+            <div class="lunar-date-controls">
+              <input id="lunar-year" type="number" min="1900" max="2100" step="1" aria-label="農曆年份">
+              <select id="lunar-month" aria-label="農曆月份"></select>
+              <select id="lunar-day" aria-label="農曆日期"></select>
+              <select id="lunar-hour" aria-label="出生小時"></select>
+              <select id="lunar-minute" aria-label="出生分鐘"></select>
+            </div>
+          </div>
+          <div class="calendar-preview" id="lunar-solar-preview" aria-live="polite"></div>
+        </div>
 
-    <section class="result" id="result" hidden>
-      <h2 class="result-title">年月日時八字</h2>
-      <div class="pillars" id="pillars"></div>
-      <div class="analysis-section">
-        <div class="section-heading">
-          <h3>大運</h3>
-          <span class="section-note" id="luck-direction-note"></span>
+        <div class="quick-time-row">
+          <button class="quick-time-button" id="set-current-time" type="button">當下時間</button>
+          <span class="quick-time-note" id="current-time-note"></span>
         </div>
-        <div class="luck-grid" id="luck-cycles"></div>
-      </div>
-      <div class="analysis-section">
-        <div class="section-heading">
-          <h3>流年</h3>
-          <label class="annual-controls">
-            <span>流年當年</span>
-            <input id="annual-target-year" type="number" min="1" max="9999" step="1" aria-label="流年當年">
-            <button class="annual-confirm-button" id="confirm-annual-year" type="button">確認</button>
-          </label>
+
+        <div class="row">
+          <div class="label">性別：</div>
+          <div class="radio-group">
+            <label class="option"><input type="radio" name="gender" value="男" checked>男</label>
+            <label class="option"><input type="radio" name="gender" value="女">女</label>
+          </div>
         </div>
-        <div class="annual-grid" id="annual-flow"></div>
+
+        <div class="row">
+          <div class="label">出生地：</div>
+          <div class="radio-group">
+            <label class="option"><input type="radio" name="birthHemisphere" value="北半球" checked>北半球</label>
+            <label class="option"><input type="radio" name="birthHemisphere" value="南半球">南半球<span class="hint">(例如紐、澳、南美等地)</span></label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label">換日法：</div>
+          <div class="radio-group">
+            <label class="option"><input type="radio" name="dayChangeMethod" value="子初換日" checked>子初換日(建議)</label>
+            <label class="option"><input type="radio" name="dayChangeMethod" value="子正換日">子正換日</label>
+          </div>
+        </div>
+        <div class="subhint">(換日法差異僅影響23:00~23:59出生者)</div>
+
+        <div class="actions">
+          <button type="submit">開始排盤</button>
+          <button class="secondary-button" id="open-analysis" type="button" disabled>論命</button>
+        </div>
+      </form>
+
+      <section class="result" id="result" hidden>
+        <h2 class="result-title">年月日時八字</h2>
+        <div class="pillars" id="pillars"></div>
+        <div class="analysis-section">
+          <div class="section-heading">
+            <h3>大運</h3>
+            <span class="section-note" id="luck-direction-note"></span>
+          </div>
+          <div class="luck-grid" id="luck-cycles"></div>
+        </div>
+        <div class="analysis-section">
+          <div class="section-heading">
+            <h3>流年</h3>
+            <label class="annual-controls">
+              <span>流年當年</span>
+              <input id="annual-target-year" type="number" min="1" max="9999" step="1" aria-label="流年當年">
+              <button class="annual-confirm-button" id="confirm-annual-year" type="button">確認</button>
+            </label>
+          </div>
+          <div class="annual-grid" id="annual-flow"></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="tab-panel" id="profiles-panel" hidden>
+      <section class="profile-account" id="profile-account" aria-labelledby="profile-account-heading">
+        <h2 id="profile-account-heading" class="section-title">跨裝置同步</h2>
+        <div id="profile-auth-form">
+          <div class="profile-auth-grid">
+            <input id="bazi-account-email" type="email" autocomplete="email" placeholder="電子郵件" aria-label="電子郵件">
+            <input id="bazi-account-password" type="password" autocomplete="current-password" placeholder="密碼（至少 8 個字元）" aria-label="密碼">
+          </div>
+          <label class="password-visibility-option"><input id="bazi-show-password" type="checkbox"> 顯示密碼</label>
+          <div class="profile-auth-actions">
+            <button id="bazi-login" type="button">登入並同步</button>
+            <button id="bazi-register" class="secondary-button" type="button">建立帳號並同步</button>
+            <button id="bazi-forgot-password" class="secondary-button" type="button">忘記密碼</button>
+            <button id="bazi-resend-verification" class="secondary-button" type="button">重新寄驗證信</button>
+          </div>
+        </div>
+        <div id="profile-account-session" hidden>
+          <p class="profile-account-label" id="profile-account-label"></p>
+          <div class="profile-auth-actions">
+            <button id="bazi-logout" class="secondary-button" type="button">登出</button>
+            <button id="bazi-delete-account" class="profile-danger-button" type="button">刪除帳號</button>
+          </div>
+        </div>
+        <p class="profile-auth-status" id="profile-auth-status" aria-live="polite">登入後，命主紀錄會隨帳號在不同裝置同步。</p>
+        <div class="profile-password-reset" id="profile-password-reset" hidden>
+          <h3>重設密碼</h3>
+          <div class="profile-password-reset-grid">
+            <input id="bazi-reset-password" type="password" autocomplete="new-password" placeholder="新密碼（至少 8 個字元）" aria-label="新密碼">
+            <input id="bazi-reset-password-confirm" type="password" autocomplete="new-password" placeholder="再次輸入新密碼" aria-label="確認新密碼">
+          </div>
+          <label class="password-visibility-option"><input id="bazi-show-reset-password" type="checkbox"> 顯示新密碼</label>
+          <div class="profile-auth-actions">
+            <button id="bazi-reset-password-submit" type="button">更新密碼</button>
+          </div>
+          <p class="profile-auth-status" id="profile-reset-status" aria-live="polite"></p>
+        </div>
+      </section>
+      <div class="profile-toolbar">
+        <input class="profile-search" id="profile-search" type="search" placeholder="搜尋命主姓名或西元出生年" aria-label="搜尋命主">
       </div>
+      <p class="storage-note" id="profile-storage-status" aria-live="polite">正在連線雲端命主紀錄…</p>
+      <div class="profile-list" id="profile-list"></div>
     </section>
   </main>
 
+  <script src="./vendor/lunar-javascript-1.7.7.js"></script>
   <script>
     const stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
     const branches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
@@ -723,9 +1245,94 @@
       minute: 0,
       timezoneOffset: 8
     };
+    const PROFILE_STORAGE_KEY = "louisko_bazi_profiles_v1";
+    const PROFILE_OWNER_KEY_STORAGE_KEY = "louisko_bazi_profile_owner_v1";
+    const BAZI_AUTH_API_PATH = "/api/bazi/auth";
+    const BAZI_PROFILE_API_PATH = "/api/bazi/profiles";
+    const BAZI_CLOUD_API_BASES = ["https://louisko.com", "https://louisko-node-photo.zeabur.app"];
+    const LUNAR_MIN_YEAR = 1900;
+    const LUNAR_MAX_YEAR = 2100;
     let selectedMinute = defaults.minute;
     let latestChart = null;
     let latestInput = null;
+    let activeCalendarType = "solar";
+    let lastConvertedSolar = null;
+    let lastConvertedLunar = null;
+    let activePasswordResetToken = new URLSearchParams(window.location.search).get("reset") || "";
+    const profileCloudState = {
+      available: false,
+      ownerKey: null,
+      syncing: false,
+      user: null,
+      authBusy: false,
+      emailConfigured: true
+    };
+
+    function getLunarLibrary() {
+      if (typeof window.Solar?.fromYmdHms !== "function" || typeof window.Lunar?.fromYmdHms !== "function" || typeof window.LunarYear?.fromYear !== "function") {
+        throw new Error("曆法轉換引擎尚未載入，請重新整理頁面。");
+      }
+      return { Solar: window.Solar, Lunar: window.Lunar, LunarYear: window.LunarYear };
+    }
+
+    function formatLunarMonth(month, isLeap = false) {
+      const names = ["", "正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+      return `${isLeap ? "閏" : ""}${names[month] || `${month}月`}`;
+    }
+
+    function formatLunarDay(day) {
+      const names = ["", "初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十", "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
+      return names[day] || `${day}日`;
+    }
+
+    function formatSolarDate(date) {
+      return `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")} ${String(date.hour).padStart(2, "0")}:${String(date.minute).padStart(2, "0")}`;
+    }
+
+    function formatLunarRecord(lunar) {
+      return `${lunar.ganzhiYear || ""}年 ${formatLunarMonth(lunar.month, lunar.isLeap)}${formatLunarDay(lunar.day)}`;
+    }
+
+    function solarToLunar(solar) {
+      const { Solar } = getLunarLibrary();
+      const lunar = Solar.fromYmdHms(solar.year, solar.month, solar.day, solar.hour, solar.minute, 0).getLunar();
+      return {
+        year: lunar.getYear(),
+        month: Math.abs(lunar.getMonth()),
+        day: lunar.getDay(),
+        isLeap: lunar.getMonth() < 0,
+        ganzhiYear: lunar.getYearInGanZhi()
+      };
+    }
+
+    function lunarToSolar(lunar, hour, minute) {
+      const { Lunar } = getLunarLibrary();
+      const lunarMonth = lunar.isLeap ? -Math.abs(lunar.month) : Math.abs(lunar.month);
+      const source = Lunar.fromYmdHms(lunar.year, lunarMonth, lunar.day, hour, minute, 0);
+      const solar = source.getSolar();
+      return {
+        year: solar.getYear(),
+        month: solar.getMonth(),
+        day: solar.getDay(),
+        hour,
+        minute
+      };
+    }
+
+    function getLunarMonthDays(year, month, isLeap) {
+      const { LunarYear } = getLunarLibrary();
+      const lunarMonth = isLeap ? -Math.abs(month) : Math.abs(month);
+      const lunarMonthRecord = LunarYear.fromYear(year).getMonth(lunarMonth);
+      if (!lunarMonthRecord) {
+        throw new RangeError(`此農曆年份沒有${formatLunarMonth(month, isLeap)}。`);
+      }
+      return lunarMonthRecord.getDayCount();
+    }
+
+    function getLeapMonth(year) {
+      const { LunarYear } = getLunarLibrary();
+      return LunarYear.fromYear(year).getLeapMonth();
+    }
 
     function appendOptions(select, options, selectedValue) {
       select.innerHTML = "";
@@ -757,8 +1364,786 @@
       );
     }
 
+    function updateLunarMonthOptions() {
+      const year = Number(document.getElementById("lunar-year").value);
+      const monthSelect = document.getElementById("lunar-month");
+      const previousMonth = Number(monthSelect.value) || 1;
+      if (!Number.isInteger(year) || year < LUNAR_MIN_YEAR || year > LUNAR_MAX_YEAR) {
+        appendOptions(monthSelect, [], null);
+        updateLunarDayOptions();
+        return;
+      }
+
+      const leapMonth = getLeapMonth(year);
+      const options = [];
+      for (let month = 1; month <= 12; month += 1) {
+        options.push({ value: month, label: formatLunarMonth(month) });
+        if (month === leapMonth) options.push({ value: -month, label: formatLunarMonth(month, true) });
+      }
+      const selectedMonth = options.some((option) => option.value === previousMonth) ? previousMonth : 1;
+      appendOptions(monthSelect, options, selectedMonth);
+      updateLunarDayOptions();
+    }
+
+    function updateLunarDayOptions() {
+      const year = Number(document.getElementById("lunar-year").value);
+      const selectedMonthValue = Number(document.getElementById("lunar-month").value);
+      const daySelect = document.getElementById("lunar-day");
+      if (!Number.isInteger(year) || !selectedMonthValue) {
+        appendOptions(daySelect, [], null);
+        return;
+      }
+
+      try {
+        const month = Math.abs(selectedMonthValue);
+        const isLeap = selectedMonthValue < 0;
+        const maxDay = getLunarMonthDays(year, month, isLeap);
+        const previousDay = Number(daySelect.value) || 1;
+        appendOptions(
+          daySelect,
+          Array.from({ length: maxDay }, (_, index) => ({ value: index + 1, label: formatLunarDay(index + 1) })),
+          Math.min(previousDay, maxDay)
+        );
+      } catch (error) {
+        appendOptions(daySelect, [], null);
+      }
+    }
+
+    function readSolarFields() {
+      return {
+        year: Number(document.getElementById("year").value),
+        month: Number(document.getElementById("month").value),
+        day: Number(document.getElementById("day").value),
+        hour: Number(document.getElementById("hour").value),
+        minute: Number(document.getElementById("minute").value)
+      };
+    }
+
+    function readLunarFields() {
+      const monthValue = Number(document.getElementById("lunar-month").value);
+      return {
+        year: Number(document.getElementById("lunar-year").value),
+        month: Math.abs(monthValue),
+        day: Number(document.getElementById("lunar-day").value),
+        isLeap: monthValue < 0,
+        hour: Number(document.getElementById("lunar-hour").value),
+        minute: Number(document.getElementById("lunar-minute").value)
+      };
+    }
+
+    function setSolarFields(solar) {
+      document.getElementById("year").value = String(solar.year);
+      document.getElementById("month").value = String(solar.month);
+      updateDayOptions();
+      document.getElementById("day").value = String(solar.day);
+      document.getElementById("hour").value = String(solar.hour);
+      document.getElementById("minute").value = String(solar.minute);
+    }
+
+    function setLunarFields(lunar, hour = defaults.hour, minute = defaults.minute) {
+      document.getElementById("lunar-year").value = String(lunar.year);
+      updateLunarMonthOptions();
+      document.getElementById("lunar-month").value = String(lunar.isLeap ? -lunar.month : lunar.month);
+      updateLunarDayOptions();
+      document.getElementById("lunar-day").value = String(lunar.day);
+      document.getElementById("lunar-hour").value = String(hour);
+      document.getElementById("lunar-minute").value = String(minute);
+    }
+
+    function isCompleteSolar(solar) {
+      try {
+        validateBirthInput({ ...solar, timezoneOffset: defaults.timezoneOffset, lateZiSwitchDay: false });
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function isCompleteLunar(lunar) {
+      return Number.isInteger(lunar.year) && lunar.year >= LUNAR_MIN_YEAR && lunar.year <= LUNAR_MAX_YEAR &&
+        Number.isInteger(lunar.month) && lunar.month >= 1 && lunar.month <= 12 && Number.isInteger(lunar.day) &&
+        Number.isInteger(lunar.hour) && lunar.hour >= 0 && lunar.hour <= 23 && Number.isInteger(lunar.minute) &&
+        lunar.minute >= 0 && lunar.minute <= 59;
+    }
+
+    function updateCalendarPreview() {
+      const solarPreview = document.getElementById("solar-lunar-preview");
+      const lunarPreview = document.getElementById("lunar-solar-preview");
+      solarPreview.classList.remove("is-error");
+      lunarPreview.classList.remove("is-error");
+
+      if (activeCalendarType === "solar") {
+        const solar = readSolarFields();
+        if (!isCompleteSolar(solar)) {
+          solarPreview.textContent = "請輸入完整且合法的國曆出生年月日時。";
+          solarPreview.classList.add("is-error");
+          return;
+        }
+        try {
+          lastConvertedSolar = solar;
+          lastConvertedLunar = solarToLunar(solar);
+          solarPreview.textContent = `對應農曆：${formatLunarRecord(lastConvertedLunar)}`;
+        } catch (error) {
+          solarPreview.textContent = error instanceof Error ? error.message : "日期轉換失敗，請確認輸入日期是否合法。";
+          solarPreview.classList.add("is-error");
+        }
+        return;
+      }
+
+      const lunar = readLunarFields();
+      if (!isCompleteLunar(lunar)) {
+        lunarPreview.textContent = "請輸入完整且合法的農曆出生年月日時。";
+        lunarPreview.classList.add("is-error");
+        return;
+      }
+      try {
+        const maxDay = getLunarMonthDays(lunar.year, lunar.month, lunar.isLeap);
+        if (lunar.day > maxDay) throw new RangeError(`農曆${formatLunarMonth(lunar.month, lunar.isLeap)}此年只有${maxDay}天。`);
+        lastConvertedLunar = lunar;
+        lastConvertedSolar = lunarToSolar(lunar, lunar.hour, lunar.minute);
+        lunarPreview.textContent = `對應國曆：${formatSolarDate(lastConvertedSolar)}`;
+      } catch (error) {
+        lunarPreview.textContent = error instanceof Error ? error.message : "日期轉換失敗，請確認輸入日期是否合法。";
+        lunarPreview.classList.add("is-error");
+      }
+    }
+
+    function setCalendarType(type, convert = true) {
+      if (type === activeCalendarType) return;
+      if (convert) {
+        if (type === "lunar") {
+          const solar = readSolarFields();
+          if (isCompleteSolar(solar)) {
+            try {
+              const lunar = solarToLunar(solar);
+              setLunarFields(lunar, solar.hour, solar.minute);
+              lastConvertedSolar = solar;
+              lastConvertedLunar = lunar;
+            } catch (error) {
+              document.getElementById("solar-lunar-preview").textContent = error instanceof Error ? error.message : "日期轉換失敗。";
+            }
+          } else if (lastConvertedLunar) {
+            setLunarFields(lastConvertedLunar, lastConvertedSolar?.hour, lastConvertedSolar?.minute);
+          }
+        } else {
+          const lunar = readLunarFields();
+          if (isCompleteLunar(lunar)) {
+            try {
+              const solar = lunarToSolar(lunar, lunar.hour, lunar.minute);
+              setSolarFields(solar);
+              lastConvertedSolar = solar;
+              lastConvertedLunar = lunar;
+            } catch (error) {
+              document.getElementById("lunar-solar-preview").textContent = error instanceof Error ? error.message : "日期轉換失敗。";
+            }
+          } else if (lastConvertedSolar) {
+            setSolarFields(lastConvertedSolar);
+          }
+        }
+      }
+      activeCalendarType = type;
+      document.getElementById("solar-input-panel").hidden = type !== "solar";
+      document.getElementById("lunar-input-panel").hidden = type !== "lunar";
+      document.querySelectorAll('input[name="calendarType"]').forEach((radio) => {
+        radio.checked = radio.value === type;
+      });
+      updateCalendarPreview();
+    }
+
     function getSelected(name) {
       return document.querySelector(`input[name="${name}"]:checked`).value;
+    }
+
+    function getStoredProfiles() {
+      try {
+        const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter((profile) => profile && typeof profile === "object" && profile.id && profile.birthSolar);
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function writeStoredProfiles(profiles) {
+      try {
+        window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profiles));
+        return true;
+      } catch (error) {
+        alert("命主紀錄無法儲存，請確認瀏覽器允許此網站使用本機儲存空間。");
+        return false;
+      }
+    }
+
+    function setProfileStorageStatus(message, isCloud = false) {
+      const status = document.getElementById("profile-storage-status");
+      if (!status) return;
+      status.textContent = message;
+      status.classList.toggle("is-cloud", isCloud);
+    }
+
+    function setProfileAuthStatus(message, isError = false) {
+      const status = document.getElementById("profile-auth-status");
+      if (!status) return;
+      status.textContent = message;
+      status.classList.toggle("is-error", isError);
+    }
+
+    function getBaziAccountCredentials() {
+      return {
+        email: document.getElementById("bazi-account-email").value.trim(),
+        password: document.getElementById("bazi-account-password").value
+      };
+    }
+
+    function setProfileAuthBusy(isBusy) {
+      profileCloudState.authBusy = isBusy;
+      ["bazi-login", "bazi-register", "bazi-forgot-password", "bazi-resend-verification", "bazi-logout", "bazi-delete-account", "bazi-reset-password-submit"].forEach((id) => {
+        const button = document.getElementById(id);
+        if (button) button.disabled = isBusy;
+      });
+    }
+
+    function renderProfileAccount() {
+      const authForm = document.getElementById("profile-auth-form");
+      const session = document.getElementById("profile-account-session");
+      const label = document.getElementById("profile-account-label");
+      const user = profileCloudState.user;
+      const resetMode = Boolean(activePasswordResetToken);
+      if (!authForm || !session || !label) return;
+      authForm.hidden = Boolean(user) || resetMode;
+      session.hidden = !user || resetMode;
+      label.textContent = user ? `已登入：${user.email}，命主紀錄會在不同裝置同步。` : "";
+    }
+
+    function setBaziPasswordResetMode(enabled) {
+      const account = document.getElementById("profile-account");
+      const toolbar = document.querySelector(".profile-toolbar");
+      const storageStatus = document.getElementById("profile-storage-status");
+      const profileList = document.getElementById("profile-list");
+      if (account) account.classList.toggle("is-reset-mode", enabled);
+      if (toolbar) toolbar.hidden = enabled;
+      if (storageStatus) storageStatus.hidden = enabled;
+      if (profileList) profileList.hidden = enabled;
+    }
+
+    function getBaziProfileOwnerKey() {
+      if (profileCloudState.ownerKey) return profileCloudState.ownerKey;
+      try {
+        const existing = window.localStorage.getItem(PROFILE_OWNER_KEY_STORAGE_KEY);
+        if (/^[a-zA-Z0-9_-]{16,100}$/.test(existing || "")) {
+          profileCloudState.ownerKey = existing;
+          return existing;
+        }
+        const generated = window.crypto?.randomUUID?.() || `owner-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+        window.localStorage.setItem(PROFILE_OWNER_KEY_STORAGE_KEY, generated);
+        profileCloudState.ownerKey = generated;
+        return generated;
+      } catch (error) {
+        const generated = `owner-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+        profileCloudState.ownerKey = generated;
+        return generated;
+      }
+    }
+
+    function getBaziCloudApiBases() {
+      if (window.location?.protocol && window.location.protocol !== "file:") return [window.location.origin];
+      return BAZI_CLOUD_API_BASES;
+    }
+
+    async function fetchBaziCloud(path, options = {}) {
+      const headers = { ...(options.headers || {}) };
+      if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+      let lastResponse = null;
+      let lastError = null;
+      for (const base of getBaziCloudApiBases()) {
+        try {
+          const response = await fetch(`${base}${path}`, { ...options, headers, credentials: "include" });
+          if (response.status === 404 || response.status === 405) {
+            lastResponse = response;
+            continue;
+          }
+          return response;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      if (lastResponse) return lastResponse;
+      throw lastError || new Error("雲端命主紀錄連線失敗。");
+    }
+
+    async function fetchBaziAuth(path, options = {}) {
+      const headers = { ...(options.headers || {}) };
+      if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+      let lastResponse = null;
+      let lastError = null;
+      for (const base of getBaziCloudApiBases()) {
+        try {
+          const response = await fetch(`${base}${path}`, { ...options, headers, credentials: "include" });
+          if (response.status === 404 || response.status === 405) {
+            lastResponse = response;
+            continue;
+          }
+          return response;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      if (lastResponse) return lastResponse;
+      throw lastError || new Error("帳號服務連線失敗。");
+    }
+
+    async function readBaziResponse(response, fallbackMessage) {
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (error) {
+        throw new Error(fallbackMessage);
+      }
+      if (!response.ok) {
+        const requestError = new Error(data?.message || fallbackMessage);
+        requestError.code = data?.error || "REQUEST_FAILED";
+        throw requestError;
+      }
+      return data;
+    }
+
+    async function getBaziCloudProfiles() {
+      const response = await fetchBaziCloud(BAZI_PROFILE_API_PATH, { cache: "no-store" });
+      const data = await readBaziResponse(response, `雲端命主紀錄讀取失敗（${response.status}）。`);
+      return Array.isArray(data.profiles) ? data.profiles : [];
+    }
+
+    async function postBaziCloudProfile(profile) {
+      const response = await fetchBaziCloud(BAZI_PROFILE_API_PATH, {
+        method: "POST",
+        body: JSON.stringify({ profile })
+      });
+      const data = await readBaziResponse(response, `雲端命主紀錄儲存失敗（${response.status}）。`);
+      return Array.isArray(data.profiles) ? data.profiles : [];
+    }
+
+    async function deleteBaziCloudProfile(id) {
+      const response = await fetchBaziCloud(`${BAZI_PROFILE_API_PATH}/${encodeURIComponent(id)}`, { method: "DELETE" });
+      const data = await readBaziResponse(response, `雲端命主紀錄刪除失敗（${response.status}）。`);
+      return Array.isArray(data.profiles) ? data.profiles : [];
+    }
+
+    async function getBaziAuthSession() {
+      const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/me`, { cache: "no-store" });
+      return readBaziResponse(response, `帳號狀態讀取失敗（${response.status}）。`);
+    }
+
+    async function getBaziEmailServiceStatus() {
+      const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/status`, { cache: "no-store" });
+      return readBaziResponse(response, `Email 服務狀態讀取失敗（${response.status}）。`);
+    }
+
+    async function submitBaziAuth(action, credentials, extra = {}) {
+      const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/${action}`, {
+        method: "POST",
+        body: JSON.stringify({ ...credentials, ...extra })
+      });
+      return readBaziResponse(response, action === "register" ? "建立帳號失敗。" : "登入失敗。");
+    }
+
+    async function requestBaziVerificationResend() {
+      const { email } = getBaziAccountCredentials();
+      setProfileAuthBusy(true);
+      setProfileAuthStatus("正在寄送驗證信…");
+      try {
+        const data = await submitBaziAuth("resend-verification", { email });
+        setProfileAuthStatus(data.message || "驗證信已寄出，請檢查信箱。" );
+      } catch (error) {
+        setProfileAuthStatus(error instanceof Error ? error.message : "驗證信寄送失敗。", true);
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    async function requestBaziPasswordReset() {
+      const { email } = getBaziAccountCredentials();
+      setProfileAuthBusy(true);
+      setProfileAuthStatus("正在寄送重設密碼信…");
+      try {
+        const data = await submitBaziAuth("forgot-password", { email });
+        setProfileAuthStatus(data.message || "如果帳號存在，重設密碼信已寄出。" );
+      } catch (error) {
+        setProfileAuthStatus(error instanceof Error ? error.message : "重設密碼信寄送失敗。", true);
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    async function resetBaziPassword() {
+      const password = document.getElementById("bazi-reset-password").value;
+      const confirmation = document.getElementById("bazi-reset-password-confirm").value;
+      const status = document.getElementById("profile-reset-status");
+      if (password !== confirmation) {
+        status.textContent = "兩次輸入的密碼不一致。";
+        return;
+      }
+      setProfileAuthBusy(true);
+      status.textContent = "正在更新密碼…";
+      try {
+        const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/reset-password`, {
+          method: "POST",
+          body: JSON.stringify({ token: activePasswordResetToken, password })
+        });
+        const data = await readBaziResponse(response, "密碼更新失敗。" );
+        status.textContent = data.message || "密碼已更新，請重新登入。";
+        activePasswordResetToken = "";
+        document.getElementById("profile-password-reset").hidden = true;
+        setBaziPasswordResetMode(false);
+        renderProfileAccount();
+        window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.hash}`);
+        document.getElementById("bazi-reset-password").value = "";
+        document.getElementById("bazi-reset-password-confirm").value = "";
+      } catch (error) {
+        status.textContent = error instanceof Error ? error.message : "密碼更新失敗。";
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    async function applyBaziAuthenticatedState(user, profiles, migrateLocal = false) {
+      profileCloudState.user = user;
+      profileCloudState.available = true;
+      renderProfileAccount();
+      let nextProfiles = Array.isArray(profiles) ? profiles : await getBaziCloudProfiles();
+      const localProfiles = getStoredProfiles();
+      if (migrateLocal && !nextProfiles.length && localProfiles.length) {
+        for (const profile of localProfiles) nextProfiles = await postBaziCloudProfile(profile);
+      }
+      writeStoredProfiles(nextProfiles);
+      renderProfiles();
+      setProfileStorageStatus("雲端命主紀錄已同步。", true);
+      setProfileAuthStatus(`已登入：${user.email}。在其他裝置登入同一帳號即可看到相同紀錄。`);
+    }
+
+    async function initializeBaziProfileCloud() {
+      if (profileCloudState.syncing) return;
+      profileCloudState.syncing = true;
+      setProfileStorageStatus("正在檢查帳號同步狀態…");
+      try {
+        const emailStatus = await getBaziEmailServiceStatus();
+        profileCloudState.emailConfigured = Boolean(emailStatus.emailConfigured);
+        const session = await getBaziAuthSession();
+        if (session.authenticated && session.user) {
+          await applyBaziAuthenticatedState(session.user, await getBaziCloudProfiles());
+          if (!profileCloudState.emailConfigured) setProfileAuthStatus("Email 驗證與忘記密碼目前尚未啟用；請先完成網站郵件服務設定。", true);
+        } else {
+          profileCloudState.user = null;
+          profileCloudState.available = false;
+          renderProfileAccount();
+          setProfileStorageStatus("尚未登入；目前只保留在此瀏覽器，登入後才會跨裝置同步。");
+          setProfileAuthStatus(profileCloudState.emailConfigured ? "登入後，命主紀錄會隨帳號在不同裝置同步。已有舊雲端紀錄者，建立帳號時會一併轉入。" : "Email 驗證、忘記密碼與重寄驗證信目前尚未啟用；建立帳號前請先完成網站郵件服務設定。", !profileCloudState.emailConfigured);
+        }
+        renderProfiles();
+      } catch (error) {
+        profileCloudState.available = false;
+        renderProfileAccount();
+        setProfileStorageStatus("帳號服務暫時無法連線，目前只保留在此瀏覽器；請稍後重試登入。");
+        setProfileAuthStatus(error instanceof Error ? error.message : "帳號服務暫時無法連線。", true);
+        console.warn("Bazi account session check failed:", error);
+      } finally {
+        profileCloudState.syncing = false;
+      }
+    }
+
+    async function syncBaziProfileToCloud(profile) {
+      if (!profileCloudState.user) {
+        setProfileStorageStatus("尚未登入；本次紀錄目前只保留在此瀏覽器，登入後才會同步到雲端。");
+        return;
+      }
+      try {
+        const cloudProfiles = await postBaziCloudProfile(profile);
+        writeStoredProfiles(cloudProfiles);
+        profileCloudState.available = true;
+        setProfileStorageStatus("雲端命主紀錄已同步。", true);
+        renderProfiles();
+      } catch (error) {
+        profileCloudState.available = false;
+        setProfileStorageStatus("雲端同步失敗，目前資料仍保留在此瀏覽器；請稍後重試。");
+        console.warn("Bazi cloud profile save failed:", error);
+      }
+    }
+
+    async function syncDeletedBaziProfileToCloud(id) {
+      if (!profileCloudState.user) {
+        setProfileStorageStatus("已登出；刪除只套用在此瀏覽器的本機紀錄。", false);
+        return;
+      }
+      try {
+        const cloudProfiles = await deleteBaziCloudProfile(id);
+        writeStoredProfiles(cloudProfiles);
+        profileCloudState.available = true;
+        setProfileStorageStatus("雲端命主紀錄已同步刪除。", true);
+        renderProfiles();
+      } catch (error) {
+        profileCloudState.available = false;
+        setProfileStorageStatus("雲端刪除尚未完成；本機紀錄已刪除，請稍後重試。", false);
+        console.warn("Bazi cloud profile delete failed:", error);
+      }
+    }
+
+    async function registerBaziAccount() {
+      const credentials = getBaziAccountCredentials();
+      setProfileAuthBusy(true);
+      setProfileAuthStatus("正在建立帳號並同步紀錄…");
+      try {
+        const data = await submitBaziAuth("register", credentials, { legacyOwnerKey: getBaziProfileOwnerKey() });
+        profileCloudState.user = null;
+        profileCloudState.available = false;
+        renderProfileAccount();
+        setProfileStorageStatus("尚未完成 Email 驗證；驗證後登入即可跨裝置同步。" );
+        setProfileAuthStatus(`驗證信已寄至 ${data.email}，請點擊信中的連結完成驗證。`);
+        document.getElementById("bazi-account-password").value = "";
+      } catch (error) {
+        setProfileAuthStatus(error instanceof Error ? error.message : "建立帳號失敗，請稍後重試。", true);
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    async function loginBaziAccount() {
+      const credentials = getBaziAccountCredentials();
+      setProfileAuthBusy(true);
+      setProfileAuthStatus("正在登入並讀取雲端紀錄…");
+      try {
+        const data = await submitBaziAuth("login", credentials);
+        await applyBaziAuthenticatedState(data.user, data.profiles);
+        document.getElementById("bazi-account-password").value = "";
+      } catch (error) {
+        if (error?.code === "EMAIL_NOT_VERIFIED") {
+          setProfileAuthStatus("請先完成 Email 驗證，再登入；也可以按「重新寄驗證信」。", true);
+        } else {
+          setProfileAuthStatus(error instanceof Error ? error.message : "登入失敗，請確認帳號與密碼。", true);
+        }
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    async function logoutBaziAccount() {
+      setProfileAuthBusy(true);
+      try {
+        const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/logout`, { method: "POST", body: "{}" });
+        await readBaziResponse(response, "登出失敗。" );
+        profileCloudState.user = null;
+        profileCloudState.available = false;
+        writeStoredProfiles([]);
+        renderProfileAccount();
+        renderProfiles();
+        setProfileStorageStatus("已登出；請登入後同步命主紀錄。" );
+        setProfileAuthStatus("已登出。為避免共用裝置留下資料，本機快取已清除。" );
+      } catch (error) {
+        setProfileAuthStatus(error instanceof Error ? error.message : "登出失敗，請稍後重試。" );
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    async function deleteBaziAccount() {
+      if (!window.confirm("刪除帳號後，雲端命主紀錄也會一併刪除，且無法復原。確定要繼續嗎？")) return;
+      const password = window.prompt("請輸入目前密碼以確認刪除帳號：");
+      if (password === null) return;
+      setProfileAuthBusy(true);
+      setProfileAuthStatus("正在刪除帳號與雲端命主紀錄…");
+      try {
+        const response = await fetchBaziAuth(`${BAZI_AUTH_API_PATH}/account`, {
+          method: "DELETE",
+          body: JSON.stringify({ password })
+        });
+        const data = await readBaziResponse(response, "帳號刪除失敗。" );
+        profileCloudState.user = null;
+        profileCloudState.available = false;
+        writeStoredProfiles([]);
+        renderProfileAccount();
+        renderProfiles();
+        setProfileStorageStatus("帳號與雲端命主紀錄已刪除。" );
+        setProfileAuthStatus(data.message || "帳號已刪除。" );
+      } catch (error) {
+        setProfileAuthStatus(error instanceof Error ? error.message : "帳號刪除失敗。", true);
+      } finally {
+        setProfileAuthBusy(false);
+      }
+    }
+
+    function initializeBaziAuthLinkState() {
+      const params = new URLSearchParams(window.location.search);
+      const verificationState = params.get("email_verified");
+      if (verificationState === "1") setProfileAuthStatus("Email 已驗證，請使用帳號與密碼登入。" );
+      if (verificationState === "0") setProfileAuthStatus("Email 驗證連結無效或已過期，請重新寄送驗證信。" );
+      if (activePasswordResetToken) {
+        showTab("profiles");
+        setBaziPasswordResetMode(true);
+        document.getElementById("profile-password-reset").hidden = false;
+        document.getElementById("profile-reset-status").textContent = "請輸入新的密碼，並勾選「顯示新密碼」確認輸入內容。";
+        window.requestAnimationFrame(() => {
+          const resetPanel = document.getElementById("profile-password-reset");
+          const passwordInput = document.getElementById("bazi-reset-password");
+          resetPanel?.scrollIntoView({ behavior: "smooth", block: "center" });
+          passwordInput?.focus({ preventScroll: true });
+        });
+      }
+    }
+
+    function createProfileId() {
+      if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+      return `profile-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    function profileIdentity(profile) {
+      const solar = profile.birthSolar;
+      return [
+        profile.name || "",
+        solar.year,
+        solar.month,
+        solar.day,
+        solar.hour,
+        solar.minute,
+        profile.gender,
+        profile.hemisphere,
+        profile.dayChangeRule,
+        profile.birthPlace || "",
+        profile.timezone || "Asia/Taipei"
+      ].join("|");
+    }
+
+    function saveBaziProfile(profile) {
+      const profiles = getStoredProfiles();
+      const identity = profileIdentity(profile);
+      const existingIndex = profiles.findIndex((item) => profileIdentity(item) === identity);
+      const now = new Date().toISOString();
+      const record = {
+        ...profile,
+        id: existingIndex >= 0 ? profiles[existingIndex].id : profile.id || createProfileId(),
+        createdAt: existingIndex >= 0 ? profiles[existingIndex].createdAt : now,
+        updatedAt: now,
+        version: 1
+      };
+      if (existingIndex >= 0) profiles[existingIndex] = record;
+      else profiles.push(record);
+      writeStoredProfiles(profiles);
+      return record;
+    }
+
+    function deleteBaziProfile(id) {
+      return writeStoredProfiles(getStoredProfiles().filter((profile) => profile.id !== id));
+    }
+
+    function buildBaziProfileRecord(input) {
+      const solar = {
+        year: input.year,
+        month: input.month,
+        day: input.day,
+        hour: input.hour,
+        minute: input.minute
+      };
+      const name = input.displayName || `未命名命主 ${formatSolarDate(solar).slice(0, 10)}`;
+      return {
+        id: createProfileId(),
+        name,
+        inputCalendarType: input.calendarType,
+        birthSolar: solar,
+        birthLunar: input.birthLunar,
+        gender: input.gender === "男" ? "male" : "female",
+        hemisphere: input.birthHemisphere === "南半球" ? "south" : "north",
+        dayChangeRule: input.lateZiSwitchDay ? "lateZiHour" : "midnight",
+        birthPlace: input.birthHemisphere,
+        timezone: input.timezoneOffset === 8 ? "Asia/Taipei" : `UTC${input.timezoneOffset >= 0 ? "+" : ""}${input.timezoneOffset}`,
+        timezoneOffset: input.timezoneOffset,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        version: 1
+      };
+    }
+
+    function formatProfileTime(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "未記錄";
+      return date.toLocaleString("zh-TW", { dateStyle: "medium", timeStyle: "short" });
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
+    }
+
+    function renderProfiles() {
+      const container = document.getElementById("profile-list");
+      const query = document.getElementById("profile-search").value.trim().toLowerCase();
+      const profiles = getStoredProfiles()
+        .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
+        .filter((profile) => !query || `${profile.name} ${profile.birthSolar?.year}`.toLowerCase().includes(query));
+
+      if (!profiles.length) {
+        container.innerHTML = `<p class="empty-profiles">${query ? "找不到符合條件的命主紀錄。" : "尚無命主紀錄。完成一次排盤後，資料會自動出現在這裡。"}</p>`;
+        return;
+      }
+
+      container.innerHTML = profiles.map((profile) => {
+        const solar = profile.birthSolar;
+        const lunar = profile.birthLunar;
+        const gender = profile.gender === "female" ? "女" : "男";
+        const hemisphere = profile.hemisphere === "south" ? "南半球" : "北半球";
+        const dayChange = profile.dayChangeRule === "lateZiHour" ? "子初換日" : "子正換日";
+        return `
+          <article class="profile-card">
+            <h3>${escapeHtml(profile.name || "未命名命主")}</h3>
+            <p>陽曆：${escapeHtml(formatSolarDate(solar))}</p>
+            <p>農曆：${escapeHtml(lunar ? formatLunarRecord(lunar) : "未記錄")}</p>
+            <p>性別：${gender}｜出生地：${hemisphere}｜換日法：${dayChange}</p>
+            <p>最後使用：${escapeHtml(formatProfileTime(profile.updatedAt))}</p>
+            <div class="profile-actions">
+              <button class="profile-use-button" type="button" data-profile-id="${escapeHtml(profile.id)}">使用此資料</button>
+              <button class="profile-delete-button" type="button" data-delete-profile-id="${escapeHtml(profile.id)}">刪除</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function setRadioValue(name, value) {
+      const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
+      if (radio) radio.checked = true;
+    }
+
+    function loadBaziProfile(profile) {
+      const solar = profile.birthSolar;
+      const lunar = profile.birthLunar;
+      document.getElementById("profile-name").value = profile.name?.startsWith("未命名命主 ") ? "" : profile.name || "";
+      setRadioValue("gender", profile.gender === "female" ? "女" : "男");
+      setRadioValue("birthHemisphere", profile.hemisphere === "south" ? "南半球" : "北半球");
+      setRadioValue("dayChangeMethod", profile.dayChangeRule === "lateZiHour" ? "子初換日" : "子正換日");
+      setSolarFields(solar);
+      if (lunar) setLunarFields(lunar, solar.hour, solar.minute);
+      lastConvertedSolar = solar;
+      lastConvertedLunar = lunar;
+      activeCalendarType = profile.inputCalendarType === "lunar" ? "lunar" : "solar";
+      document.getElementById("solar-input-panel").hidden = activeCalendarType !== "solar";
+      document.getElementById("lunar-input-panel").hidden = activeCalendarType !== "lunar";
+      document.querySelectorAll('input[name="calendarType"]').forEach((radio) => {
+        radio.checked = radio.value === activeCalendarType;
+      });
+      updateCalendarPreview();
+      showTab("chart");
+      document.getElementById("result").hidden = true;
+      document.getElementById("open-analysis").disabled = true;
+      latestChart = null;
+      latestInput = null;
+    }
+
+    function showTab(tab) {
+      const isChart = tab === "chart";
+      document.getElementById("chart-panel").hidden = !isChart;
+      document.getElementById("profiles-panel").hidden = isChart;
+      document.getElementById("tab-chart").classList.toggle("is-active", isChart);
+      document.getElementById("tab-profiles").classList.toggle("is-active", !isChart);
+      document.getElementById("tab-chart").setAttribute("aria-selected", String(isChart));
+      document.getElementById("tab-profiles").setAttribute("aria-selected", String(!isChart));
+      if (!isChart) renderProfiles();
     }
 
     function getTenGod(dayMaster, targetStem) {
@@ -905,17 +2290,32 @@
 
     function toBirthInput() {
       const dayChangeMethod = getSelected("dayChangeMethod");
+      const calendarType = activeCalendarType;
+      let solar;
+      let lunar;
+
+      if (calendarType === "solar") {
+        solar = readSolarFields();
+        validateBirthInput({ ...solar, timezoneOffset: defaults.timezoneOffset, lateZiSwitchDay: false });
+        lunar = solarToLunar(solar);
+      } else {
+        lunar = readLunarFields();
+        if (!isCompleteLunar(lunar)) throw new RangeError("請輸入完整的農曆出生年月日時。");
+        const maxDay = getLunarMonthDays(lunar.year, lunar.month, lunar.isLeap);
+        if (lunar.day > maxDay) throw new RangeError(`農曆${formatLunarMonth(lunar.month, lunar.isLeap)}此年只有${maxDay}天。`);
+        solar = lunarToSolar(lunar, lunar.hour, lunar.minute);
+      }
+
       return {
-        year: Number(document.getElementById("year").value),
-        month: Number(document.getElementById("month").value),
-        day: Number(document.getElementById("day").value),
-        hour: Number(document.getElementById("hour").value),
-        minute: Number(document.getElementById("minute").value),
+        ...solar,
         gender: getSelected("gender"),
         birthHemisphere: getSelected("birthHemisphere"),
         dayChangeMethod,
         lateZiSwitchDay: dayChangeMethod === "子初換日",
-        timezoneOffset: defaults.timezoneOffset
+        timezoneOffset: defaults.timezoneOffset,
+        displayName: document.getElementById("profile-name").value.trim(),
+        calendarType,
+        birthLunar: lunar
       };
     }
 
@@ -1227,9 +2627,13 @@
           generatedAt: new Date().toISOString()
         },
         user: {
+          name: input.displayName || "",
+          displayName: input.displayName || "",
           gender: input.gender === "男" ? "male" : "female",
           birthSolar: `${input.year}-${String(input.month).padStart(2, "0")}-${String(input.day).padStart(2, "0")} ${String(input.hour).padStart(2, "0")}:${String(input.minute).padStart(2, "0")}`,
-          birthLunar: "",
+          birthLunar: formatLunarRecord(input.birthLunar),
+          birthLunarData: input.birthLunar,
+          inputCalendarType: input.calendarType,
           birthPlace: input.birthHemisphere,
           timezone: input.timezoneOffset === 8 ? "Asia/Taipei" : `UTC${input.timezoneOffset >= 0 ? "+" : ""}${input.timezoneOffset}`,
           dayChangeRule: input.lateZiSwitchDay ? "lateZiHour" : "midnight"
@@ -1358,23 +2762,111 @@
       defaults.minute
     );
 
+    document.getElementById("lunar-year").value = String(defaults.year);
+    appendOptions(
+      document.getElementById("lunar-hour"),
+      Array.from({ length: 24 }, (_, hour) => {
+        const branch = branches[Math.floor((hour + 1) / 2) % 12];
+        return { value: hour, label: `${hour} ${branch}時` };
+      }),
+      defaults.hour
+    );
+    appendOptions(
+      document.getElementById("lunar-minute"),
+      Array.from({ length: 60 }, (_, minute) => ({ value: minute, label: `${String(minute).padStart(2, "0")} 分` })),
+      defaults.minute
+    );
+    updateLunarMonthOptions();
+    setLunarFields(solarToLunar({ ...defaults }), defaults.hour, defaults.minute);
+    updateCalendarPreview();
+
+    document.querySelectorAll('input[name="calendarType"]').forEach((radio) => {
+      radio.addEventListener("change", () => setCalendarType(radio.value));
+    });
+
     document.getElementById("set-current-time").addEventListener("click", () => {
       const now = new Date();
-      document.getElementById("year").value = String(now.getFullYear());
-      document.getElementById("month").value = String(now.getMonth() + 1);
-      updateDayOptions();
-      document.getElementById("day").value = String(now.getDate());
-      document.getElementById("hour").value = String(now.getHours());
-      document.getElementById("minute").value = String(now.getMinutes());
+      const solar = {
+        year: now.getFullYear(),
+        month: now.getMonth() + 1,
+        day: now.getDate(),
+        hour: now.getHours(),
+        minute: now.getMinutes()
+      };
+      setSolarFields(solar);
+      const lunar = solarToLunar(solar);
+      setLunarFields(lunar, solar.hour, solar.minute);
+      lastConvertedSolar = solar;
+      lastConvertedLunar = lunar;
       document.getElementById("annual-target-year").value = String(now.getFullYear());
       selectedMinute = now.getMinutes();
       document.getElementById("current-time-note").textContent =
         `已帶入 ${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(selectedMinute).padStart(2, "0")}`;
+      updateCalendarPreview();
     });
 
-    document.getElementById("year").addEventListener("change", updateDayOptions);
-    document.getElementById("year").addEventListener("input", updateDayOptions);
-    document.getElementById("month").addEventListener("change", updateDayOptions);
+    document.getElementById("year").addEventListener("change", () => {
+      updateDayOptions();
+      updateCalendarPreview();
+    });
+    document.getElementById("year").addEventListener("input", () => {
+      updateDayOptions();
+      updateCalendarPreview();
+    });
+    document.getElementById("month").addEventListener("change", () => {
+      updateDayOptions();
+      updateCalendarPreview();
+    });
+    ["day", "hour", "minute"].forEach((id) => document.getElementById(id).addEventListener("change", updateCalendarPreview));
+    document.getElementById("lunar-year").addEventListener("input", () => {
+      updateLunarMonthOptions();
+      updateCalendarPreview();
+    });
+    document.getElementById("lunar-year").addEventListener("change", () => {
+      updateLunarMonthOptions();
+      updateCalendarPreview();
+    });
+    document.getElementById("lunar-month").addEventListener("change", () => {
+      updateLunarDayOptions();
+      updateCalendarPreview();
+    });
+    ["lunar-day", "lunar-hour", "lunar-minute"].forEach((id) => document.getElementById(id).addEventListener("change", updateCalendarPreview));
+
+    document.getElementById("tab-chart").addEventListener("click", () => showTab("chart"));
+    document.getElementById("tab-profiles").addEventListener("click", () => showTab("profiles"));
+    document.getElementById("profile-search").addEventListener("input", renderProfiles);
+    document.getElementById("bazi-show-password").addEventListener("change", (event) => {
+      document.getElementById("bazi-account-password").type = event.target.checked ? "text" : "password";
+    });
+    document.getElementById("bazi-show-reset-password").addEventListener("change", (event) => {
+      const type = event.target.checked ? "text" : "password";
+      document.getElementById("bazi-reset-password").type = type;
+      document.getElementById("bazi-reset-password-confirm").type = type;
+    });
+    document.getElementById("bazi-login").addEventListener("click", loginBaziAccount);
+    document.getElementById("bazi-register").addEventListener("click", registerBaziAccount);
+    document.getElementById("bazi-forgot-password").addEventListener("click", requestBaziPasswordReset);
+    document.getElementById("bazi-resend-verification").addEventListener("click", requestBaziVerificationResend);
+    document.getElementById("bazi-logout").addEventListener("click", logoutBaziAccount);
+    document.getElementById("bazi-delete-account").addEventListener("click", deleteBaziAccount);
+    document.getElementById("bazi-reset-password-submit").addEventListener("click", resetBaziPassword);
+    document.getElementById("profile-list").addEventListener("click", (event) => {
+      const useButton = event.target.closest("[data-profile-id]");
+      if (useButton) {
+        const profile = getStoredProfiles().find((item) => item.id === useButton.dataset.profileId);
+        if (profile) loadBaziProfile(profile);
+        return;
+      }
+      const deleteButton = event.target.closest("[data-delete-profile-id]");
+      if (!deleteButton) return;
+      const profile = getStoredProfiles().find((item) => item.id === deleteButton.dataset.deleteProfileId);
+      if (!profile) return;
+      if (window.confirm(`確定要刪除「${profile.name || "未命名命主"}」的命主紀錄嗎？\n此動作無法復原。`)) {
+        deleteBaziProfile(profile.id);
+        renderProfiles();
+        void syncDeletedBaziProfileToCloud(profile.id);
+      }
+    });
 
     function calculateAndRender() {
       try {
@@ -1383,6 +2875,8 @@
         const chart = calculateBaziChart(input, getTargetAnnualYear());
         latestChart = chart;
         latestInput = input;
+        const savedProfile = saveBaziProfile(buildBaziProfileRecord(input));
+        void syncBaziProfileToCloud(savedProfile);
         renderPillars(chart, input);
         renderLuckAndAnnual(chart);
         document.getElementById("result").hidden = false;
@@ -1409,6 +2903,9 @@
       event.preventDefault();
       calculateAndRender();
     });
+
+    initializeBaziAuthLinkState();
+    void initializeBaziProfileCloud();
   </script>
 </body>
 </html>

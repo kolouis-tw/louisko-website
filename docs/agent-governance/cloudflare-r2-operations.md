@@ -15,6 +15,7 @@ Use this file when the task involves Wrangler CLI, Cloudflare account access, R2
 - Wrangler CLI is available locally through `/opt/homebrew/bin/npx -y wrangler@latest`.
 - The logged-in account was noted as Cloudflare account `5208cf5dbbf25b1776f9b45cd796d45d`.
 - Verify auth again before sensitive changes if the session might be stale.
+- `louisko.com` remains purchased/renewed through Zeabur, but its authoritative DNS was intentionally migrated on `2026-07-16` to the Cloudflare Zone in account `5208cf5dbbf25b1776f9b45cd796d45d`, with nameservers `henrik.ns.cloudflare.com` and `rose.ns.cloudflare.com`. The old Zeabur path used `cory.ns.cloudflare.com` and `barbara.ns.cloudflare.com`. See [deployment-reference.md](deployment-reference.md) for the domain identity ledger and email follow-up.
 
 ## Common Commands
 

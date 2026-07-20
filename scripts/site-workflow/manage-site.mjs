@@ -139,8 +139,8 @@ h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:48px;li
 <body>
 <main class="shell">
   <nav class="top">
-    <a class="brand" href="../../index.html">Louisko</a>
-    <a class="back" href="../../index.html">回首頁</a>
+    <a class="brand" href="/">Louisko</a>
+    <a class="back" href="/">回首頁</a>
   </nav>
   <section class="hero">
     <h1>${escapeHtml(title)}</h1>

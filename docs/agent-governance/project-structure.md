@@ -18,7 +18,8 @@ Use this file when the task touches site structure, entrypoints, ownership bound
 - Repository root: main site, shared assets, deployment entry, and shared workflow
 - `apps/bazi/`: Bazi charting app
 - `apps/photo/`: Photo app
-- `apps/erp/`, `apps/ai/`, `apps/design/`, `apps/docs/`: reserved or lightweight app roots
+- `apps/ziwei/`: Ziwei Doushu app
+- `apps/erp/`, `apps/ai/`, `apps/docs/`: reserved or lightweight app roots
 - `scripts/site-workflow/`: cross-site workflow tooling, not a single app's private code
 
 ## Placement Rules

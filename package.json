@@ -8,7 +8,8 @@
     "site:list": "node scripts/site-workflow/manage-site.mjs list",
     "site:verify": "node scripts/site-workflow/manage-site.mjs verify",
     "style:info": "node scripts/site-workflow/louisko-style-system.mjs info",
-    "style:final": "node scripts/site-workflow/louisko-style-system.mjs final"
+    "style:final": "node scripts/site-workflow/louisko-style-system.mjs final",
+    "test:bazi:line": "node apps/bazi/scripts/line-bot-regression-check.cjs"
   },
   "engines": {
     "node": ">=18"

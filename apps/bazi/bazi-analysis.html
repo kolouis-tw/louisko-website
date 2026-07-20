@@ -84,6 +84,11 @@
       border-color: transparent;
     }
 
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
     .hero {
       display: grid;
       grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
@@ -423,6 +428,24 @@
     .prompt-status.near { color: var(--earth); }
     .prompt-status.over { color: var(--fire); }
 
+    .shensha-disclaimer {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+    }
+
+    .shensha-disclaimer {
+      padding: 14px;
+    }
+
+    .shensha-disclaimer {
+      margin-bottom: 12px;
+      color: #ddd7c8;
+      font-size: 14px;
+      line-height: 1.7;
+      font-weight: 700;
+    }
+
     .empty-state {
       padding: 28px;
       text-align: center;
@@ -478,7 +501,7 @@
 <body>
   <main class="bazi-analysis-page">
     <div class="topbar">
-      <a class="louisko-page-brand" href="../../index.html" aria-label="Louisko 首頁">
+      <a class="louisko-page-brand" href="/" aria-label="Louisko 首頁">
         <img class="louisko-logo" src="../../assets/louis-logo-transparent.png" alt="Louis">
         <span class="louisko-brand-text">Louisko</span>
       </a>
@@ -504,6 +527,12 @@
     const elementGenerates = { 木: "火", 火: "土", 土: "金", 金: "水", 水: "木" };
     const elementControls = { 木: "土", 土: "水", 水: "火", 火: "金", 金: "木" };
     const MAX_PROMPT_CHARS = 6000;
+    const SHEN_SHA_RULESET_VERSION = "core-v1.0";
+    const SHEN_SHA_DISCLAIMER = "看八字神煞時，必須秉持「神煞不獨論，須配合日主旺衰、月令格局、用神喜忌與大運流年」的原則。";
+    const LIFETIME_PROMPT_VERSION = "advisor-v2.0";
+    const LIFETIME_PROMPT_TARGET_MIN = 8000;
+    const LIFETIME_PROMPT_TARGET_MAX = 18000;
+    const LIFETIME_PROMPT_HARD_MAX = 22000;
     const solarTermMonthLabels = [
       { monthIndex: 1, branch: "寅", solarTermName: "立春", approximateGregorianRange: "約 2/4-3/5" },
       { monthIndex: 2, branch: "卯", solarTermName: "驚蟄", approximateGregorianRange: "約 3/5-4/4" },
@@ -536,6 +565,54 @@
       正印: ["學習、保護、正統資源", "依賴、保守、慢熱"],
       偏印: ["靈感、研究、非主流", "孤僻、想太多、不穩定"]
     };
+    const pillarOrder = ["year", "month", "day", "hour"];
+    const pillarLabels = { year: "年柱", month: "月柱", day: "日柱", hour: "時柱" };
+    const shortPillarLabel = { year: "年", month: "月", day: "日", hour: "時" };
+    const shenShaOrder = ["tian-yi", "wen-chang", "tian-de", "yue-de", "yi-ma", "tao-hua", "hua-gai", "yang-ren", "gu-chen", "gua-su", "yin-yang-cha-cuo"];
+    const shenShaRuleMaps = {
+      tianYi: { 甲: ["丑", "未"], 戊: ["丑", "未"], 庚: ["丑", "未"], 乙: ["子", "申"], 己: ["子", "申"], 丙: ["亥", "酉"], 丁: ["亥", "酉"], 壬: ["卯", "巳"], 癸: ["卯", "巳"], 辛: ["午", "寅"] },
+      wenChang: { 甲: "巳", 乙: "午", 丙: "申", 丁: "酉", 戊: "申", 己: "酉", 庚: "亥", 辛: "子", 壬: "寅", 癸: "卯" },
+      tianDe: {
+        寅: { targetType: "stem", value: "丁" }, 卯: { targetType: "branch", value: "申" }, 辰: { targetType: "stem", value: "壬" },
+        巳: { targetType: "stem", value: "辛" }, 午: { targetType: "branch", value: "亥" }, 未: { targetType: "stem", value: "甲" },
+        申: { targetType: "stem", value: "癸" }, 酉: { targetType: "branch", value: "寅" }, 戌: { targetType: "stem", value: "丙" },
+        亥: { targetType: "stem", value: "乙" }, 子: { targetType: "branch", value: "巳" }, 丑: { targetType: "stem", value: "庚" }
+      },
+      yueDe: { 寅: "丙", 午: "丙", 戌: "丙", 申: "壬", 子: "壬", 辰: "壬", 亥: "甲", 卯: "甲", 未: "甲", 巳: "庚", 酉: "庚", 丑: "庚" },
+      yiMa: { 申: "寅", 子: "寅", 辰: "寅", 寅: "申", 午: "申", 戌: "申", 巳: "亥", 酉: "亥", 丑: "亥", 亥: "巳", 卯: "巳", 未: "巳" },
+      taoHua: { 申: "酉", 子: "酉", 辰: "酉", 寅: "卯", 午: "卯", 戌: "卯", 巳: "午", 酉: "午", 丑: "午", 亥: "子", 卯: "子", 未: "子" },
+      huaGai: { 寅: "戌", 午: "戌", 戌: "戌", 亥: "未", 卯: "未", 未: "未", 申: "辰", 子: "辰", 辰: "辰", 巳: "丑", 酉: "丑", 丑: "丑" },
+      yangRen: { 甲: "卯", 丙: "午", 戊: "午", 庚: "酉", 壬: "子" },
+      guChenGuaSu: {
+        亥: { guChen: "寅", guaSu: "戌" }, 子: { guChen: "寅", guaSu: "戌" }, 丑: { guChen: "寅", guaSu: "戌" },
+        寅: { guChen: "巳", guaSu: "丑" }, 卯: { guChen: "巳", guaSu: "丑" }, 辰: { guChen: "巳", guaSu: "丑" },
+        巳: { guChen: "申", guaSu: "辰" }, 午: { guChen: "申", guaSu: "辰" }, 未: { guChen: "申", guaSu: "辰" },
+        申: { guChen: "亥", guaSu: "未" }, 酉: { guChen: "亥", guaSu: "未" }, 戌: { guChen: "亥", guaSu: "未" }
+      },
+      yinYangChaCuo: new Set(["丙子", "丙午", "丁丑", "丁未", "戊寅", "戊申", "辛卯", "辛酉", "壬辰", "壬戌", "癸巳", "癸亥"])
+    };
+    const strengthCanonicalOrder = ["身強", "偏強", "中和偏強", "中和", "中和偏弱", "偏弱", "身弱"];
+    const natalInteractionRules = [
+      { type: "合", a: "子", b: "丑", label: "子丑合" },
+      { type: "合", a: "寅", b: "亥", label: "寅亥合" },
+      { type: "合", a: "卯", b: "戌", label: "卯戌合" },
+      { type: "合", a: "辰", b: "酉", label: "辰酉合" },
+      { type: "合", a: "巳", b: "申", label: "巳申合" },
+      { type: "合", a: "午", b: "未", label: "午未合" },
+      { type: "沖", a: "子", b: "午", label: "子午沖" },
+      { type: "沖", a: "丑", b: "未", label: "丑未沖" },
+      { type: "沖", a: "寅", b: "申", label: "寅申沖" },
+      { type: "沖", a: "卯", b: "酉", label: "卯酉沖" },
+      { type: "沖", a: "辰", b: "戌", label: "辰戌沖" },
+      { type: "沖", a: "巳", b: "亥", label: "巳亥沖" },
+      { type: "害", a: "子", b: "未", label: "子未害" },
+      { type: "害", a: "丑", b: "午", label: "丑午害" },
+      { type: "害", a: "寅", b: "巳", label: "寅巳害" },
+      { type: "害", a: "卯", b: "辰", label: "卯辰害" },
+      { type: "害", a: "申", b: "亥", label: "申亥害" },
+      { type: "害", a: "酉", b: "戌", label: "酉戌害" }
+    ];
+    const supportedConditionalBranches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
     let latestPromptExport = null;
 
     function escapeHtml(value) {
@@ -593,8 +670,25 @@
       }));
     }
 
+    function buildChartSignature(chart, ruleVersion = "") {
+      const pillars = [chart?.pillars?.year?.pillar, chart?.pillars?.month?.pillar, chart?.pillars?.day?.pillar, chart?.pillars?.hour?.pillar].filter(Boolean).join("-");
+      const timezone = chart?.user?.timezone ?? "unknown-timezone";
+      const dayChangeRule = chart?.user?.dayChangeRule ?? "unknown-day-change";
+      const direction = chart?.luckStartInfo?.direction ?? "unknown-direction";
+      const startAge = chart?.luckStartInfo?.startAge ?? "unknown-start-age";
+      return [pillars, timezone, dayChangeRule, direction, startAge, ruleVersion || "no-rule-version"].join("|");
+    }
+
     function getPillarList(payload) {
       return [payload.pillars.year, payload.pillars.month, payload.pillars.day, payload.pillars.hour];
+    }
+
+    function getPillarListByChart(chart) {
+      return [chart.pillars.year, chart.pillars.month, chart.pillars.day, chart.pillars.hour];
+    }
+
+    function getNatalBranches(chart) {
+      return getPillarListByChart(chart).map((pillar) => pillar.branch);
     }
 
     function getAllBranches(payload) {
@@ -604,12 +698,51 @@
       return branches;
     }
 
+    function createLifetimeAdvisorSource(payload, sections, annualMonths, shenShaResult) {
+      const chart = { ...payload, monthlyLuck: annualMonths, shenSha: shenShaResult };
+      const currentLuck = (chart.luckCycles ?? []).find((cycle) =>
+        chart.currentLuck && cycle.pillar === chart.currentLuck.pillar && cycle.ageStart === chart.currentLuck.ageStart
+      ) || null;
+      return {
+        chart,
+        natalAnalysis: {
+          sections,
+          sectionMap: getSectionMap(sections)
+        },
+        luckCycles: chart.luckCycles ?? [],
+        currentLuck,
+        shenSha: shenShaResult?.hits ?? [],
+        metadata: {
+          version: LIFETIME_PROMPT_VERSION,
+          ruleVersion: shenShaResult?.ruleSetVersion ?? "",
+          generatedAt: new Date().toISOString(),
+          chartSignature: buildChartSignature(chart, shenShaResult?.ruleSetVersion ?? ""),
+          targetYear: chart.annualLuck?.year ?? null
+        }
+      };
+    }
+
     function strongestKey(record) {
       return Object.entries(record).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
     }
 
     function weakestKey(record) {
       return Object.entries(record).sort((a, b) => a[1] - b[1])[0]?.[0] ?? "";
+    }
+
+    function getStrengthResult(score) {
+      const boundedScore = Math.max(0, Math.min(100, Number(score ?? 0)));
+      if (boundedScore >= 76) return { category: "strong", label: "身強", score: boundedScore };
+      if (boundedScore >= 61) return { category: "slightlyStrong", label: "偏強", score: boundedScore };
+      if (boundedScore >= 53) return { category: "balancedStrong", label: "中和偏強", score: boundedScore };
+      if (boundedScore >= 43) return { category: "balancedWeak", label: "中和偏弱", score: boundedScore };
+      if (boundedScore >= 28) return { category: "slightlyWeak", label: "偏弱", score: boundedScore };
+      return { category: "weak", label: "身弱", score: boundedScore };
+    }
+
+    function formatStrengthLabel(result) {
+      if (!result) return "待判";
+      return `${result.label}（${result.score}）`;
     }
 
     function analyzeStrength(payload) {
@@ -646,15 +779,24 @@
       score += supportCount * 5 - pressureCount * 4;
       evidence.push(`天干生扶同黨約 ${supportCount} 位，剋洩耗壓力約 ${pressureCount} 位。`);
 
-      score = Math.max(0, Math.min(100, score));
-      const level = score >= 76 ? "身強" : score >= 61 ? "偏強" : score >= 43 ? "中和" : score >= 28 ? "偏弱" : "身弱";
+      const strengthResult = getStrengthResult(score);
+      const level = strengthResult.label;
       const conclusion = level.includes("強")
         ? "日主氣勢不弱，論命宜看能否洩秀、制衡與調候，不宜一味再增生扶。"
         : level.includes("弱")
           ? "日主承載力偏弱，宜先看印比扶身與根氣是否可用，再談財官食傷。"
           : "日主大致中和，格局、調候與大運引動會成為判斷重點。";
 
-      return { id: "day-master-strength", title: "日主旺衰", subtitle: `${level}｜分數 ${score}`, score, tags: [level, payload.dayMaster.stem + payload.dayMaster.element], evidence, conclusion };
+      return {
+        id: "day-master-strength",
+        title: "日主旺衰",
+        subtitle: formatStrengthLabel(strengthResult),
+        score: strengthResult.score,
+        strengthResult,
+        tags: [level, payload.dayMaster.stem + payload.dayMaster.element],
+        evidence,
+        conclusion
+      };
     }
 
     function analyzeFiveElements(payload) {
@@ -691,22 +833,65 @@
       };
     }
 
+    function formatRepeatedBranchTag(branch, count) {
+      if (count === 2) return `雙${branch}同支重現`;
+      return `${branch}支重現${count}次`;
+    }
+
+    function getNatalInteractionAnalysis(chart) {
+      const natalBranches = getNatalBranches(chart);
+      const branchCounts = natalBranches.reduce((acc, branch) => {
+        acc[branch] = (acc[branch] ?? 0) + 1;
+        return acc;
+      }, {});
+      const pairTags = natalInteractionRules
+        .filter((rule) => natalBranches.includes(rule.a) && natalBranches.includes(rule.b))
+        .map((rule) => rule.label);
+      const repeatedTags = Object.entries(branchCounts)
+        .filter(([, count]) => count > 1)
+        .map(([branch, count]) => formatRepeatedBranchTag(branch, count));
+      const branchElements = natalBranches.map((branch) => branchElement[branch]).filter(Boolean);
+      const elementCounts = branchElements.reduce((acc, element) => {
+        acc[element] = (acc[element] ?? 0) + 1;
+        return acc;
+      }, {});
+      const concentratedTags = Object.entries(elementCounts)
+        .filter(([, count]) => count >= 2)
+        .map(([element]) => `${element}勢集中`);
+      const conditionalNotes = supportedConditionalBranches
+        .filter((branch) => !natalBranches.includes(branch))
+        .map((branch) => {
+          const hits = natalInteractionRules
+            .filter((rule) => (rule.a === branch && natalBranches.includes(rule.b)) || (rule.b === branch && natalBranches.includes(rule.a)))
+            .map((rule) => rule.label);
+          return hits.length ? `逢${branch}可引動：${uniqueList(hits).join("、")}` : null;
+        })
+        .filter(Boolean);
+      return {
+        natalBranches,
+        tags: uniqueList([...pairTags, ...repeatedTags, ...concentratedTags]),
+        fixed: uniqueList([...pairTags, ...repeatedTags, ...concentratedTags]),
+        conditionalNotes,
+        branchCounts
+      };
+    }
+
     function analyzeInteractions(payload) {
-      const branches = getAllBranches(payload);
-      const pairs = [
-        ["六合", "子", "丑", "土"], ["六合", "寅", "亥", "木"], ["六合", "卯", "戌", "火"], ["六合", "辰", "酉", "金"], ["六合", "巳", "申", "水"], ["六合", "午", "未", "土"],
-        ["六沖", "子", "午"], ["六沖", "丑", "未"], ["六沖", "寅", "申"], ["六沖", "卯", "酉"], ["六沖", "辰", "戌"], ["六沖", "巳", "亥"],
-        ["六害", "子", "未"], ["六害", "丑", "午"], ["六害", "寅", "巳"], ["六害", "卯", "辰"], ["六害", "申", "亥"], ["六害", "酉", "戌"]
-      ];
-      const found = pairs.filter((item) => branches.includes(item[1]) && branches.includes(item[2]));
-      const evidence = found.length
-        ? found.map((item) => `${item[1]}${item[2]}見${item[0]}${item[3] ? `，有化${item[3]}之象，仍需看月令與透干是否成化。` : "，主變動牽引，吉凶視其所沖之宮位與用忌而定。"}`)
-        : ["目前原局、大運、流年地支未見明顯六合、六沖、六害成組。"];
+      const natal = getNatalInteractionAnalysis(payload);
+      const evidence = [];
+      if (natal.fixed.length) {
+        evidence.push(`原局固有：${natal.fixed.join("、")}。`);
+      } else {
+        evidence.push("原局固有：四支之間未見明顯合沖害成組。");
+      }
+      if (natal.conditionalNotes.length) {
+        evidence.push(`條件式引動：${natal.conditionalNotes.slice(0, 3).join("；")}。`);
+      }
       return {
         id: "stem-branch-interactions",
         title: "干支作用",
-        subtitle: found.length ? `見 ${found.length} 組作用` : "作用較少",
-        tags: found.map((item) => `${item[1]}${item[2]}${item[0]}`),
+        subtitle: natal.fixed.length ? `原局見 ${natal.fixed.length} 組固定訊號` : "原局作用較少",
+        tags: natal.tags,
         evidence,
         conclusion: "合沖刑害不是直接判吉凶；合可成局也可合去用神，沖可破根也可沖開阻滯，必須放回日主旺衰、月令與大運流年中判斷。"
       };
@@ -778,52 +963,193 @@
       };
     }
 
-    function calculateShenShaStatic(chart) {
-      const pillarLabels = { year: "年柱", month: "月柱", day: "日柱", hour: "時柱" };
-      const entries = Object.entries(chart);
-      const hits = [];
-      const add = (hit) => hits.push({ ...hit, pillarLabel: pillarLabels[hit.position] });
-      const branchMapHits = (name, category, level, map, references, rule, meaning, aiHint) => {
-        for (const ref of references) {
-          const target = map[ref.branch];
-          for (const [position, pillar] of entries) {
-            if (pillar.branch === target) add({ name, category, level, basis: `${ref.label} ${ref.branch}`, rule, matchedBy: "年支或日支", target, position, meaning, aiHint });
+    function summarizeShenShaBasis(basisList) {
+      return uniqueList((basisList ?? []).map((basis) => basis.label ?? `${basis.type}:${basis.value}`)).join("、");
+    }
+
+    function calculateShenShaStatic(chart, options = {}) {
+      const entries = pillarOrder.map((key) => [key, chart[key]]);
+      const rawHits = [];
+      const yangRenMode = options.yangRenMode ?? "yang-stems-only";
+      const pushHit = (config) => {
+        rawHits.push({
+          ruleSetVersion: SHEN_SHA_RULESET_VERSION,
+          pillarLabel: pillarLabels[config.pillar],
+          position: config.pillar,
+          ...config
+        });
+      };
+      const addBranchMappedHits = (id, name, category, meaning, map, references) => {
+        references.forEach((basis) => {
+          const target = map[basis.value];
+          entries.forEach(([pillarKey, pillar]) => {
+            if (pillar.branch === target) {
+              pushHit({
+                id,
+                name,
+                category,
+                pillar: pillarKey,
+                matchedOn: "branch",
+                matchedValue: pillar.branch,
+                basis: [basis],
+                meaning
+              });
+            }
+          });
+        });
+      };
+      const addStemMappedHits = (id, name, category, meaning, targets, basis) => {
+        entries.forEach(([pillarKey, pillar]) => {
+          if (targets.includes(pillar.branch)) {
+            pushHit({
+              id,
+              name,
+              category,
+              pillar: pillarKey,
+              matchedOn: "branch",
+              matchedValue: pillar.branch,
+              basis: [basis],
+              meaning
+            });
           }
-        }
+        });
       };
-      const stemMapHits = (name, category, level, map, rule, meaning, aiHint) => {
-        const targets = Array.isArray(map[chart.day.stem]) ? map[chart.day.stem] : [map[chart.day.stem]];
-        for (const [position, pillar] of entries) {
-          if (targets.includes(pillar.branch)) add({ name, category, level, basis: `日干 ${chart.day.stem}`, rule, matchedBy: "日干", target: pillar.branch, position, meaning, aiHint });
-        }
-      };
-      const refs = [{ label: "年支", branch: chart.year.branch }, { label: "日支", branch: chart.day.branch }];
-      branchMapHits("桃花", "桃花感情類", "常用", { 申: "酉", 子: "酉", 辰: "酉", 寅: "卯", 午: "卯", 戌: "卯", 亥: "子", 卯: "子", 未: "子", 巳: "午", 酉: "午", 丑: "午" }, refs, "申子辰見酉，寅午戌見卯，亥卯未見子，巳酉丑見午。", "主魅力、人緣、審美、情感吸引力；若受沖刑，亦可能主感情波動。", "桃花須結合夫妻宮、官殺財星、合沖刑害與大運流年判斷，不可單論感情多寡。");
-      branchMapHits("驛馬", "遷移變動類", "常用", { 申: "寅", 子: "寅", 辰: "寅", 寅: "申", 午: "申", 戌: "申", 巳: "亥", 酉: "亥", 丑: "亥", 亥: "巳", 卯: "巳", 未: "巳" }, refs, "申子辰馬在寅，寅午戌馬在申，巳酉丑馬在亥，亥卯未馬在巳。", "主移動、遠行、變動、跨地域發展、外出求財。", "驛馬若逢沖動，變動性更強；若為喜用，多主遠方機會，若為忌，則奔波勞碌。");
-      branchMapHits("華蓋", "才學藝術類", "常用", { 申: "辰", 子: "辰", 辰: "辰", 寅: "戌", 午: "戌", 戌: "戌", 亥: "未", 卯: "未", 未: "未", 巳: "丑", 酉: "丑", 丑: "丑" }, refs, "申子辰見辰，寅午戌見戌，亥卯未見未，巳酉丑見丑。", "主藝術、技藝、孤高、宗教哲思、審美與精神性。", "華蓋宜結合印星、食傷與日主旺衰判斷；為喜時利創作學術，為忌時易孤僻自閉。");
-      branchMapHits("將星", "權威領導類", "進階", { 申: "子", 子: "子", 辰: "子", 寅: "午", 午: "午", 戌: "午", 巳: "酉", 酉: "酉", 丑: "酉", 亥: "卯", 卯: "卯", 未: "卯" }, refs, "申子辰見子，寅午戌見午，巳酉丑見酉，亥卯未見卯。", "主領導、掌控、組織能力、權威感。", "將星若配官殺印星得宜，利管理領導；若忌神過旺，則易固執或掌控欲強。");
-      stemMapHits("天乙貴人", "貴人類", "常用", { 甲: ["丑", "未"], 戊: ["丑", "未"], 庚: ["丑", "未"], 乙: ["子", "申"], 己: ["子", "申"], 丙: ["亥", "酉"], 丁: ["亥", "酉"], 壬: ["巳", "卯"], 癸: ["巳", "卯"], 辛: ["午", "寅"] }, "甲戊庚牛羊，乙己鼠猴鄉，丙丁豬雞位，壬癸蛇兔藏，六辛逢馬虎。", "主貴人、助力、逢凶有解、遇事有人提攜。", "天乙貴人若落喜用且不受嚴重刑沖，助力較明顯；若落忌神或被沖破，助力減弱。");
-      stemMapHits("文昌貴人", "才學藝術類", "常用", { 甲: "巳", 乙: "午", 丙: "申", 戊: "申", 丁: "酉", 己: "酉", 庚: "亥", 辛: "子", 壬: "寅", 癸: "卯" }, "甲乙巳午報君知，丙戊申宮丁己雞，庚豬辛鼠壬逢虎，癸人見卯入雲梯。", "主學習、文筆、表達、考試、設計與知識整理能力。", "文昌需配合印星、食傷、官星判斷；若與喜用相合，利學業、設計、寫作、申請文件。");
-      stemMapHits("羊刃", "衝突煞類", "常用", { 甲: "卯", 乙: "寅", 丙: "午", 戊: "午", 丁: "巳", 己: "巳", 庚: "酉", 辛: "申", 壬: "子", 癸: "亥" }, "甲刃卯，乙刃寅，丙戊刃午，丁己刃巳，庚刃酉，辛刃申，壬刃子，癸刃亥。", "主剛烈、決斷、競爭、衝勁；若失衡，亦主衝突、急躁與傷損。", "羊刃不必然為凶；身弱逢刃可助身，身強刃旺又逢沖則需防衝突與過剛。");
-      if (["庚辰", "庚戌", "壬辰", "戊戌"].includes(`${chart.day.stem}${chart.day.branch}`)) {
-        hits.push({ name: "魁罡", category: "特殊日柱類", level: "特殊", basis: `日柱 ${chart.day.stem}${chart.day.branch}`, rule: "庚辰、庚戌、壬辰、戊戌為魁罡日。", matchedBy: "日柱", target: `${chart.day.stem}${chart.day.branch}`, position: "day", pillarLabel: "日柱", meaning: "主剛毅、果決、氣勢強、權威感；亦可能性情剛烈。", aiHint: "魁罡需看日主旺衰與格局清濁；不宜單論吉凶，忌再逢重刑沖破。" });
-      }
-      const gcgs = { 亥: ["寅", "戌"], 子: ["寅", "戌"], 丑: ["寅", "戌"], 寅: ["巳", "丑"], 卯: ["巳", "丑"], 辰: ["巳", "丑"], 巳: ["申", "辰"], 午: ["申", "辰"], 未: ["申", "辰"], 申: ["亥", "未"], 酉: ["亥", "未"], 戌: ["亥", "未"] }[chart.year.branch];
-      for (const [position, pillar] of entries) {
-        if (pillar.branch === gcgs[0]) add({ name: "孤辰", category: "孤寂精神類", level: "進階", basis: `年支 ${chart.year.branch}`, rule: "亥子丑見寅，寅卯辰見巳，巳午未見申，申酉戌見亥為孤辰。", matchedBy: "年支", target: gcgs[0], position, meaning: "主獨立、孤高、自我意識強，亦可能人際距離感較重。", aiHint: "孤辰須結合印星、華蓋、夫妻宮與大運流年判斷，不可直接斷孤獨或婚姻不順。" });
-        if (pillar.branch === gcgs[1]) add({ name: "寡宿", category: "孤寂精神類", level: "進階", basis: `年支 ${chart.year.branch}`, rule: "亥子丑見戌，寅卯辰見丑，巳午未見辰，申酉戌見未為寡宿。", matchedBy: "年支", target: gcgs[1], position, meaning: "主情感慢熱、內心孤寂、關係中保留感較強。", aiHint: "寡宿不可單斷感情不佳，須看夫妻宮、桃花、官殺財星與合沖情況。" });
-      }
-      const seen = new Set();
-      const deduped = hits.filter((hit) => {
-        const key = `${hit.name}-${hit.position}-${hit.target}-${hit.basis}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
+
+      addStemMappedHits("tian-yi", "天乙貴人", "貴人扶助", "遇事較易得助力、貴人、緩衝與轉機。", shenShaRuleMaps.tianYi[chart.day.stem] ?? [], {
+        type: "dayStem",
+        value: chart.day.stem,
+        label: `依日干${chart.day.stem}查得`
       });
-      const names = [...new Set(deduped.map((hit) => hit.name))];
+      addStemMappedHits("wen-chang", "文昌貴人", "學習表達", "較利學習、表達、整理知識、寫作與考試節奏。", [shenShaRuleMaps.wenChang[chart.day.stem]], {
+        type: "dayStem",
+        value: chart.day.stem,
+        label: `依日干${chart.day.stem}查得`
+      });
+
+      const tianDeRule = shenShaRuleMaps.tianDe[chart.month.branch];
+      entries.forEach(([pillarKey, pillar]) => {
+        const matches = tianDeRule.targetType === "stem"
+          ? pillar.stem === tianDeRule.value
+          : pillar.branch === tianDeRule.value;
+        if (matches) {
+          pushHit({
+            id: "tian-de",
+            name: "天德貴人",
+            category: "德性解厄",
+            pillar: pillarKey,
+            matchedOn: tianDeRule.targetType,
+            matchedValue: tianDeRule.targetType === "stem" ? pillar.stem : pillar.branch,
+            basis: [{ type: "monthBranch", value: chart.month.branch, label: `依月支${chart.month.branch}查得` }],
+            meaning: "多主緩和、化解、善意資源與轉圜空間。"
+          });
+        }
+      });
+
+      const yueDeTarget = shenShaRuleMaps.yueDe[chart.month.branch];
+      entries.forEach(([pillarKey, pillar]) => {
+        if (pillar.stem === yueDeTarget) {
+          pushHit({
+            id: "yue-de",
+            name: "月德貴人",
+            category: "德性解厄",
+            pillar: pillarKey,
+            matchedOn: "stem",
+            matchedValue: pillar.stem,
+            basis: [{ type: "monthBranch", value: chart.month.branch, label: `依月支${chart.month.branch}查得` }],
+            meaning: "較利以溫和方式化解壓力，也較易得人情與支持。"
+          });
+        }
+      });
+
+      const branchReferences = [
+        { type: "yearBranch", value: chart.year.branch, label: `依年支${chart.year.branch}查得` },
+        { type: "dayBranch", value: chart.day.branch, label: `依日支${chart.day.branch}查得` }
+      ];
+      addBranchMappedHits("yi-ma", "驛馬", "遷移變動", "多主移動、節奏變化、奔波、外務與跨域連結。", shenShaRuleMaps.yiMa, branchReferences);
+      addBranchMappedHits("tao-hua", "桃花", "人際魅力", "多主人緣、吸引力、審美與情感互動題材。", shenShaRuleMaps.taoHua, branchReferences);
+      addBranchMappedHits("hua-gai", "華蓋", "藝文思辨", "多主藝術感、獨立思考、研究氣質與精神世界。", shenShaRuleMaps.huaGai, branchReferences);
+
+      if (yangRenMode === "yang-stems-only" && shenShaRuleMaps.yangRen[chart.day.stem]) {
+        addStemMappedHits("yang-ren", "羊刃", "剛烈決斷", "多主衝勁、競爭、決斷與壓力承受題材。", [shenShaRuleMaps.yangRen[chart.day.stem]], {
+          type: "dayStem",
+          value: chart.day.stem,
+          label: `依日干${chart.day.stem}查得（陽干版）`
+        });
+      }
+
+      const lonelyTargets = shenShaRuleMaps.guChenGuaSu[chart.year.branch];
+      entries.forEach(([pillarKey, pillar]) => {
+        if (pillar.branch === lonelyTargets.guChen) {
+          pushHit({
+            id: "gu-chen",
+            name: "孤辰",
+            category: "孤高內傾",
+            pillar: pillarKey,
+            matchedOn: "branch",
+            matchedValue: pillar.branch,
+            basis: [{ type: "yearBranch", value: chart.year.branch, label: `依年支${chart.year.branch}查得` }],
+            meaning: "較易呈現獨立、自持、保留距離感的一面。"
+          });
+        }
+        if (pillar.branch === lonelyTargets.guaSu) {
+          pushHit({
+            id: "gua-su",
+            name: "寡宿",
+            category: "情感保留",
+            pillar: pillarKey,
+            matchedOn: "branch",
+            matchedValue: pillar.branch,
+            basis: [{ type: "yearBranch", value: chart.year.branch, label: `依年支${chart.year.branch}查得` }],
+            meaning: "較易慢熱、內斂，在關係裡保留觀察空間。"
+          });
+        }
+      });
+
+      const dayPillar = `${chart.day.stem}${chart.day.branch}`;
+      if (shenShaRuleMaps.yinYangChaCuo.has(dayPillar)) {
+        pushHit({
+          id: "yin-yang-cha-cuo",
+          name: "陰陽差錯",
+          category: "日柱特殊",
+          pillar: "day",
+          matchedOn: "pillar",
+          matchedValue: dayPillar,
+          basis: [{ type: "dayPillar", value: dayPillar, label: `依日柱${dayPillar}查得` }],
+          meaning: "多主節奏與人事拿捏較有反差感，需更看整體結構。"
+        });
+      }
+
+      const dedupedMap = new Map();
+      rawHits.forEach((hit) => {
+        const key = `${hit.id}:${hit.pillar}:${hit.matchedOn}:${hit.matchedValue}`;
+        const existing = dedupedMap.get(key);
+        if (existing) {
+          existing.basis = [...existing.basis, ...hit.basis];
+        } else {
+          dedupedMap.set(key, { ...hit });
+        }
+      });
+
+      const hits = [...dedupedMap.values()]
+        .map((hit) => ({
+          ...hit,
+          basis: uniqueList(hit.basis.map((item) => JSON.stringify(item))).map((item) => JSON.parse(item))
+        }))
+        .sort((a, b) => {
+          const orderA = shenShaOrder.indexOf(a.id);
+          const orderB = shenShaOrder.indexOf(b.id);
+          if (orderA !== orderB) return orderA - orderB;
+          return pillarOrder.indexOf(a.pillar) - pillarOrder.indexOf(b.pillar);
+        });
+
+      const names = uniqueList(hits.map((hit) => hit.name));
       return {
-        hits: deduped,
-        summary: names.length ? `命局見 ${names.join("、")} 等神煞。神煞只作輔助參考，須結合原局旺衰、格局、用神、大運流年同看，不可單獨定吉凶。` : "未見主要神煞明顯成象。神煞為輔助參考，仍須以原局旺衰、格局、用神與大運流年為主。"
+        ruleSetVersion: SHEN_SHA_RULESET_VERSION,
+        disclaimer: SHEN_SHA_DISCLAIMER,
+        hits,
+        summary: names.length
+          ? `核心神煞命中 ${names.join("、")}。神煞只作輔助，仍須回到原局、大運、流年與喜忌同看。`
+          : "本命盤未見核心神煞明顯集中成象，仍以原局旺衰、格局、用神與大運流年為主。"
       };
     }
 
@@ -884,7 +1210,7 @@
           strong ? `日主不弱，宜先看${outputElement}洩秀、${wealthElement}承接。` : `日主偏弱，宜先看${supportElement}生身、${dayElement}扶身。`,
           `調候顯示${climate.subtitle}，用神若同時能調候，力量更佳。`
         ],
-        conclusion: `此處為基礎引擎暫判：用神喜忌需待權威曆法、格局成敗與大運引動校準後再定案。`
+        conclusion: "網站定盤結論為：用神喜忌已先給出觀察方向；後續大運與流年會改變表現強弱，但不改變本命定盤基礎。"
       };
     }
 
@@ -970,7 +1296,7 @@
           tags: [...new Set(shenShaResult.hits.map((hit) => hit.name))],
           evidence: [
             shenShaResult.summary,
-            ...shenShaResult.hits.slice(0, 4).map((hit) => `${hit.name}在${hit.pillarLabel}，依據 ${hit.basis}，命中 ${hit.target}。`)
+            ...shenShaResult.hits.slice(0, 4).map((hit) => `${hit.name}在${hit.pillarLabel}，${summarizeShenShaBasis(hit.basis)}，命中 ${hit.matchedValue}。`)
           ],
           conclusion: "神煞不可單獨定吉凶；須回到日主旺衰、月令格局、用神喜忌與大運流年引動中同看。"
         };
@@ -998,9 +1324,13 @@
     }
 
     function normalizeStrengthLabel(subtitle) {
-      const match = String(subtitle ?? "").match(/^(.*?)｜分數\s*(\d+)/);
-      if (!match) return String(subtitle ?? "待判");
-      return `${match[1]}（${match[2]}）`;
+      const normalized = String(subtitle ?? "").trim();
+      if (!normalized) return "待判";
+      const parenMatch = normalized.match(/^(.*?)（(\d+)）$/);
+      if (parenMatch) return normalized;
+      const legacyMatch = normalized.match(/^(.*?)｜分數\s*(\d+)/);
+      if (legacyMatch) return `${legacyMatch[1]}（${legacyMatch[2]}）`;
+      return normalized;
     }
 
     function summarizeClimate(climateSection) {
@@ -1022,17 +1352,53 @@
       };
     }
 
+    function buildFiveElementMomentum(chart) {
+      const hiddenByElement = getPillarListByChart(chart).flatMap((pillar) => pillar.hiddenStems ?? []).reduce((acc, hidden) => {
+        acc[hidden.element] = (acc[hidden.element] ?? 0) + 1;
+        return acc;
+      }, {});
+      const exposedByElement = getPillarListByChart(chart).reduce((acc, pillar) => {
+        acc[pillar.stemElement] = (acc[pillar.stemElement] ?? 0) + 1;
+        return acc;
+      }, {});
+      const monthElement = chart.pillars.month.branchElement;
+      const natalBranches = getNatalBranches(chart);
+      return ["木", "火", "土", "金", "水"].map((element) => {
+        const seasonalStrength = monthElement === element
+          ? "得月令"
+          : elementGenerates[monthElement] === element
+            ? "受月令生扶"
+            : elementControls[monthElement] === element
+              ? "受月令制約"
+              : "月令不直接扶助";
+        const rootedness = hiddenByElement[element]
+          ? `藏干見 ${hiddenByElement[element]} 處根氣`
+          : "藏干根氣偏少";
+        const exposed = exposedByElement[element]
+          ? `天干透出 ${exposedByElement[element]} 位`
+          : "天干未透";
+        const role = element === chart.dayMaster.element
+          ? "屬日主本氣，觀其承載與續航"
+          : elementGenerates[element] === chart.dayMaster.element
+            ? "偏向資源、生扶與保護"
+            : elementGenerates[chart.dayMaster.element] === element
+              ? "偏向輸出、表達與耗力"
+              : elementControls[chart.dayMaster.element] === element
+                ? "偏向財務、成果與現實承接"
+                : "偏向壓力、規範與責任測試";
+        const branchCount = natalBranches.filter((branch) => branchElement[branch] === element).length;
+        const conclusion = branchCount >= 2
+          ? `${element}在地支成勢，需看是否過旺或能否流通。`
+          : seasonalStrength === "得月令"
+            ? `${element}得令，是本局氣機重心。`
+            : `${element}需結合透干、藏干與時運再定其輕重。`;
+        return { element, seasonalStrength, rootedness, exposed, role, conclusion };
+      });
+    }
+
     function formatCompactInteractions(payload) {
-      const branches = getPillarList(payload).map((pillar) => pillar.branch);
-      const pairs = [
-        ["合", "子", "丑"], ["合", "寅", "亥"], ["合", "卯", "戌"], ["合", "辰", "酉"], ["合", "巳", "申"], ["合", "午", "未"],
-        ["沖", "子", "午"], ["沖", "丑", "未"], ["沖", "寅", "申"], ["沖", "卯", "酉"], ["沖", "辰", "戌"], ["沖", "巳", "亥"],
-        ["害", "子", "未"], ["害", "丑", "午"], ["害", "寅", "巳"], ["害", "卯", "辰"], ["害", "申", "亥"], ["害", "酉", "戌"]
-      ];
-      const tags = pairs
-        .filter(([, a, b]) => branches.includes(a) && branches.includes(b))
-        .map(([type, a, b]) => `${a}${b}${type}`);
-      return tags.length ? tags.join("｜") : "原局未見明顯合沖害成組";
+      const natal = getNatalInteractionAnalysis(payload);
+      return natal.fixed.length ? natal.fixed.join("｜") : "原局未見明顯合沖害成組";
     }
 
     function formatHiddenStemList(pillar) {
@@ -1042,11 +1408,10 @@
     function formatCompactShenSha(result, options = {}) {
       const hits = result?.hits ?? [];
       if (!hits.length) return "未見主要神煞明顯成象";
-      const shortPillarLabel = { year: "年", month: "月", day: "日", hour: "時" };
       const grouped = new Map();
       hits.forEach((hit) => {
         const values = grouped.get(hit.name) ?? [];
-        values.push(`${hit.target}${shortPillarLabel[hit.position] ?? ""}`);
+        values.push(`${hit.matchedValue}${shortPillarLabel[hit.pillar] ?? ""}`);
         grouped.set(hit.name, uniqueList(values));
       });
       const entries = [...grouped.entries()].map(([name, values]) => `${name}${values.join("、")}`);
@@ -1061,6 +1426,1007 @@
         `時柱 ${payload.pillars.hour.pillar}`
       ].join("，");
       return `${getGenderLabel(payload)}：${pillars}。日主為 ${payload.dayMaster.stem}${payload.dayMaster.element}，出生資料：${payload.user.birthSolar}，換日法：${payload.user.dayChangeRule}。`;
+    }
+
+    function formatBirthProfile(payload) {
+      return [
+        `- 命造：${getGenderLabel(payload)}`,
+        `- 四柱：${payload.pillars.year.pillar}／${payload.pillars.month.pillar}／${payload.pillars.day.pillar}／${payload.pillars.hour.pillar}`,
+        `- 日主：${payload.dayMaster.stem}${payload.dayMaster.element}`,
+        `- 出生時間：${payload.user.birthSolar}`,
+        `- 時區：${payload.user.timezone}`,
+        `- 出生地：${payload.user.birthPlace || "未提供"}`,
+        `- 換日法：${payload.user.dayChangeRule}`,
+        `- 真太陽時設定：目前輸出沿用網站排盤結果，不另作改盤`,
+        `- 大運方向：${payload.luckStartInfo?.direction ?? "未提供"}`,
+        `- 起運年齡：${payload.luckStartInfo?.startAge ?? "未提供"} 歲`
+      ].join("\n");
+    }
+
+    function formatPillarsCompact(payload) {
+      return [
+        `- 年柱${payload.pillars.year.pillar}：${payload.pillars.year.stem}${payload.pillars.year.tenGodStem}｜${payload.pillars.year.branch}藏${formatHiddenStemList(payload.pillars.year)}`,
+        `- 月柱${payload.pillars.month.pillar}：${payload.pillars.month.stem}${payload.pillars.month.tenGodStem}｜${payload.pillars.month.branch}藏${formatHiddenStemList(payload.pillars.month)}`,
+        `- 日柱${payload.pillars.day.pillar}：${payload.pillars.day.stem}${payload.pillars.day.tenGodStem}｜${payload.pillars.day.branch}藏${formatHiddenStemList(payload.pillars.day)}`,
+        `- 時柱${payload.pillars.hour.pillar}：${payload.pillars.hour.stem}${payload.pillars.hour.tenGodStem}｜${payload.pillars.hour.branch}藏${formatHiddenStemList(payload.pillars.hour)}`
+      ].join("\n");
+    }
+
+    function formatNatalSummary(payload, sections) {
+      return sections.map((section) => {
+        const evidence = (section.evidence ?? []).slice(0, 3).map((item) => `  - ${item}`).join("\n");
+        return `### ${section.title}\n- 摘要：${section.subtitle}\n${evidence}\n- 結論：${section.conclusion}`;
+      }).join("\n\n");
+    }
+
+    function formatLuckCyclesDetailed(payload) {
+      return (payload.luckCycles ?? []).map((cycle) => {
+        const theme = (cycle.elementTheme ?? []).join("、");
+        const direction = [
+          `${cycle.ageStart}-${cycle.ageEnd} 歲`,
+          `${cycle.yearStart}-${cycle.yearEnd}`,
+          `${cycle.pillar}`,
+          `天干${cycle.stemTenGod}`,
+          `地支${cycle.branchTenGod}`
+        ].join("｜");
+        const note = [
+          `此運以${theme}之氣入局，需合看原局月令、日主承載與當運是否引動夫妻宮、月令或日主根氣。`,
+          `若${cycle.stemTenGod}與${cycle.branchTenGod}能承接命局所喜，常較利把原局優勢落成現實節奏；若引動忌神，則宜改走保守、修正、減壓路線。`,
+          `本運不可單看一字旺衰，仍要與流年流月疊看，判斷是否成格、通關、調候或反成壓力。`
+        ].join("");
+        return `- ${direction}\n  主題：${note}`;
+      }).join("\n");
+    }
+
+    function formatShenShaCompact(result) {
+      if (!result?.hits?.length) return "- 本命盤未見核心神煞明顯集中成象。";
+      return result.hits.map((hit) => `- ${hit.name}｜${hit.pillarLabel}・${hit.matchedValue}｜${hit.meaning}`).join("\n");
+    }
+
+    function formatAnalysisProtocol() {
+      return [
+        "1. 先確認時間定盤，不得擅改四柱、時區、換日法、起運方向與大運。",
+        "2. 分析順序固定為：原局 → 大運 → 流年 → 流月 → 流日 → 流時。",
+        "3. 每段至少交代：依據、被引動柱位、十神變化、合沖刑害破、格局與喜忌、風險條件、有利條件、行動建議、條件式結論。",
+        "4. 不可只看五行數量、不可說缺什麼補什麼、不可單看神煞、不可把單一沖合視為定論。",
+        "5. 健康只談五行傾向與生活節奏，不作醫療診斷；財務、法律與重大決策只給條件式建議。"
+      ].join("\n");
+    }
+
+    function getAdvisorDisplayName(payload) {
+      return payload.user?.displayName || payload.user?.name || payload.user?.nickname || "命主";
+    }
+
+    function splitPillar(pillar = "") {
+      return { stem: pillar.slice(0, 1), branch: pillar.slice(1, 2) };
+    }
+
+    function getCurrentLuckCycle(payload) {
+      return (payload.luckCycles ?? []).find((cycle) =>
+        payload.currentLuck && cycle.pillar === payload.currentLuck.pillar && cycle.ageStart === payload.currentLuck.ageStart
+      ) || null;
+    }
+
+    function getSectionMap(sections) {
+      return Object.fromEntries((sections ?? []).map((section) => [section.id, section]));
+    }
+
+    function getSectionEvidence(section, fallback = [], limit = 3) {
+      const evidence = (section?.evidence ?? []).filter(Boolean).slice(0, limit);
+      return evidence.length ? evidence : fallback;
+    }
+
+    function formatBulletList(items) {
+      return items.filter(Boolean).map((item) => `- ${item}`).join("\n");
+    }
+
+    function buildKnowledgeBlock(title, section, content) {
+      return [
+        `## ${title}`,
+        "【依據】",
+        formatBulletList(content.basis),
+        "【推理】",
+        content.reasoning,
+        "【命理解釋】",
+        content.interpretation,
+        "【人生影響】",
+        content.impact,
+        "【AI可直接引用的結論】",
+        content.conclusion
+      ].join("\n");
+    }
+
+    function describeElementEffect(dayElement, targetElement) {
+      if (!dayElement || !targetElement) return "需回到實際十神與月令條件判讀";
+      if (dayElement === targetElement) return "與日主同氣，偏向扶身、增強主觀與承載";
+      if (elementGenerates[targetElement] === dayElement) return `以${targetElement}生${dayElement}，偏向資源、保護與補根`;
+      if (elementGenerates[dayElement] === targetElement) return `由${dayElement}生${targetElement}，偏向輸出、創作、表達與耗力`;
+      if (elementControls[dayElement] === targetElement) return `${dayElement}剋${targetElement}，偏向財務承接、資源掌控與現實壓力`;
+      if (elementControls[targetElement] === dayElement) return `${targetElement}剋${dayElement}，偏向規範、競爭、責任與壓力測試`;
+      return "需回到實際十神與月令條件判讀";
+    }
+
+    function collectCycleRelations(chart, cycleBranch) {
+      if (!cycleBranch) return [];
+      return getPillarListByChart(chart).flatMap((pillar, index) => {
+        const key = pillarOrder[index];
+        const sameBranch = pillar.branch === cycleBranch;
+        const sameBranchRelation = sameBranch ? {
+          targetKey: key,
+          targetLabel: pillarLabels[key],
+          targetBranch: pillar.branch,
+          type: "同支重現",
+          label: `${cycleBranch}與${pillar.branch}同支重現`
+        } : null;
+        const pairRelations = natalInteractionRules
+          .filter((rule) => (rule.a === cycleBranch && rule.b === pillar.branch) || (rule.b === cycleBranch && rule.a === pillar.branch))
+          .map((rule) => ({
+            targetKey: key,
+            targetLabel: pillarLabels[key],
+            targetBranch: pillar.branch,
+            type: rule.type,
+            label: rule.label
+          }));
+        return [sameBranchRelation, ...pairRelations].filter(Boolean);
+      });
+    }
+
+    function analyzeLuckCycleEffects(chart, cycle) {
+      if (!cycle?.pillar) {
+        return {
+          relations: [],
+          monthTouched: false,
+          dayTouched: false,
+          yearTouched: false,
+          hourTouched: false,
+          monthConflict: false,
+          fullPillarRepeat: false,
+          stemRepeat: false,
+          branchRepeat: false,
+          repeatedBranchCount: 0,
+          repeatedBranchNote: ""
+        };
+      }
+      const { stem, branch } = splitPillar(cycle.pillar);
+      const relations = collectCycleRelations(chart, branch);
+      const monthTouched = relations.some((relation) => relation.targetKey === "month");
+      const dayTouched = relations.some((relation) => relation.targetKey === "day");
+      const yearTouched = relations.some((relation) => relation.targetKey === "year");
+      const hourTouched = relations.some((relation) => relation.targetKey === "hour");
+      const monthConflict = relations.some((relation) => relation.targetKey === "month" && relation.type === "沖");
+      const fullPillarRepeat = getPillarListByChart(chart).some((pillar) => pillar.pillar === cycle.pillar);
+      const stemRepeat = getPillarListByChart(chart).some((pillar) => pillar.stem === stem);
+      const repeatedBranchMatches = getPillarListByChart(chart).filter((pillar) => pillar.branch === branch);
+      const branchRepeat = repeatedBranchMatches.length > 0;
+      const repeatedBranchCount = repeatedBranchMatches.length;
+      const touchedBranchCounts = relations.reduce((acc, relation) => {
+        acc[relation.targetBranch] = (acc[relation.targetBranch] ?? 0) + 1;
+        return acc;
+      }, {});
+      const repeatedTargetBranchEntry = Object.entries(touchedBranchCounts).find(([, count]) => count >= 2) ?? null;
+      const repeatedBranchNote = repeatedBranchCount >= 2
+        ? `同時引動 ${repeatedBranchCount} 個${branch}`
+        : repeatedBranchCount === 1
+          ? `${branch}支重現`
+          : repeatedTargetBranchEntry
+            ? `同時引動 ${repeatedTargetBranchEntry[1]} 個${repeatedTargetBranchEntry[0]}`
+            : "";
+      return {
+        relations,
+        monthTouched,
+        dayTouched,
+        yearTouched,
+        hourTouched,
+        monthConflict,
+        fullPillarRepeat,
+        stemRepeat,
+        branchRepeat,
+        repeatedBranchCount,
+        repeatedTargetBranch: repeatedTargetBranchEntry?.[0] ?? "",
+        repeatedTargetBranchCount: Number(repeatedTargetBranchEntry?.[1] ?? 0),
+        repeatedBranchNote
+      };
+    }
+
+    function getNatalInteractionTags(payload) {
+      return getNatalInteractionAnalysis(payload).tags;
+    }
+
+    function validateNatalInteractions(natalBranches, interactions) {
+      const actual = new Set(getNatalInteractionAnalysis({ pillars: Object.fromEntries(
+        natalBranches.map((branch, index) => [pillarOrder[index], { branch }])
+      ) }).tags);
+      const listed = Array.isArray(interactions)
+        ? interactions
+        : String(interactions ?? "").split("｜").map((item) => item.trim()).filter(Boolean);
+      const invalid = listed.filter((item) => !actual.has(item));
+      return {
+        actual: [...actual],
+        listed,
+        invalid,
+        invalidCount: invalid.length
+      };
+    }
+
+    function isDevelopmentMode() {
+      return typeof location !== "undefined" && (location.hostname === "localhost" || location.protocol === "file:");
+    }
+
+    function formatLifetimeAdvisorIdentity(source) {
+      return [
+        "## AI顧問身分",
+        "你是此命主的長期八字命理分析顧問。",
+        "網站已完成四柱、十神、藏干、大運及本命知識的定盤。除非命主明確要求重新校曆，否則不得自行更改四柱、日主、時區、換日法、大運方向、起運年齡及既有大運。",
+        "你熟悉《淵海子平》《滴天髓》《窮通寶鑑》等子平命理方法，但回答時應以本檔提供的命主定盤資料為最高依據，不得為展示術語而重新排盤或推翻網站結果。",
+        "第一次讀取本檔時，請先完成一次完整的本命與終身大運建檔論命。完成後，後續對話只針對命主提出的問題作精準分析。"
+      ].join("\n");
+    }
+
+    function formatLifetimeAdvisorRules(source) {
+      return [
+        "## 使用說明",
+        "這是一份由網站完成定盤與必要命理推導後輸出的可攜式終身 AI 顧問檔案。",
+        "它的作用不是請 AI 重新排盤，而是讓外部聊天模型直接接受本命、大運與原局知識庫，從此作為命主的長期八字命理顧問。",
+        "可貼入 ChatGPT、Gemini、Claude、OpenRouter 或其他支援長對話的模型中使用。",
+        "",
+        "### AI指令區",
+        "- 請使用繁體中文，風格採半文言半白話；避免堆砌古文，不可為了古雅而失去可讀性。",
+        "- 原局分析順序固定為：月令 → 日主旺衰 → 通根透干 → 五行氣勢 → 十神結構 → 格局成敗 → 調候 → 用神喜忌 → 干支作用 → 人生領域。",
+        "- 動態時運分析順序固定為：原局 → 大運 → 流年 → 流月 → 流日 → 流時 → 神煞輔助 → 現代情境 → 行動建議。",
+        "- 每一主要分析段落至少包含：依據、推理、命理解釋、人生影響、結論；若屬時運分析，再補有利條件、風險條件、行動建議。",
+        "- 不可只用五行數量判斷吉凶，不可說缺什麼就補什麼，不可只看神煞，不可見一沖一合就直接斷事。",
+        "- 不可使用必定、注定、一定發生等絕對語氣；健康只能描述五行傾向與生活節奏，不可作醫療診斷；財務、法律、健康與重大人生決策只能提供條件式風險提示與決策輔助。",
+      ].join("\n");
+    }
+
+    function formatInitialFullProfileWorkflow() {
+      return [
+        "## 首次使用行為：完整本命建檔論命",
+        "首次完整建檔狀態：未完成",
+        "若命主第一次把本檔貼入新的 AI 對話，且尚未完成本命建檔論命，你必須先完成一次完整、具體、命主專屬的本命與終身大運建檔分析。",
+        "",
+        "首次回覆必須依序完成：",
+        "1. 定盤確認：簡潔列出命造、四柱、日主、出生年月日時、出生地、時區、換日法、大運方向、起運年齡、目前大運。",
+        "2. 命盤總論：用 1 至 3 段說明整張命盤的核心，不得只列旺衰、格局或喜忌標籤。",
+        "3. 日主旺衰與承載能力：交代得令、得地、通根、生扶、洩耗、官殺壓力、是否可能從格與為何不從。",
+        "4. 月令與通根透干：說明月令主氣、月令十神、是否透干、地支重現是否成勢、根氣落點與是否受原局作用影響。",
+        "5. 五行氣勢與流通：逐一分析木、火、土、金、水的得令、得地、透干、藏干、寒暖燥濕與是否成流通。",
+        "6. 十神結構：明確分析主軸十神、救應十神、輸出十神、成果十神、壓力十神與彼此制化。",
+        "7. 格局成敗：不得只寫格名，必須交代成格、破格與救格條件。",
+        "8. 調候、病藥與用神喜忌：分清調候、扶抑、格局、通關，不得只寫木火為喜、水金為忌。",
+        "9. 原局干支作用：先列原局固有，再列未來時運的條件式引動，不可混寫。",
+        "10. 人生領域完整分析：至少含性格與決策、讀書與學習、考試與證照、專業技能、設計與創造、領導與管理、事業與創業、財運與投資、合作與合夥、感情與婚姻、家庭與親子、出國留學移民、健康五行傾向、退休與晚年。",
+        "11. 全部大運總覽：依序分析全部大運，每一步都要寫出與原局作用、柱位引動、同干同支、改善調候、扶身與否、主要領域、風險與策略。",
+        "12. 目前大運深入分析：比其他大運更完整，明確指出是否沖月令、與月支/日支/時支關係、是否完整柱伏吟、是否同干或同支重現。",
+        "13. 神煞：只作輔助，篇幅不得超過首次完整分析的 5%。",
+        "14. 全命總結：整理命局最重要的 3 至 5 項結構、最大優勢、最大限制、人生主要功課、最值得累積的能力、長期決策原則、目前大運方向。",
+        "",
+        "首次回覆禁止只說已載入、禁止只重述四柱、禁止先做角色宣告後立刻提問、禁止主動只分析建檔年份。",
+        "首次完整分析結尾固定寫：以上已完成本命與終身大運的第一次完整建檔分析。後續請直接提出事件、人生領域或指定時間，我將只調用與問題相關的命盤資料回答。"
+      ].join("\n");
+    }
+
+    function formatOngoingAdvisoryWorkflow() {
+      return [
+        "## 後續回答模式",
+        "首次完整建檔狀態：已完成後，後續一律改用精準顧問模式。",
+        "後續回答規則：",
+        "1. 第一段先給結論。",
+        "2. 只引用與問題相關的本命、大運與必要時運資料。",
+        "3. 不重新輸出整份命盤，不重列全部大運，不延伸命主未詢問的領域。",
+        "4. 一般回答以 3 至 5 段為原則，依序交代：直接結論、最關鍵命理依據、必要的時運影響、有利條件與風險、行動建議。"
+      ].join("\n");
+    }
+
+    function formatFixedChartProfile(source) {
+      const chart = source.chart;
+      const currentLuckCycle = source.currentLuck;
+      return [
+        "## 不可變更的定盤資料",
+        `命主稱呼：${getAdvisorDisplayName(chart)}`,
+        `命造：${getGenderLabel(chart)}`,
+        `年柱：${chart.pillars.year.pillar}`,
+        `月柱：${chart.pillars.month.pillar}`,
+        `日柱：${chart.pillars.day.pillar}`,
+        `時柱：${chart.pillars.hour.pillar}`,
+        `日主：${chart.dayMaster.stem}${chart.dayMaster.element}`,
+        `出生年月日時：${chart.user.birthSolar}`,
+        `出生地：${chart.user.birthPlace || "未提供"}`,
+        `時區：${chart.user.timezone}`,
+        `換日法：${chart.user.dayChangeRule}`,
+        "真太陽時設定：沿用網站既有排盤結果，不於 Prompt 內重算",
+        `大運方向：${chart.luckStartInfo?.direction ?? "依網站既有結果"}`,
+        `起運年齡：${chart.luckStartInfo?.startAge ?? "依網站既有結果"} 歲`,
+        `目前大運：${currentLuckCycle ? `${currentLuckCycle.pillar}（${currentLuckCycle.yearStart}-${currentLuckCycle.yearEnd}）` : "依網站既有結果"}`,
+        "",
+        "固定指令：除非命主明確要求重新校曆，否則不得更改四柱、時區、換日法、起運方向與大運。"
+      ].join("\n");
+    }
+
+    function formatNatalKnowledgeBase(source) {
+      const chart = source.chart;
+      const sectionMap = source.natalAnalysis.sectionMap;
+      const strength = sectionMap["day-master-strength"];
+      const elements = sectionMap["five-element-flow"];
+      const tenGod = sectionMap["ten-god-structure"];
+      const interactions = sectionMap["stem-branch-interactions"];
+      const pattern = sectionMap["structure-pattern"];
+      const climate = sectionMap["climate-adjustment"];
+      const favorable = sectionMap["favorable-gods"];
+      const dayElement = chart.dayMaster.element;
+      const favorableSummary = summarizeFavorableElements(chart, strength);
+      const momentum = buildFiveElementMomentum(chart);
+      const momentumSummary = momentum.map((item) => `${item.element}：${item.seasonalStrength}；${item.rootedness}；${item.exposed}；${item.conclusion}`);
+      const natalInteraction = getNatalInteractionAnalysis(chart);
+      const blocks = [
+        "# 一、本命知識庫",
+        [
+          "## 原局核心總論",
+          "本命分析以月令、日主承載、十神結構、調候與原局干支作用為主。以下內容皆視為網站定盤後生成的命主專屬知識庫，AI 可複核命理意義，但不得自行改盤。",
+          "",
+          `- 網站定盤結論：${strength?.subtitle ?? "日主承載已有結論"}；${pattern?.subtitle ?? "格局已有結論"}；${climate?.subtitle ?? "調候已有結論"}。`,
+          `- 月令定位：${chart.pillars.month.branch}月，${monthSeason[chart.pillars.month.branch] ?? "以既有月令資料為準"}。`,
+          `- 原局作用：${formatCompactInteractions(chart)}。`,
+          `- 用神方向：${favorable?.subtitle ?? "依網站定盤結果"}。`
+        ].join("\n"),
+        buildKnowledgeBlock("日主旺衰", strength, {
+          basis: getSectionEvidence(strength, [
+            `月令為${chart.pillars.month.branch}，需合看得令、通根與透干。`,
+            "網站已完成旺衰初判。"
+          ], 4),
+          reasoning: `日主為${chart.dayMaster.stem}${dayElement}，旺衰判讀不只看五行多少，而是看月令是否同氣、地支是否有根、天干是否得生扶，與財官食傷是否形成可承載的壓力。此局目前判為${strength?.subtitle ?? "以網站既有結果為準"}，表示命主在資源、壓力與輸出之間有其固定承載邏輯。`,
+          interpretation: "若日主偏弱，命理上更重視印比扶身與根氣穩定；若日主偏強，則更重視洩秀、財官承接與秩序。若屬中和，則格局與大運引動會成為更大的勝負手。",
+          impact: "這會直接影響命主遇到學習、工作、關係與財務壓力時，是傾向先補資源、先減負荷，還是可以主動出擊、承接責任與交換現實成果。",
+          conclusion: strength?.conclusion ?? "後續所有問題，都要先把日主承載力視為背景，不可跳過旺衰直接下判斷。"
+        }),
+        buildKnowledgeBlock("月令與通根", strength, {
+          basis: [
+            `月令主氣為${chart.pillars.month.branchMainStem}${chart.pillars.month.branchMainTenGod}，月支為${chart.pillars.month.branch}。`,
+            ...getSectionEvidence(strength, [], 2),
+            `四柱藏干為：${formatHiddenStemList(chart.pillars.year)}｜${formatHiddenStemList(chart.pillars.month)}｜${formatHiddenStemList(chart.pillars.day)}｜${formatHiddenStemList(chart.pillars.hour)}。`
+          ],
+          reasoning: "子平法先重月令。月令決定時氣，通根決定日主與十神是否落地。若月令主氣與日主同氣或能生扶，則根基較穩；若月令主氣剋洩日主，便要看其他地支根氣與天干資源能否補足。",
+          interpretation: "通根不是有根就算好，還要看根在本氣、中氣、餘氣，是否受沖合所動，是否能在關鍵運程被承接。月令與根氣穩定，命主在長期規劃上通常更能持續；月令壓身而根氣浮，則更怕環境失序與節奏失衡。",
+          impact: "這會影響命主讀書是否穩、事業是否能長線累積、感情是否容易被外在節奏干擾，以及遇到高壓年份時有沒有回穩能力。",
+          conclusion: `後續分析月令與通根時，必須先把${chart.pillars.month.branch}月主氣與四支根氣視為底盤，再談任何流年吉凶。`
+        }),
+        buildKnowledgeBlock("五行氣勢", elements, {
+          basis: momentumSummary,
+          reasoning: `本局五行觀察要把月令${chart.pillars.month.branch}、四柱透干與藏干一起納入。表面數量只是入口，真正的氣勢在於哪一股氣得時、得地、得勢，並且能否形成生剋有序的流通，而不是卡在單一偏氣上。`,
+          interpretation: `若${elements?.subtitle ?? "主要五行"}能形成有承接的流通，常見為能力可穩定輸出；若偏氣過旺又無節制，則容易把優勢變成執念、壓力或內耗。寒暖燥濕也屬五行氣勢的一部分，不能只看數字。`,
+          impact: "在實際人生中，五行氣勢決定命主的節奏感、對環境的適應方式、工作型態、表達方式，以及在壓力下偏向收斂、爆發、觀望或硬撐。",
+          conclusion: elements?.conclusion ?? "AI 後續談五行時，必須以氣勢與流通為主，不可用缺什麼補什麼的簡化說法。"
+        }),
+        buildKnowledgeBlock("十神結構", tenGod, {
+          basis: getSectionEvidence(tenGod, [
+            `天干透出十神為：${getPillarList(chart).map((pillar) => pillar.tenGodStem).join("、")}。`
+          ], 4),
+          reasoning: `十神結構以月令主氣${chart.pillars.month.branchMainTenGod}與天干透出同看，真正要問的是：哪種十神在本命中有根、有承接、會反覆出現於人生議題。這比教科書式地背十神定義更重要。`,
+          interpretation: "偏印、七殺、財星、食傷、官星各自都可能成為資產，也可能成為壓力，關鍵在於它們是否得令、是否有制、是否被原局與大運引成系統。十神不是標籤，而是命主與世界互動的介面。",
+          impact: "這將影響命主怎麼做決策、怎麼學習、怎麼承擔責任、如何處理人際合作與金錢交換，以及面對競爭或規範時的慣性反應。",
+          conclusion: tenGod?.conclusion ?? "未來若談性格、工作或關係，必須優先引用本命十神結構，而非套用抽象人格模板。"
+        }),
+        buildKnowledgeBlock("格局成敗", pattern, {
+          basis: getSectionEvidence(pattern, [
+            `月令主氣為${chart.pillars.month.branchMainStem}${chart.pillars.month.branchMainTenGod}。`
+          ], 4),
+          reasoning: `此命以${pattern?.subtitle ?? "網站既有格局判讀"}作第一層格局觀察。格局不是名稱漂亮就算成立，而是要看月令主氣是否清純、是否透出、是否被沖破、是否得到用神與大運承接。`,
+          interpretation: "成格代表命局有明確主軸，做事較容易形成穩定方法論；破格則代表主題仍在，但執行上更易反覆、折損或走偏。救格條件通常落在大運流年是否補足關鍵資源、是否調候得當、是否把原本混雜之氣整理出次序。",
+          impact: "命主在不同人生階段，可能會表現出同一核心天賦的不同版本。格局穩時，會顯得方向清楚；格局失衡時，同樣的能力也可能變成壓力來源。",
+          conclusion: pattern?.conclusion ?? "後續若談能否成事，要先看格局有沒有被承接，而不是只看單一年份的好壞。"
+        }),
+        buildKnowledgeBlock("調候", climate, {
+          basis: getSectionEvidence(climate, [
+            `出生月令為${chart.pillars.month.branch}，${monthSeason[chart.pillars.month.branch] ?? "以既有時令資料為準"}。`
+          ], 4),
+          reasoning: `本命調候主題為${climate?.subtitle ?? "依網站既有調候結果"}。調候處理的是寒暖燥濕，不等於五行缺補。它關心的是命局氣機是否太寒、太燥、太濕或太熱，以及哪些元素進來時能讓整體節奏更順。`,
+          interpretation: `調候與旺衰有時一致，有時不一致。也就是說，對日主有利的元素，不一定同時最能解決氣候偏氣；反之亦然。所以後續談用神時，必須分清楚扶抑與調候兩條線。`,
+          impact: "調候穩，命主在身心節奏、工作續航與關係互動上通常更平順；調候失衡，常會表現為做事卡、內耗重、容易極端化，或者進入對自己不友善的生活節奏。",
+          conclusion: climate?.conclusion ?? "後續若問某運好不好，除了十神，也必須看它是否改善或加重原局偏氣。"
+        }),
+        buildKnowledgeBlock("用神喜忌", favorable, {
+          basis: getSectionEvidence(favorable, [
+            `基礎喜用方向為：喜${favorableSummary.favorable.join("、")}；需防${favorableSummary.avoid.join("、")}過旺。`
+          ], 4),
+          reasoning: `本命用神不可只寫成「${favorableSummary.favorable.join("、")}為喜」就結束，還要問這些元素分別在扶抑、調候、格局承接、通關時扮演什麼角色。對${chart.dayMaster.stem}${dayElement}而言，${favorableSummary.favorable.join("、")}較可能成為可用方向，而${favorableSummary.avoid.join("、")}若過旺，則更可能形成壓力。`,
+          interpretation: `木、火、土、金、水在此局中不是一律吉或凶，而是要看出現在什麼時間、以什麼十神進場、是否與月令或原局關鍵柱位相應。尤其${favorableSummary.neutral}常屬中介條件，需看流通成敗。`,
+          impact: "這會直接影響命主應該怎麼選擇學習路線、工作節奏、合作方式與風險管理，不是單純改顏色、戴飾品或做表面補運。",
+          conclusion: favorable?.conclusion ?? "後續回答時，請把用神拆成條件式判讀，而不是輸出單一口號。"
+        }),
+        buildKnowledgeBlock("原局干支作用", interactions, {
+          basis: uniqueList([
+            `原局固有：${natalInteraction.fixed.join("、") || "未見固定合沖害成組"}。`,
+            ...natalInteraction.conditionalNotes.slice(0, 3)
+          ]),
+          reasoning: "原局作用只寫命盤真正存在的合、沖、害等，不把大運或流年才出現的作用誤寫成本命固有。每一組作用都要回到它動到哪一柱、哪一宮位、哪一層十神來看。",
+          interpretation: "合不一定是好，可能合住、合化、合去用神；沖也不一定是壞，可能沖開閉塞，也可能直接傷根。害則多見暗耗與摩擦。這些作用構成命主人生中較容易被引動的固定接口。",
+          impact: "未來談感情、工作、居住地變動、合作關係與重大年份時，這些原局作用會是優先被點亮的地方，尤其當大運流年再次碰到相同支神時更明顯。",
+          conclusion: interactions?.conclusion ?? "後續凡遇合沖刑害，都必須先區分是原局固有，還是時運外加，不可混為一談。"
+        })
+      ];
+      return blocks.join("\n\n");
+    }
+
+    function formatLifeDomainKnowledge(source) {
+      const chart = source.chart;
+      const sectionMap = source.natalAnalysis.sectionMap;
+      const favorableSummary = summarizeFavorableElements(chart, sectionMap["day-master-strength"]);
+      const currentLuckCycle = source.currentLuck;
+      const interactionSummary = formatCompactInteractions(chart);
+      const specs = [
+        {
+          title: "性格與決策",
+          basis: [`日主${chart.dayMaster.stem}${chart.dayMaster.element}`, `月令${chart.pillars.month.branchMainStem}${chart.pillars.month.branchMainTenGod}`, `原局作用${interactionSummary}`],
+          reasoning: `命主做決策時，往往先受${chart.pillars.month.branchMainTenGod}與日主承載力牽動，會先評估能不能承接，再決定要不要出手。`,
+          strength: "一旦找到可依靠的結構與節奏，判斷通常比表面更穩。",
+          risk: "若連續被忌神或外部壓力推著走，容易把風險感內化成遲疑或自我壓迫。"
+        },
+        {
+          title: "讀書與學習",
+          basis: [`偏印與印根`, `月令${chart.pillars.month.branchMainTenGod}`, `日主承載${sectionMap["day-master-strength"]?.subtitle ?? "待判"}`],
+          reasoning: "學習力不是單看聰明，而是看印星能否吸收、傷官能否整理、七殺壓力能否轉成紀律，與日主承載是否足夠。",
+          strength: "若節奏穩定，通常適合把知識拆模組、做筆記、反覆整理後再輸出。",
+          risk: "外務太多或壓力失衡時，容易出現學得多卻來不及沉澱的情況。"
+        },
+        {
+          title: "考試與證照",
+          basis: [`月令${chart.pillars.month.branchMainTenGod}`, `日主承載${sectionMap["day-master-strength"]?.subtitle ?? "待判"}`, `原局作用${interactionSummary}`],
+          reasoning: "規則型考試看的是七殺或官殺壓力能否被承接，印星能否穩住理解，食傷能否在時間限制中正常輸出。",
+          strength: "若有固定複習節奏與明確標準，臨場反而較容易把壓力轉成表現。",
+          risk: "遇到沖月令、作息失衡或過度逼身時，臨場失常機率會變高。"
+        },
+        {
+          title: "專業技能",
+          basis: [`時柱${chart.pillars.hour.pillar}`, `食傷與財官承接`, `目前大運${currentLuckCycle?.pillar ?? "待定"}`],
+          reasoning: "專業技能的關鍵不只是會不會，而是能不能把技能變成案例、作品、流程與可驗證成果。",
+          strength: "若能持續輸出並定期整理，技術資產會比表面速度更有長線價值。",
+          risk: "只吸收不輸出，或只做事不整理，容易形成學多做少或做多難複用。"
+        },
+        {
+          title: "設計與創造",
+          basis: [`偏印與食傷`, `時柱${chart.pillars.hour.pillar}`, `調候${sectionMap["climate-adjustment"]?.subtitle ?? "待判"}`],
+          reasoning: "創造力要看靈感是否能被整理、設計感是否能落成作品，以及抽象理解能否接上現實交付。",
+          strength: "若節奏對了，適合做內容、設計、品牌或技術與創意整合型輸出。",
+          risk: "偏氣過旺時，容易靈感很多，但卡在完成度、穩定度或落地節奏。"
+        },
+        {
+          title: "領導與管理",
+          basis: [`月令${chart.pillars.month.branchMainTenGod}`, `年柱${chart.pillars.year.pillar}`, `目前大運${currentLuckCycle?.pillar ?? "待定"}`],
+          reasoning: "領導不是只看權力，而是看責任壓力、規則感、資源調度與界線感能不能同時承接。",
+          strength: "資源與秩序穩時，較能在高標準場域裡扛起責任與整合人事。",
+          risk: "若先天就偏容易承壓，時運又持續逼身，管理很容易先變成自我消耗。"
+        },
+        {
+          title: "事業與創業",
+          basis: [`月柱${chart.pillars.month.pillar}`, `時柱${chart.pillars.hour.pillar}`, `目前大運${currentLuckCycle?.pillar ?? "待定"}`],
+          reasoning: `事業主軸先看月柱的結構，再看時柱能否把能力落成作品與成果；目前大運決定這條線是擴張、整頓，還是先補根。`,
+          strength: "當命局所喜能被工作節奏承接時，成果累積會比短期爆發更穩。",
+          risk: "若時運同時壓月令與日主，工作容易變成只剩責任，缺少可持續的輸出感。"
+        },
+        {
+          title: "財運與投資",
+          basis: [`時干${chart.pillars.hour.stem}${chart.pillars.hour.tenGodStem}`, `日主旺衰${sectionMap["day-master-strength"]?.subtitle ?? "待判"}`, `用神${favorableSummary.favorable.join("、")}`],
+          reasoning: `財務不能只看財星透不透，還要看日主承不承得住、資源調度是否順、以及大運是否把財星變成成果或壓力。`,
+          strength: "若先把節奏、現金流與風險邊界做清楚，財運通常能走得更久。",
+          risk: "承載不足時硬接現實責任，常見表現不是沒機會，而是有機會卻消化得很辛苦。"
+        },
+        {
+          title: "合作與合夥",
+          basis: [`原局作用${interactionSummary}`, `月柱${chart.pillars.month.pillar}`, `日柱${chart.pillars.day.pillar}`],
+          reasoning: "合作與合夥看的是權責、決策權、現金流與界線能否講清楚，而不是單看有人脈或資源就成立。",
+          strength: "角色清楚、利益與責任分明時，合作能放大效率與成果。",
+          risk: "界線不清或壓力時運重疊時，原局裡容易暗耗的地方會先爆出來。"
+        },
+        {
+          title: "感情與婚姻",
+          basis: [`日支${chart.pillars.day.branch}夫妻宮`, `日柱${chart.pillars.day.pillar}`, `原局作用${interactionSummary}`],
+          reasoning: `感情議題先看日支夫妻宮與原局如何被碰動，再看大運流年是否把合作、承諾、距離或現實壓力拉到前景。`,
+          strength: "當關係節奏與彼此邊界清楚時，比較能把命局優勢放進長期相處。",
+          risk: "若夫妻宮逢沖害或日主承載偏低，常見問題是誤解堆積、節奏錯位與進退失衡。"
+        },
+        {
+          title: "家庭與親子",
+          basis: [`年柱${chart.pillars.year.pillar}`, `時柱${chart.pillars.hour.pillar}`, `原局作用${interactionSummary}`],
+          reasoning: "家庭與親子要一起看原生責任、照顧模式、晚輩互動與晚景安排，不能只看單一宮位。",
+          strength: "若能把照顧責任與生活界線一起設好，家庭支持常能成為穩定後盾。",
+          risk: "當責任持續集中而缺少界線時，容易同時壓到情緒、作息與現實安排。"
+        },
+        {
+          title: "出國、留學與移民",
+          basis: [`印星與學習能力`, `官財承接`, `目前大運${currentLuckCycle?.pillar ?? "待定"}`],
+          reasoning: "移動與移民不只看驛馬，而要看學習力、財務承接、家庭條件與大運是否支持長期搬移。",
+          strength: "若時運同時補足資源與視野，外地反而可能打開更合適的發展結構。",
+          risk: "若只是為了逃避眼前壓力而移動，原本的節奏問題很可能換地方重演。"
+        },
+        {
+          title: "健康五行傾向",
+          basis: [`調候${sectionMap["climate-adjustment"]?.subtitle ?? "待判"}`, `五行氣勢${sectionMap["five-element-flow"]?.subtitle ?? "待判"}`, `月令${chart.pillars.month.branch}`],
+          reasoning: "健康段落只談五行傾向與生活節奏，不作醫療診斷；重點是看原局偏氣是否在作息、壓力與氣候條件下被放大。 ",
+          strength: "作息穩、節律穩時，身心狀態通常也較容易跟著回穩。",
+          risk: "若長期逆著原局調候方向生活，容易先在疲勞、循環或壓力調節上出現失衡感。"
+        },
+        {
+          title: "退休與晚年",
+          basis: [`時柱${chart.pillars.hour.pillar}`, `目前大運${currentLuckCycle?.pillar ?? "待定"}`, `日主承載${sectionMap["day-master-strength"]?.subtitle ?? "待判"}`],
+          reasoning: "晚景品質取決於時柱、收入結構、生活節奏與技能能否延續，不是等到退休前才突然處理。",
+          strength: "若中年前就建立穩定技能與節奏，晚年通常較能保有主動性與選擇權。",
+          risk: "若前段人生長期透支、責任失衡或財務結構脆弱，晚景壓力往往會提早浮現。"
+        }
+      ];
+      return [
+        "# 二、人生領域知識庫",
+        "以下各領域皆以同一份定盤資料為依據。未來回答相關問題時，請先回到本命，再疊加目前所處大運與流年條件。"
+      ].concat(specs.map((spec) => [
+        `### ${spec.title}`,
+        "【依據】",
+        formatBulletList(spec.basis),
+        "【推理】",
+        spec.reasoning,
+        "【優勢】",
+        formatBulletList([spec.strength]),
+        "【限制】",
+        formatBulletList([spec.risk]),
+        "【AI可直接引用的結論】",
+        `命主面對「${spec.title}」議題時，應先回到${spec.basis.slice(0, 2).join("、")}，再疊加${currentLuckCycle ? `${currentLuckCycle.pillar}大運` : "目前大運"}與流年條件判讀。`
+      ].join("\n"))).join("\n\n");
+    }
+
+    function formatLuckCycleTimeline(source) {
+      const chart = source.chart;
+      const sectionMap = source.natalAnalysis.sectionMap;
+      const climate = sectionMap["climate-adjustment"];
+      const dayElement = chart.dayMaster.element;
+      const favorableSummary = summarizeFavorableElements(chart, sectionMap["day-master-strength"]);
+      const currentLuckCycle = source.currentLuck;
+      return [
+        "# 三、終身大運時間軸",
+        "## 每一步大運的獨立推導",
+        "大運是長期背景，不是單獨吉凶。每一步都要看它是否承接原局、改善調候、扶助或消耗日主，以及它把人生主題推往哪個方向。"
+      ].concat((source.luckCycles ?? []).map((cycle) => {
+        const { stem, branch } = splitPillar(cycle.pillar);
+        const stemElementValue = stemElement[stem];
+        const branchElementValue = branchElement[branch];
+        const effect = analyzeLuckCycleEffects(chart, cycle);
+        const relations = effect.relations;
+        const favorableHit = [stemElementValue, branchElementValue].some((element) => favorableSummary.favorable.includes(element));
+        const avoidHit = [stemElementValue, branchElementValue].some((element) => favorableSummary.avoid.includes(element));
+        const climateImproved = favorableHit && !avoidHit;
+        const supportsDayMaster = favorableSummary.favorable.includes(stemElementValue) || favorableSummary.favorable.includes(branchElementValue);
+        const hurtsDayMaster = favorableSummary.avoid.includes(stemElementValue) || favorableSummary.avoid.includes(branchElementValue);
+        const currentTag = currentLuckCycle && currentLuckCycle.pillar === cycle.pillar && currentLuckCycle.ageStart === cycle.ageStart ? "【目前所處大運】" : "";
+        const monthRelation = relations.filter((relation) => relation.targetKey === "month").map((relation) => relation.label).join("、") || "無";
+        const dayRelation = relations.filter((relation) => relation.targetKey === "day").map((relation) => relation.label).join("、") || "無";
+        const yearRelation = relations.filter((relation) => relation.targetKey === "year").map((relation) => relation.label).join("、") || "無";
+        const hourRelation = relations.filter((relation) => relation.targetKey === "hour").map((relation) => relation.label).join("、") || "無";
+        return [
+          `### ${cycle.pillar}大運（${cycle.yearStart}-${cycle.yearEnd}｜${cycle.ageStart}-${cycle.ageEnd}歲）${currentTag}`,
+          "【與原局關係】",
+          formatBulletList([
+            `天干為${stem}${cycle.stemTenGod}，${describeElementEffect(dayElement, stemElementValue)}。`,
+            `地支為${branch}，主氣十神${cycle.branchTenGod}，${describeElementEffect(dayElement, branchElementValue)}。`,
+            relations.length ? `與原局互動：${relations.map((relation) => relation.label).join("、")}。` : "與原局未見明顯固定支沖合成組，重點轉到十神承接與調候變化。",
+            `引動月柱：${effect.monthTouched ? "是" : "否"}；與月支作用：${monthRelation}；是否沖月令：${effect.monthConflict ? "是" : "否"}。`,
+            `引動日支：${effect.dayTouched ? "是" : "否"}；與日支作用：${dayRelation}；是否完整柱伏吟：${effect.fullPillarRepeat ? "是" : "否"}；是否支伏吟／同支重現：${effect.branchRepeat ? "是" : "否"}。`,
+            `引動年柱：${effect.yearTouched ? "是" : "否"}；與年支作用：${yearRelation}。`,
+            `引動時柱：${effect.hourTouched ? "是" : "否"}；與時支作用：${hourRelation}。`,
+            `是否天干伏吟：${effect.stemRepeat ? "是" : "否"}；是否改善調候：${climateImproved ? "偏是" : "未必"}；是否扶身：${supportsDayMaster ? "偏是" : "偏否"}。`
+          ]),
+          "【主要主題】",
+          `此運會把${cycle.stemTenGod}與${cycle.branchTenGod}的議題推到前景。${effect.monthTouched ? "月柱被引動，學業、職場節奏與整體生活方向更容易出現明顯轉折。" : "月柱未被直接碰動，主題較像在原有方向上加重或改變表現方式。"}${effect.dayTouched ? "日支被引動，感情、合作與自我狀態會更有事件感。" : ""}${effect.hourTouched ? "時柱受動，作品輸出、晚景規劃或子女相關議題較容易被提上檯面。" : ""}${effect.repeatedBranchNote ? `${effect.repeatedBranchNote}，體感會更集中。` : ""}`,
+          "【有利條件】",
+          formatBulletList([
+            favorableHit ? `此運含有${favorableSummary.favorable.join("、")}之氣，較有機會補足命局所喜。` : "若流年再補命局所喜，此運較能把原局優勢轉成實際成果。",
+            `${climate?.subtitle ?? "調候結果"}是重要背景；${climateImproved ? "此運較像在補調候與修節奏。" : "此運未必直接補調候，需靠流年流月再協助。"}`
+          ]),
+          "【風險條件】",
+          formatBulletList([
+            avoidHit ? `此運也可能放大${favorableSummary.avoid.join("、")}過旺的壓力，尤其當流年再疊加時更明顯。` : "若流年把忌神、沖根或破格條件再放大，此運的壓力面會顯得突出。",
+            `${hurtsDayMaster ? "此運對日主承載有壓力，若又同時碰到月令或夫妻宮，體感會更明顯。" : "此運雖非純壓身，但若節奏失序，原局舊問題仍會浮現。"}`
+          ]),
+          "【此運策略】",
+          `${supportsDayMaster ? "先借此運補根、立節奏，再談擴張與承擔。" : "先管理壓力與邊界，避免在承載不足時硬接高風險責任。"}${effect.dayTouched ? "涉及感情或合作時，尤其要把節奏與界線講清楚。" : ""}`
+        ].join("\n");
+      })).join("\n\n");
+    }
+
+    function formatTimingProtocol(source) {
+      const chart = source.chart;
+      return [
+        "## 未來時運分析順序",
+        "未來所有時間問題，分析順序固定為：原局 → 大運 → 流年 → 流月 → 流日 → 流時 → 神煞輔助 → 現代情境 → 行動建議。",
+        "",
+        "1. 原局是本命地基，任何時運都不能推翻定盤。",
+        "2. 大運是長期背景，決定命主在該十年最常被推動的主題。",
+        "3. 流年是年度主題，負責把十年的大背景壓縮成當年的事件焦點。",
+        "4. 流月是年度聚焦，流日是短期觸發，流時是當日細節；下層時運不得推翻上層結構。",
+        "5. 神煞只能在結構判讀完成後作輔助，不可搶在前面當主結論。",
+        "6. 重大判斷至少要有兩個以上獨立條件同時成立，例如：大運承接 + 流年引動，或原局病點 + 流月沖動。",
+        `7. 若未提供精確流日或流時資料，最多分析到已確認的層級；不可假裝精確掌握${chart.user.timezone}下的細部時點。`
+      ].join("\n");
+    }
+
+    function formatCurrentLuckDeepDive(source) {
+      const chart = source.chart;
+      const current = source.currentLuck;
+      if (!current) return "## 目前大運深入分析\n目前缺少可對應的大運資料。";
+      const effect = analyzeLuckCycleEffects(chart, current);
+      const { stem, branch } = splitPillar(current.pillar);
+      const stemElementValue = stemElement[stem];
+      const branchElementValue = branchElement[branch];
+      return [
+        "## 目前大運深入分析",
+        `- 目前大運：${current.pillar}（${current.yearStart}-${current.yearEnd}）`,
+        `- 天干十神：${stem}${current.stemTenGod}；${describeElementEffect(chart.dayMaster.element, stemElementValue)}。`,
+        `- 地支主氣十神：${branch}${current.branchTenGod}；${describeElementEffect(chart.dayMaster.element, branchElementValue)}。`,
+        `- 沖月令：${effect.monthConflict ? "是" : "否"}`,
+        `- 與月支：${effect.relations.filter((relation) => relation.targetKey === "month").map((relation) => relation.label).join("、") || "無"}`,
+        `- 與日支：${effect.relations.filter((relation) => relation.targetKey === "day").map((relation) => relation.label).join("、") || "無"}`,
+        `- 與時支：${effect.relations.filter((relation) => relation.targetKey === "hour").map((relation) => relation.label).join("、") || "無"}`,
+        `- 完整柱伏吟：${effect.fullPillarRepeat ? "是" : "否"}`,
+        `- 天干同干：${effect.stemRepeat ? "是" : "否"}`,
+        `- 地支同支重現：${effect.branchRepeat ? "是" : "否"}${effect.branchRepeat ? `，${effect.repeatedBranchNote}` : ""}`,
+        "",
+        "此運必須比其他大運分析更深，明確說出它怎麼把命主的壓力、責任、關係、生活安排與成果承接重新排位。若有子未害、同支重現、雙重沖動等現象，必須直接寫明，不可模糊成一般變動。"
+      ].join("\n");
+    }
+
+    function formatMemoryProtocol() {
+      return [
+        "## 對話與記憶規則",
+        "在此對話中，請把命主後續提供的重要人生事件，視為此命理顧問關係的長期背景。",
+        "",
+        "你必須做到：",
+        "- 保留命主後續提供的結婚、離婚、子女、創業、移民、重大疾病、轉職、財務事件、家庭事件等資料，作為後續分析背景。",
+        "- 分清楚哪些是命盤推論，哪些是命主已發生的事實，不可把推論寫成既成事實。",
+        "- 後續建議應引用已知人生經歷，避免反覆詢問同一個已提供資訊。",
+        "- 不得聲稱自己可以跨聊天軟體或跨新對話永久記憶；你只能在當前對話視窗內持續累積背景。"
+      ].join("\n");
+    }
+
+    function formatAdvisorAnswerProtocol() {
+      return [
+        "## 回答格式",
+        "未來每次回答，建議優先依照以下格式輸出：",
+        "",
+        "## 一、問題定義",
+        "## 二、本命依據",
+        "## 三、目前大運",
+        "## 四、流年／流月／流日／流時",
+        "## 五、主要引動",
+        "## 六、有利條件",
+        "## 七、風險條件",
+        "## 八、重大注意事項",
+        "## 九、具體行動建議",
+        "## 十、結論",
+        "",
+        "每一段都要有依據與結論，並使用條件式語句，不作絕對預言。"
+      ].join("\n");
+    }
+
+    function formatBuildMetadata(source) {
+      return [
+        "## 建檔資訊",
+        `- 建檔時所處大運：${source.currentLuck ? `${source.currentLuck.pillar}（${source.currentLuck.yearStart}-${source.currentLuck.yearEnd}）` : "依網站既有結果"}`,
+        `- 建檔年份：${source.metadata.targetYear ?? "未提供"}`,
+        "建檔年份只作版本記錄，不代表命主正在詢問該流年。除非命主明確詢問，AI 不得主動分析建檔年份。"
+      ].join("\n");
+    }
+
+    function validateLifetimePrompt(prompt) {
+      const chars = String(prompt ?? "").length;
+      let status = "理想範圍";
+      if (chars < LIFETIME_PROMPT_TARGET_MIN) status = "內容偏短";
+      else if (chars > LIFETIME_PROMPT_HARD_MAX) status = "超過上限";
+      else if (chars > LIFETIME_PROMPT_TARGET_MAX) status = "接近上限";
+      return {
+        chars,
+        min: LIFETIME_PROMPT_TARGET_MIN,
+        max: LIFETIME_PROMPT_TARGET_MAX,
+        hardMax: LIFETIME_PROMPT_HARD_MAX,
+        status
+      };
+    }
+
+    function getPromptSection(prompt, heading) {
+      const text = String(prompt ?? "");
+      const start = text.indexOf(heading);
+      if (start === -1) return "";
+      const rest = text.slice(start + heading.length);
+      const nextHeadingIndex = rest.search(/\n#{1,3} /);
+      return nextHeadingIndex === -1 ? rest.trim() : rest.slice(0, nextHeadingIndex).trim();
+    }
+
+    function getPromptLine(prompt, prefix) {
+      return String(prompt ?? "").split("\n").find((line) => line.startsWith(prefix)) ?? "";
+    }
+
+    function extractPillarValue(line) {
+      return line.split("：")[1]?.trim() ?? "";
+    }
+
+    function validatePromptChartConsistency(source, prompt) {
+      const chart = source.chart;
+      const errors = [];
+      const lineChecks = [
+        ["年柱：", chart.pillars.year.pillar],
+        ["月柱：", chart.pillars.month.pillar],
+        ["日柱：", chart.pillars.day.pillar],
+        ["時柱：", chart.pillars.hour.pillar],
+        ["日主：", `${chart.dayMaster.stem}${chart.dayMaster.element}`],
+        ["換日法：", chart.user.dayChangeRule]
+      ];
+      lineChecks.forEach(([prefix, expected]) => {
+        const line = getPromptLine(prompt, prefix);
+        if (line && extractPillarValue(line) !== expected) errors.push(`${prefix}${extractPillarValue(line)} 應為 ${expected}`);
+      });
+      const spouseMatches = [...String(prompt).matchAll(/日支([子丑寅卯辰巳午未申酉戌亥])/g)].map((match) => match[1]);
+      spouseMatches.forEach((branch) => {
+        if (branch !== chart.pillars.day.branch) errors.push(`夫妻宮引用日支${branch}，應為日支${chart.pillars.day.branch}`);
+      });
+      return {
+        errors,
+        passed: errors.length === 0
+      };
+    }
+
+    function validateTenGodConsistency(chart, prompt) {
+      const errors = [];
+      stems.forEach((stem) => {
+        const expected = getTenGod(chart.dayMaster.stem, stem);
+        Object.keys(tenGodMeaning).forEach((god) => {
+          if (god === expected) return;
+          if (String(prompt).includes(`${stem}${god}`)) errors.push(`${stem} 誤標為 ${god}，應為 ${expected}`);
+        });
+      });
+      return {
+        errors: uniqueList(errors),
+        passed: errors.length === 0
+      };
+    }
+
+    function validateHiddenStemConsistency(chart, prompt) {
+      const errors = [];
+      const pillarPrefixes = { year: "- 年柱", month: "- 月柱", day: "- 日柱", hour: "- 時柱" };
+      pillarOrder.forEach((key) => {
+        const pillar = chart.pillars[key];
+        const line = String(prompt).split("\n").find((item) => item.startsWith(`${pillarPrefixes[key]}${pillar.pillar}`)) ?? "";
+        if (!line) return;
+        const expected = (pillar.hiddenStems ?? []).map((hidden) => `${hidden.stem}${hidden.tenGod}`);
+        expected.forEach((token) => {
+          if (!line.includes(token)) errors.push(`${pillarLabels[key]}缺少藏干 ${token}`);
+        });
+        stems.forEach((stem) => {
+          const correct = expected.some((token) => token.startsWith(stem));
+          if (!correct && line.includes(`${stem}藏`)) errors.push(`${pillarLabels[key]}混入非本柱藏干 ${stem}`);
+        });
+      });
+      return {
+        errors: uniqueList(errors),
+        passed: errors.length === 0
+      };
+    }
+
+    function validateLifeDomainEvidence(source, lifeDomainSection) {
+      const chart = source.chart;
+      const errors = [];
+      const allowedPillars = new Set(getPillarListByChart(chart).map((pillar) => pillar.pillar));
+      const foundPillars = String(lifeDomainSection).match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]/g) ?? [];
+      foundPillars.forEach((pillar) => {
+        if (!allowedPillars.has(pillar) && !String(lifeDomainSection).includes(`大運${pillar}`) && !String(lifeDomainSection).includes(`流年${pillar}`)) {
+          errors.push(`人生領域引用非本命柱 ${pillar}`);
+        }
+      });
+      const spouseMatches = [...String(lifeDomainSection).matchAll(/日支([子丑寅卯辰巳午未申酉戌亥])/g)].map((match) => match[1]);
+      spouseMatches.forEach((branch) => {
+        if (branch !== chart.pillars.day.branch) errors.push(`人生領域夫妻宮誤指日支${branch}`);
+      });
+      return {
+        errors: uniqueList(errors),
+        passed: errors.length === 0
+      };
+    }
+
+    function detectRepeatedTemplateSentences(prompt) {
+      const normalizedLines = String(prompt)
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length >= 20 && !line.startsWith("#") && !line.startsWith("- 命造") && !line.startsWith("- 引動") && !line.startsWith("- 是否") && !line.startsWith("- 與原局"));
+      const counts = normalizedLines.reduce((acc, line) => {
+        acc[line] = (acc[line] ?? 0) + 1;
+        return acc;
+      }, {});
+      const repeatedExact = Object.entries(counts)
+        .filter(([line, count]) => count > 4 && !line.includes("原局作用"))
+        .map(([line, count]) => `${line}（重複 ${count} 次）`);
+      const skeletonCounts = normalizedLines.reduce((acc, line) => {
+        const skeleton = line
+          .replace(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]/g, "{干支}")
+          .replace(/\d{4}-\d{4}/g, "{年份區間}")
+          .replace(/\d+-\d+歲/g, "{年齡區間}")
+          .replace(/[甲乙丙丁戊己庚辛壬癸]/g, "{干}")
+          .replace(/[子丑寅卯辰巳午未申酉戌亥]/g, "{支}");
+        acc[skeleton] = (acc[skeleton] ?? 0) + 1;
+        return acc;
+      }, {});
+      const repeatedSkeleton = Object.entries(skeletonCounts)
+        .filter(([skeleton, count]) => count > 8 && skeleton.includes("{"))
+        .map(([skeleton, count]) => `${skeleton}（高相似 ${count} 次）`);
+      return uniqueList([...repeatedExact, ...repeatedSkeleton]);
+    }
+
+    function validateLuckCycleConsistency(source, prompt) {
+      const errors = [];
+      source.luckCycles.forEach((cycle) => {
+        const section = getPromptSection(prompt, `### ${cycle.pillar}大運（`);
+        if (!section) return;
+        const effect = analyzeLuckCycleEffects(source.chart, cycle);
+        if (effect.monthConflict && !section.includes("是否沖月令：是")) errors.push(`${cycle.pillar}大運未標示沖月令`);
+        if (!effect.monthConflict && section.includes("沖月令：是")) errors.push(`${cycle.pillar}大運誤判為沖月令`);
+        if (effect.repeatedBranchCount >= 2 && !section.includes(`同時引動 ${effect.repeatedBranchCount} 個${cycle.branch}`)) {
+          errors.push(`${cycle.pillar}大運漏寫同時引動 ${effect.repeatedBranchCount} 個${cycle.branch}`);
+        }
+      });
+      return {
+        errors: uniqueList(errors),
+        passed: errors.length === 0
+      };
+    }
+
+    function validateLifetimeAdvisorSource(source) {
+      const errors = [];
+      const chart = source.chart;
+      if (!chart?.pillars?.year?.pillar || !chart?.pillars?.month?.pillar || !chart?.pillars?.day?.pillar || !chart?.pillars?.hour?.pillar) errors.push("四柱不完整");
+      if (!chart?.dayMaster?.stem || !chart?.dayMaster?.element) errors.push("日主資料不完整");
+      if (!(source.luckCycles ?? []).length) errors.push("大運資料缺失");
+      if (chart.currentLuck && !source.currentLuck) errors.push("currentLuck 無法對應到 luckCycles");
+      const natalValidation = validateNatalInteractions(getNatalBranches(chart), getNatalInteractionTags(chart));
+      if (natalValidation.invalidCount) errors.push(`原局作用非法：${natalValidation.invalid.join("、")}`);
+      return {
+        errors,
+        passed: errors.length === 0
+      };
+    }
+
+    function validateGeneratedLifetimePrompt(source, prompt) {
+      const chartConsistency = validatePromptChartConsistency(source, prompt);
+      const tenGod = validateTenGodConsistency(source.chart, prompt);
+      const hiddenStem = validateHiddenStemConsistency(source.chart, prompt);
+      const natalInteraction = validateNatalInteractions(getNatalBranches(source.chart), getNatalInteractionTags(source.chart));
+      const luckCycle = validateLuckCycleConsistency(source, prompt);
+      const lifeDomain = validateLifeDomainEvidence(source, getPromptSection(prompt, "# 二、人生領域知識庫"));
+      const repeatedTemplates = detectRepeatedTemplateSentences(prompt);
+      const strengthMatches = strengthCanonicalOrder.filter((label) => new RegExp(`(^|[^\\u4e00-\\u9fff])${label}([^\\u4e00-\\u9fff]|$)`).test(String(prompt)));
+      const canonicalStrength = source.natalAnalysis.sectionMap["day-master-strength"]?.strengthResult?.label ?? "";
+      const contradictoryStrengthLabels = uniqueList(strengthMatches.filter((label) => canonicalStrength && label !== canonicalStrength));
+      const unresolvedPlaceholders = uniqueList((String(prompt).match(/待判|暫定|待權威曆法|placeholder/g) ?? []));
+      const foreignChartContamination = uniqueList([
+        ...chartConsistency.errors,
+        ...lifeDomain.errors
+      ]);
+      return {
+        chartConsistencyErrors: chartConsistency.errors,
+        tenGodErrors: tenGod.errors,
+        hiddenStemErrors: hiddenStem.errors,
+        natalInteractionErrors: natalInteraction.invalid,
+        luckCycleErrors: luckCycle.errors,
+        foreignChartContamination,
+        repeatedTemplateSentences: repeatedTemplates,
+        contradictoryStrengthLabels,
+        unresolvedPlaceholders,
+        passed: [
+          chartConsistency.passed,
+          tenGod.passed,
+          hiddenStem.passed,
+          natalInteraction.invalidCount === 0,
+          luckCycle.passed,
+          lifeDomain.passed,
+          repeatedTemplates.length <= 4,
+          contradictoryStrengthLabels.length === 0,
+          unresolvedPlaceholders.length === 0
+        ].every(Boolean)
+      };
+    }
+
+    function validateLifetimeAdvisorPrompt(source, prompt) {
+      const requiredSections = [
+        "## 首次使用行為：完整本命建檔論命",
+        "## 後續回答模式",
+        "## 不可變更的定盤資料",
+        "## 目前大運深入分析",
+        "## 建檔資訊"
+      ];
+      const missingInitialSections = requiredSections.filter((heading) => !String(prompt).includes(heading));
+      const ceremonialPatterns = ["尊啟者", "本席", "正式啟動", "完全鎖定", "已完整儲存", "水火既濟", "破局開新", "未未自刑"];
+      const ceremonialLanguage = ceremonialPatterns.filter((phrase) => String(prompt).includes(phrase));
+      const genericLifeDomainSections = ["性格與決策", "讀書與學習", "考試與證照", "專業技能", "設計與創造", "領導與管理", "事業與創業", "財運與投資", "合作與合夥", "感情與婚姻", "家庭與親子", "出國、留學與移民", "健康五行傾向", "退休與晚年"]
+        .filter((title) => !String(prompt).includes(`### ${title}`));
+      const duplicatedLuckCycleSections = source.luckCycles
+        .filter((cycle) => !String(prompt).includes(`### ${cycle.pillar}大運（`))
+        .map((cycle) => cycle.pillar);
+      const buildYearAutoAnalysisDetected = String(prompt).includes("指定流年") || String(prompt).includes("指定流月") || String(prompt).includes("十二流月");
+      const missingFinalSummary = !String(prompt).includes("以上已完成本命與終身大運的第一次完整建檔分析。後續請直接提出事件、人生領域或指定時間，我將只調用與問題相關的命盤資料回答。");
+      return {
+        missingInitialSections,
+        genericLifeDomainSections,
+        duplicatedLuckCycleSections,
+        incorrectChartReferences: [],
+        incorrectTenGodReferences: [],
+        incorrectNatalInteractions: [],
+        incorrectFuYinLabels: [],
+        ceremonialLanguage,
+        buildYearAutoAnalysisDetected,
+        missingFinalSummary,
+        passed: missingInitialSections.length === 0
+          && genericLifeDomainSections.length === 0
+          && duplicatedLuckCycleSections.length === 0
+          && ceremonialLanguage.length === 0
+          && !buildYearAutoAnalysisDetected
+          && !missingFinalSummary
+      };
+    }
+
+    function countOccurrences(haystack, needle) {
+      if (!needle) return 0;
+      return String(haystack).split(needle).length - 1;
+    }
+
+    function analyzePromptQuality(prompt, source) {
+      const genericPhrases = [
+        "若能把喜用之氣用在可累積的路線",
+        "特別在目前大運與強烈流年交會時",
+        "選擇可驗證、可修正的策略",
+        "先看原局承接，再看大運支持",
+        "能承接就擴張，不能承接就修正"
+      ];
+      const repeatedSentenceCount = genericPhrases.reduce((sum, phrase) => {
+        const count = countOccurrences(prompt, phrase);
+        return sum + Math.max(0, count - 1);
+      }, 0);
+      const genericSectionCount = (String(prompt).match(/十神、格局、調候皆以網站定盤為準/g) ?? []).length;
+      const sourceValidation = validateLifetimeAdvisorSource(source);
+      const promptValidation = validateGeneratedLifetimePrompt(source, prompt);
+      const workflowValidation = validateLifetimeAdvisorPrompt(source, prompt);
+      const unresolvedPlaceholderCount = promptValidation.unresolvedPlaceholders.length;
+      const duplicatedLuckCycleParagraphCount = Math.max(0, ((String(prompt).match(/【此運策略】/g) ?? []).length) - new Set((source.luckCycles ?? []).map((cycle) => cycle.pillar)).size);
+      const missingEvidenceSections = [];
+      String(prompt).split("\n### ").slice(1).forEach((sectionText) => {
+        const title = sectionText.split("\n")[0].trim();
+        if (title === "AI指令區") return;
+        if (!sectionText.includes("【依據】") && !sectionText.includes("【與原局關係】")) missingEvidenceSections.push(title);
+      });
+      const score = Math.max(0, 100
+        - repeatedSentenceCount * 6
+        - genericSectionCount * 4
+        - promptValidation.natalInteractionErrors.length * 15
+        - promptValidation.chartConsistencyErrors.length * 12
+        - promptValidation.tenGodErrors.length * 12
+        - promptValidation.hiddenStemErrors.length * 12
+        - promptValidation.luckCycleErrors.length * 12
+        - promptValidation.foreignChartContamination.length * 15
+        - promptValidation.repeatedTemplateSentences.length * 4
+        - promptValidation.contradictoryStrengthLabels.length * 12
+        - workflowValidation.missingInitialSections.length * 8
+        - workflowValidation.genericLifeDomainSections.length * 4
+        - workflowValidation.duplicatedLuckCycleSections.length * 3
+        - workflowValidation.ceremonialLanguage.length * 15
+        - (workflowValidation.buildYearAutoAnalysisDetected ? 12 : 0)
+        - (workflowValidation.missingFinalSummary ? 12 : 0)
+        - unresolvedPlaceholderCount * 10
+        - duplicatedLuckCycleParagraphCount * 8
+        - missingEvidenceSections.length * 5);
+      return {
+        ...promptValidation,
+        ...workflowValidation,
+        sourceErrors: sourceValidation.errors,
+        repeatedSentenceCount,
+        genericSectionCount,
+        invalidNatalInteractionCount: promptValidation.natalInteractionErrors.length,
+        unresolvedPlaceholderCount,
+        duplicatedLuckCycleParagraphCount,
+        missingEvidenceSections,
+        score,
+        passed: sourceValidation.passed && promptValidation.passed && workflowValidation.passed
+      };
     }
 
     function buildFullBaziPrompt(data) {
@@ -1092,6 +2458,61 @@ ${JSON.stringify(sections.map(({ id, title, subtitle, evidence, conclusion }) =>
 
 命盤 JSON：
 ${JSON.stringify(payload, null, 2)}`;
+    }
+
+    function buildLifetimeBaziAdvisorPrompt(data) {
+      const source = data.source ?? createLifetimeAdvisorSource(data.payload, data.sections, data.annualMonths, data.shenShaResult);
+      const { chart } = source;
+      const shenShaResult = data.shenShaResult;
+      const instructionBlock = [
+        `# ${getAdvisorDisplayName(chart)}｜終身八字 AI 命理顧問檔案`,
+        "",
+        formatLifetimeAdvisorRules(source),
+        "",
+        formatInitialFullProfileWorkflow(),
+        "",
+        formatOngoingAdvisoryWorkflow(),
+        "",
+        `- 生成版本：${source.metadata.version}`,
+        `- 對應四柱：${chart.pillars.year.pillar} ${chart.pillars.month.pillar} ${chart.pillars.day.pillar} ${chart.pillars.hour.pillar}`
+      ].join("\n");
+      const knowledgeBlock = [
+        formatLifetimeAdvisorIdentity(source),
+        "",
+        formatFixedChartProfile(source),
+        "",
+        "## 四柱十神與藏干",
+        formatPillarsCompact(chart),
+        "",
+        formatNatalKnowledgeBase(source),
+        "",
+        formatLifeDomainKnowledge(source),
+        "",
+        formatLuckCycleTimeline(source),
+        "",
+        formatCurrentLuckDeepDive(source),
+        "",
+        "# 四、輔助資料",
+        "## 神煞",
+        `- 規則版本：${shenShaResult.ruleSetVersion}`,
+        `- 原則：${shenShaResult.disclaimer}`,
+        formatBulletList((shenShaResult.hits ?? []).length
+          ? shenShaResult.hits.map((hit) => `${hit.name}｜${hit.pillarLabel}・${hit.matchedValue}｜${hit.meaning}`)
+          : [shenShaResult.summary]),
+        "",
+        "# 五、AI顧問協議",
+        formatTimingProtocol(source),
+        "",
+        formatMemoryProtocol(),
+        "",
+        formatAdvisorAnswerProtocol(),
+        "",
+        formatBuildMetadata(source),
+        "",
+        "- 使用本 Prompt 時，若另有具體問題、指定日期、事件背景與已發生事實，請在提問時補充。",
+        "- 若沒有額外時點條件，則以原局與大運層級做長期分析。"
+      ].join("\n");
+      return `${instructionBlock}\n\n${knowledgeBlock}`.trim();
     }
 
     function buildCompactPromptSections(data, options = {}) {
@@ -1190,20 +2611,45 @@ ${JSON.stringify(payload, null, 2)}`;
       return lastPrompt;
     }
 
+    function createPromptEntry(label, filenameSuffix, prompt, validation, extra = {}) {
+      return {
+        label,
+        filenameSuffix,
+        prompt,
+        validation,
+        ...extra
+      };
+    }
+
     function buildPromptExportState(payload, sections, annualMonths, shenShaResult) {
       const fullPayload = { ...payload, monthlyLuck: annualMonths, shenSha: shenShaResult };
-      const data = { payload: fullPayload, sections, annualMonths, shenShaResult };
+      const source = createLifetimeAdvisorSource(fullPayload, sections, annualMonths, shenShaResult);
+      const data = { payload: fullPayload, sections, annualMonths, shenShaResult, source };
       const fullPrompt = buildFullBaziPrompt(data);
-      const compactPrompt = buildCompactBaziPrompt(data);
+      const lifetimePrompt = buildLifetimeBaziAdvisorPrompt(data);
+      const qualityReport = analyzePromptQuality(lifetimePrompt, source);
+      const instructionPart = lifetimePrompt.split("# 一、本命知識庫")[0] ?? lifetimePrompt;
+      const knowledgePart = lifetimePrompt.includes("# 一、本命知識庫") ? `# 一、本命知識庫${lifetimePrompt.split("# 一、本命知識庫")[1]}` : "";
+      const displayName = getAdvisorDisplayName(payload);
+      const pillars = `${payload.pillars.year.pillar} ${payload.pillars.month.pillar} ${payload.pillars.day.pillar} ${payload.pillars.hour.pillar}`;
       return {
-        full: { label: "完整 Prompt", filenameSuffix: "full", prompt: fullPrompt, validation: validatePromptLength(fullPrompt) },
-        compact: { label: "精簡 AI Prompt", filenameSuffix: "compact", prompt: compactPrompt, validation: validatePromptLength(compactPrompt) },
-        mode: "compact"
+        debug: createPromptEntry("完整除錯資料", "debug", fullPrompt, validatePromptLength(fullPrompt)),
+        lifetime: createPromptEntry("終身 AI 命理顧問 Prompt", "lifetime-advisor", lifetimePrompt, validateLifetimePrompt(lifetimePrompt), {
+          displayName,
+          pillars,
+          version: LIFETIME_PROMPT_VERSION,
+          suggestedFilename: `${displayName}_終身八字AI命理顧問.md`,
+          qualityReport,
+          sourceSignature: source.metadata.chartSignature,
+          instructionChars: instructionPart.length,
+          knowledgeChars: knowledgePart.length
+        }),
+        mode: "lifetime"
       };
     }
 
     function buildAiPrompt(payload, sections, annualMonths, shenShaResult) {
-      return buildPromptExportState(payload, sections, annualMonths, shenShaResult).compact.prompt;
+      return buildPromptExportState(payload, sections, annualMonths, shenShaResult).lifetime.prompt;
     }
 
     function analyzeBazi(payload) {
@@ -1302,21 +2748,25 @@ ${JSON.stringify(payload, null, 2)}`;
 
     function renderShenSha(result) {
       if (!result.hits.length) {
-        return `<p class="conclusion">${escapeHtml(result.summary)}</p>`;
+        return `
+          <p class="shensha-disclaimer">${escapeHtml(result.disclaimer)}</p>
+          <p class="conclusion">${escapeHtml(result.summary)}</p>
+        `;
       }
       return `
+        <p class="shensha-disclaimer">${escapeHtml(result.disclaimer)}</p>
         <p class="conclusion">${escapeHtml(result.summary)}</p>
         <div class="shensha-grid">${result.hits.map((hit) => `
           <article class="shensha-card">
             <h3>${escapeHtml(hit.name)}</h3>
             <div class="tags">
               <span class="tag">${escapeHtml(hit.category)}</span>
-              <span class="tag">${escapeHtml(hit.level)}</span>
               <span class="tag">${escapeHtml(hit.pillarLabel)}</span>
+              <span class="tag">${escapeHtml(hit.matchedValue)}</span>
             </div>
-            <p><strong>依據：</strong>${escapeHtml(hit.basis)}，見 ${escapeHtml(hit.target)}。${escapeHtml(hit.rule)}</p>
-            <p><strong>含義：</strong>${escapeHtml(hit.meaning)}</p>
-            <p><strong>備註：</strong>${escapeHtml(hit.aiHint)}</p>
+            <p><strong>依據：</strong>${escapeHtml(summarizeShenShaBasis(hit.basis))}</p>
+            <p><strong>命中：</strong>${escapeHtml(hit.pillarLabel)}・${escapeHtml(hit.matchedValue)}</p>
+            <p><strong>簡義：</strong>${escapeHtml(hit.meaning)}</p>
           </article>
         `).join("")}</div>
       `;
@@ -1334,27 +2784,42 @@ ${JSON.stringify(payload, null, 2)}`;
 
     function renderPromptPanel(exportState) {
       const current = exportState[exportState.mode];
+      const qualityWarning = exportState.mode === "lifetime" && current.qualityReport && !current.qualityReport.passed;
       const statusClass = current.validation.status === "超過上限"
         ? "over"
         : current.validation.status === "接近上限"
           ? "near"
           : "safe";
+      const countLabel = exportState.mode === "lifetime"
+        ? `終身 Prompt 字數：${current.validation.chars}`
+        : `Prompt 字數：${current.validation.chars} / ${MAX_PROMPT_CHARS}`;
       return `
         <div class="prompt-toolbar">
           <div class="prompt-mode-group">
-            <button id="prompt-mode-compact" class="${exportState.mode === "compact" ? "active" : ""}" type="button">精簡 AI Prompt</button>
-            <button id="prompt-mode-full" class="${exportState.mode === "full" ? "active" : ""}" type="button">完整 Prompt</button>
+            <button id="prompt-mode-lifetime" class="${exportState.mode === "lifetime" ? "active" : ""}" type="button">終身 AI 命理顧問 Prompt</button>
+            <button id="prompt-mode-debug" class="${exportState.mode === "debug" ? "active" : ""}" type="button">完整除錯資料</button>
           </div>
           <div class="prompt-meta">
-            <span id="prompt-char-count">Prompt 字數：${current.validation.chars} / ${MAX_PROMPT_CHARS}</span>
+            <span id="prompt-char-count">${countLabel}</span>
             <span id="prompt-status" class="prompt-status ${statusClass}">狀態：${current.validation.status}</span>
+            ${current.displayName ? `<span>命主：${escapeHtml(current.displayName)}</span>` : ""}
+            ${current.pillars ? `<span>四柱：${escapeHtml(current.pillars)}</span>` : ""}
+            ${current.version ? `<span>版本：${escapeHtml(current.version)}</span>` : ""}
+            ${current.instructionChars ? `<span>指令區：${current.instructionChars}</span>` : ""}
+            ${current.knowledgeChars ? `<span>知識庫：${current.knowledgeChars}</span>` : ""}
+            ${current.qualityReport ? `<span>品質分：${escapeHtml(current.qualityReport.score)}</span>` : ""}
+            ${current.qualityReport ? `<span>一致性：${current.qualityReport.passed ? "通過" : "失敗"}</span>` : ""}
           </div>
         </div>
+        ${qualityWarning ? `<p class="subtitle">此命盤的 AI 顧問檔案有品質提醒，但仍可複製或下載；品質提醒不會阻擋 Prompt 匯出。</p>` : ""}
+        ${current.qualityReport && isDevelopmentMode() && (current.qualityReport.score < 85 || !current.qualityReport.passed) ? `<p class="subtitle">開發檢查：品質分數 ${current.qualityReport.score}、原局作用異常 ${current.qualityReport.invalidNatalInteractionCount}、圖表錯置 ${current.qualityReport.chartConsistencyErrors.length}、十神錯誤 ${current.qualityReport.tenGodErrors.length}、藏干錯誤 ${current.qualityReport.hiddenStemErrors.length}、大運錯誤 ${current.qualityReport.luckCycleErrors.length}、缺段 ${current.qualityReport.missingInitialSections?.length ?? 0}、建檔流年誤導 ${current.qualityReport.buildYearAutoAnalysisDetected ? 1 : 0}、儀式化語言 ${current.qualityReport.ceremonialLanguage?.length ?? 0}、模板重複 ${current.qualityReport.repeatedTemplateSentences.length}。</p>` : ""}
         <pre id="prompt-output" class="prompt-box">${escapeHtml(current.prompt)}</pre>
       `;
     }
 
     function getPromptFilename(mode, payload) {
+      const current = latestPromptExport?.[latestPromptExport.mode];
+      if (current?.suggestedFilename) return current.suggestedFilename;
       const birthDate = String(payload.user?.birthSolar ?? "prompt").slice(0, 10);
       return `bazi-${mode}-prompt-${birthDate}.md`;
     }
@@ -1362,8 +2827,25 @@ ${JSON.stringify(payload, null, 2)}`;
     async function copyCurrentPrompt() {
       const current = latestPromptExport?.[latestPromptExport.mode];
       if (!current) return;
-      await navigator.clipboard.writeText(current.prompt);
       const button = document.getElementById("copy-prompt");
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(current.prompt);
+        } else {
+          throw new Error("Clipboard API unavailable");
+        }
+      } catch (error) {
+        const textarea = document.createElement("textarea");
+        textarea.value = current.prompt;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand("copy");
+        textarea.remove();
+        if (!copied) throw error;
+      }
       if (!button) return;
       button.textContent = "已複製";
       setTimeout(() => {
@@ -1380,27 +2862,41 @@ ${JSON.stringify(payload, null, 2)}`;
       const link = document.createElement("a");
       link.href = url;
       link.download = getPromptFilename(current.filenameSuffix, payload);
+      link.style.display = "none";
+      document.body.appendChild(link);
       link.click();
-      URL.revokeObjectURL(url);
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
     }
 
     function syncTopbarPromptButtons(payload) {
       const copyButton = document.getElementById("copy-prompt");
       const downloadButton = document.getElementById("download-prompt");
       if (!copyButton || !downloadButton) return;
+      const current = latestPromptExport?.[latestPromptExport.mode];
       copyButton.hidden = false;
       downloadButton.hidden = false;
-      copyButton.onclick = () => { copyCurrentPrompt().catch(() => {}); };
+      copyButton.disabled = false;
+      downloadButton.disabled = false;
+      copyButton.onclick = () => {
+        copyCurrentPrompt().catch(() => {
+          copyButton.textContent = "複製失敗";
+          setTimeout(() => {
+            const latestButton = document.getElementById("copy-prompt");
+            if (latestButton) latestButton.textContent = "複製 Prompt";
+          }, 1600);
+        });
+      };
       downloadButton.onclick = () => downloadCurrentPrompt(payload);
     }
 
     function bindPromptModeSwitch(payload) {
-      document.getElementById("prompt-mode-compact")?.addEventListener("click", () => {
-        latestPromptExport.mode = "compact";
+      document.getElementById("prompt-mode-lifetime")?.addEventListener("click", () => {
+        latestPromptExport.mode = "lifetime";
         updatePromptPanel(payload);
       });
-      document.getElementById("prompt-mode-full")?.addEventListener("click", () => {
-        latestPromptExport.mode = "full";
+      document.getElementById("prompt-mode-debug")?.addEventListener("click", () => {
+        latestPromptExport.mode = "debug";
         updatePromptPanel(payload);
       });
     }
@@ -1411,6 +2907,11 @@ ${JSON.stringify(payload, null, 2)}`;
       container.innerHTML = renderPromptPanel(latestPromptExport);
       bindPromptModeSwitch(payload);
       syncTopbarPromptButtons(payload);
+    }
+
+    function getVisibleAnalysisSections(sections) {
+      const hiddenIds = new Set(["life-domains", "luck-cycle-analysis"]);
+      return (sections ?? []).filter((section) => !hiddenIds.has(section.id));
     }
 
     function renderBaziAnalysis(payload) {
@@ -1448,7 +2949,7 @@ ${JSON.stringify(payload, null, 2)}`;
         </section>
 
         <div class="section-grid">
-          ${analysis.sections.map(renderSection).join("")}
+          ${getVisibleAnalysisSections(analysis.sections).map(renderSection).join("")}
           <section class="section wide" id="luck-timeline">
             <h2>大運時間軸</h2>
             <p class="subtitle">每步十年。</p>
@@ -1460,13 +2961,13 @@ ${JSON.stringify(payload, null, 2)}`;
             ${renderAnnualMonths(analysis.annualMonths)}
           </section>
           <section class="section wide" id="shensha-list">
-            <h2>神煞輔助列表</h2>
-            <p class="subtitle">固定規則引擎計算；只作輔助參考，不單獨定吉凶。</p>
+            <h2>核心神煞 Core Shen Sha Set</h2>
+            <p class="subtitle">規則版本 ${escapeHtml(analysis.shenShaResult.ruleSetVersion)}；固定規則引擎計算，只作輔助參考。</p>
             ${renderShenSha(analysis.shenShaResult)}
           </section>
           <section class="section wide" id="ai-master-reading">
             <h2>AI Prompt 匯出</h2>
-            <p class="subtitle">預設顯示精簡 AI Prompt；完整 Prompt 與內部 JSON 仍完整保留於系統輸出層。</p>
+            <p class="subtitle">預設顯示終身 AI 命理顧問 Prompt；完整除錯資料仍保留於內部輸出層。</p>
             <div id="ai-prompt-panel">${renderPromptPanel(latestPromptExport)}</div>
           </section>
         </div>

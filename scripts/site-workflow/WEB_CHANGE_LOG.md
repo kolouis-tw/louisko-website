@@ -2,6 +2,75 @@
 
 本文件用來記錄每次 `louisko.com` 網頁修改、GitHub 同步與 Zeabur 部署。
 
+## 2026-07-20 - 建立 Bazi Phase 1 私有 LINE Bot adapter
+
+- 變更目的：依 LINE Bot 終身 AI 命理 Prompt 規格，讓已授權 LINE User ID 可使用既有網站 Bazi Core、命主紀錄、終身 Prompt 與 Markdown 匯出。
+- 修改檔案：`server.js`、`apps/bazi/server/canonical-service.cjs`、`apps/bazi/server/line-bot.cjs`、`apps/bazi/scripts/line-bot-regression-check.cjs`、LINE governance／README／SMOKE_TEST／後端架構文件。
+- API：新增 `POST /api/line/webhook` 與 owner-scoped、短效一次性 `GET /api/bazi/line/download`。
+- 安全邊界：HMAC signature、LINE User ID allowlist、`kolouis@gmail.com` owner resolver、owner-scoped profile／artifact、session TTL、generation lock、rate limit、PII-safe logging；不讀取或保存網站密碼。
+- 本機驗證：LINE canonical regression、2005／1975 golden chart、農曆閏月轉換、calendar regression 12/12、Prompt consistency、Ziwei 12/12、site verify、HTTP webhook fail-closed smoke 與 `git diff --check` 通過。
+- GitHub commit：待本次變更確認後處理。
+- GitHub push：待本次變更確認後處理。
+- Zeabur 部署：待本次變更確認後處理；正式站目前 `/api/line/webhook` 回 `404`，表示尚未部署。
+- 線上驗證：尚未啟用 LINE，因 channel secret、access token 與 allowlist 尚未配置；程式在未配置時回 `LINE_NOT_CONFIGURED`，不影響網站功能。
+- 三資料夾同步：目前以 `AI_Web` 單一 repo 為正式來源；LINE 操作與設定已同步記錄於 `docs/agent-governance/line-bot-operations.md`。
+
+## 2026-07-16 - 命主紀錄改為帳號雲端同步
+
+- 變更目的：將命主紀錄從瀏覽器 owner key 雲端保存升級為真正的帳號登入與跨裝置同步，並保留本機 fallback。
+- 修改檔案：`server.js`、`apps/bazi/index.html`、`apps/bazi/README.md`、`apps/bazi/SMOKE_TEST.md`、`docs/agent-governance/deployment-reference.md`。
+- API：`/api/bazi/auth/{me,register,login,logout}` 與登入後的 `GET/POST/DELETE /api/bazi/profiles`。
+- 隱私邊界：密碼以加鹽 scrypt 雜湊保存，登入使用 HttpOnly session cookie；命主資料以帳號 ID 分隔。建立帳號時遷移目前瀏覽器舊 owner key 紀錄。
+- 本機驗證：server 語法、Bazi inline script、帳號註冊／登入／登出／未登入拒絕／跨登入讀取測試與 `git diff --check` 通過。
+- GitHub commit：`6c6d460 Add bazi account sync across devices`。
+- GitHub push：已推送到 `kolouis-tw/louisko-website` 的 `main`。
+- Zeabur 部署：`6a57c15b3c393b66819cc33d`，狀態 `RUNNING`。
+- 線上驗證：`https://louisko.com/apps/bazi/` 已載入「跨裝置同步」帳號介面；未登入 `/api/bazi/auth/me` 回傳 `authenticated:false`，未登入 `/api/bazi/profiles` 回傳 `401 AUTHENTICATION_REQUIRED`。
+
+## 2026-07-16 - 加入 Bazi Email 驗證、忘記密碼與刪除帳號
+
+- 變更目的：為帳號同步加入 Email 驗證、一次性忘記密碼連結、密碼重設後 session 失效，以及要求目前密碼確認的帳號刪除流程。
+- 修改檔案：`server.js`、`apps/bazi/index.html`、`apps/bazi/README.md`、`apps/bazi/SMOKE_TEST.md`、`docs/agent-governance/deployment-reference.md`。
+- API：`GET /api/bazi/auth/verify-email`、`POST /api/bazi/auth/resend-verification`、`POST /api/bazi/auth/forgot-password`、`POST /api/bazi/auth/reset-password`、`DELETE /api/bazi/auth/account`。
+- 郵件服務：Cloudflare Email Sending REST API；本機 `BAZI_EMAIL_PROVIDER=console` 可輸出測試連結，正式環境必須配置 Zeabur secrets。
+- 本機驗證：註冊／驗證／登入／忘記密碼／一次性重設／舊 session 失效／刪除帳號與 profile 檔案清除通過；password 欄位顯示切換語法檢查通過。
+- GitHub commit：`c1f48f8 Add bazi email account security flows`。
+- GitHub push：已推送到 `kolouis-tw/louisko-website` 的 `main`。
+- Zeabur 部署：`6a5818bf3c393b66819cca84`，狀態 `RUNNING`。
+- 線上驗證：正式頁面已載入 Email 驗證、忘記密碼、刪除帳號與顯示密碼控制；未登入 `/api/bazi/auth/me` 回 `authenticated:false`，未登入 profiles 回 `401 AUTHENTICATION_REQUIRED`。正式註冊目前回 `503 EMAIL_SERVICE_NOT_CONFIGURED`，因 Zeabur 尚未配置 Cloudflare Email Sending secret，未建立測試帳號。
+
+## 2026-07-16 - 顯示 Email 服務未啟用狀態
+
+- 變更目的：修正 Email 相關按鈕看似沒有作用的問題，新增 `/api/bazi/auth/status`，並在 UI 直接以錯誤色提示 Email 驗證、忘記密碼與重寄驗證信尚未啟用的真正原因。
+- 修改檔案：`server.js`、`apps/bazi/index.html`。
+- 本機驗證：server 與 inline script 語法、`git diff --check` 通過。
+- GitHub commit：`079ef8f Show bazi email service status in UI`。
+- GitHub push：已推送到 `kolouis-tw/louisko-website` 的 `main`。
+- Zeabur 部署：`6a5844273d3d099ed2f12df6`，狀態 `RUNNING`。
+- 線上驗證：`GET /api/bazi/auth/status` 回傳 `{"ok":true,"emailConfigured":false}`；正式頁面已載入郵件未啟用的錯誤提示，註冊回傳 `503 EMAIL_SERVICE_NOT_CONFIGURED`，未建立測試帳號。
+
+## 2026-07-16 - 修正命主姓名輸入框視覺一致性
+
+- 變更目的：修正命主姓名 `type=text` 未套用既有表單控制樣式，造成尺寸、內距與日期輸入欄位不一致。
+- 修改檔案：`apps/bazi/index.html`、`apps/bazi/SMOKE_TEST.md`。
+- 資料與演算法：未修改，純 UI 樣式修正。
+- 本機驗證：inline script 語法檢查、曆法回歸檢查與 `npm run site:verify` 待本次完成後補記。
+- GitHub push：待本次變更確認後處理。
+- Zeabur 部署：待本次變更確認後處理。
+- 線上驗證：待部署後補記。
+
+## 2026-07-16 - 八字命主紀錄與國曆／農曆雙輸入
+
+- 變更目的：在正式八字排盤頁加入命主姓名、命主紀錄分頁、localStorage 儲存與刪除確認，以及國曆／農曆雙向輸入。
+- 主要檔案：`apps/bazi/index.html`、`apps/bazi/vendor/lunar-javascript-1.7.7.js`、`apps/bazi/scripts/calendar-profile-regression-check.mjs`、`apps/bazi/README.md`、`apps/bazi/SMOKE_TEST.md`。
+- 資料邊界：曆法轉換只產生標準陽曆日期；四柱、子時換日、前後節氣起運與十步大運仍沿用原有函式。
+- 儲存方式：`louisko_bazi_profiles_v1`，僅存在目前瀏覽器裝置，不代表雲端同步。
+- 本機驗證：HTML inline script `node --check`、農曆 `2026-06-20 12:30` round-trip、`npm run site:verify` 通過；Playwright CLI 因環境沒有 `npx` 未執行。
+- GitHub push：待本次變更確認後處理。
+- Zeabur deploy：待本次變更確認後處理。
+- 線上驗證：待部署後補記。
+- 三資料夾同步：目前以 `AI_Web` 單一 repo 為正式來源，本次同步更新此 app 與站台變更紀錄。
+
 ## 記錄格式
 
 ```md
@@ -65,3 +134,27 @@
 - 線上驗證：待補
 - 三資料夾同步：本工作區目前以 `AI_Web` 單一 repo 為正式來源；本次僅更新八字 Prompt Export Layer 與對應測試文件。
 - 備註：未修改四柱、十神、藏干、起運、大運、流年、流月、五虎遁與神煞判定邏輯；完整 JSON 與完整 Prompt 仍保留。
+
+## 2026-07-13 00:35 Asia/Taipei - 修正終身八字 Prompt 一致性與防污染
+
+- 變更目的：修正終身八字 AI 顧問 Prompt 的單一資料來源、跨命盤污染、原局 / 大運作用誤判、人生領域舊 fixture 殘留，並加入生成前後驗證與 UI 阻斷。
+- 修改檔案：`apps/bazi/bazi-analysis.html`、`apps/bazi/SMOKE_TEST.md`、`apps/bazi/scripts/lifetime-prompt-consistency-check.mjs`、`scripts/site-workflow/WEB_CHANGE_LOG.md`
+- 本機驗證：`/opt/homebrew/bin/node` 語法檢查 `apps/bazi/bazi-analysis.html`、`/opt/homebrew/bin/node --check apps/bazi/scripts/lifetime-prompt-consistency-check.mjs`、`/opt/homebrew/bin/node apps/bazi/scripts/lifetime-prompt-consistency-check.mjs`、`PATH=/opt/homebrew/bin:$PATH /opt/homebrew/bin/npm run site:verify`
+- GitHub commit：待補
+- GitHub push：待補
+- Zeabur 部署：待補
+- 線上驗證：待補
+- 三資料夾同步：本工作區目前以 `AI_Web` 單一 repo 為正式來源；本次僅更新 `apps/bazi/` 與站台變更紀錄。
+- 備註：已移除終身 Prompt 內的「動態時運資料包」段落；未修改四柱、日主、十神、藏干、起運、大運、流年、流月等核心計算入口。
+
+## 2026-07-14 00:25 Asia/Taipei - 調整終身八字 AI 顧問首次完整建檔流程
+
+- 變更目的：讓終身八字 AI 顧問 Prompt 在第一次貼入外部聊天模型時，先完成一次完整本命與終身大運建檔論命，之後再切換成精準顧問模式；同時移除永久 Prompt 對建檔流年的主動分析暗示。
+- 修改檔案：`apps/bazi/bazi-analysis.html`、`scripts/site-workflow/WEB_CHANGE_LOG.md`
+- 本機驗證：`/opt/homebrew/bin/node apps/bazi/scripts/lifetime-prompt-consistency-check.mjs`、`PATH=/opt/homebrew/bin:$PATH /opt/homebrew/bin/npm run site:verify`
+- GitHub commit：待補
+- GitHub push：待補
+- Zeabur 部署：待補
+- 線上驗證：待補
+- 三資料夾同步：本工作區目前以 `AI_Web` 單一 repo 為正式來源；本次僅更新 `apps/bazi/` 與站台變更紀錄。
+- 備註：未修改四柱、十神、藏干、起運、大運、流年、流月等核心計算；主要更新 Prompt Builder、首次行為規則、後續回答規則與品質檢查。

@@ -1,0 +1,362 @@
+:root {
+  --bg: #f4efe7;
+  --paper: rgba(255, 250, 243, 0.88);
+  --paper-strong: #fffaf2;
+  --ink: #211d19;
+  --muted: #6f665d;
+  --line: rgba(33, 29, 25, 0.12);
+  --line-strong: rgba(33, 29, 25, 0.22);
+  --accent: #8e3b2d;
+  --accent-soft: rgba(142, 59, 45, 0.12);
+  --gold: #c5a35a;
+  --shadow: 0 28px 80px rgba(49, 38, 28, 0.08);
+  --radius: 24px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(197, 163, 90, 0.18), transparent 26%),
+    linear-gradient(145deg, #f8f3ec 0%, #efe4d6 52%, #f4efe7 100%);
+  font-family: "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent 85%);
+}
+
+.page-shell {
+  width: min(1220px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0 64px;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 20px 4px 28px;
+}
+
+.hero-copy {
+  max-width: 760px;
+}
+
+.eyebrow,
+.panel-kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 16px;
+  font-size: clamp(40px, 6vw, 78px);
+  line-height: 0.94;
+  font-weight: 600;
+}
+
+.hero-text {
+  max-width: 680px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.hero-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 12px 18px;
+  color: var(--ink);
+  text-decoration: none;
+  background: rgba(255, 250, 243, 0.7);
+  backdrop-filter: blur(14px);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+  padding: 24px;
+}
+
+.panel-head {
+  margin-bottom: 20px;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.form-panel,
+.summary-panel {
+  align-self: start;
+}
+
+.summary-panel {
+  grid-column: 1;
+}
+
+.birth-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.birth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.birth-form input,
+.birth-form select,
+.birth-form button {
+  appearance: none;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+  font: inherit;
+}
+
+.birth-form input,
+.birth-form select {
+  padding: 13px 14px;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+}
+
+.birth-form button {
+  padding: 14px 18px;
+  border-color: rgba(142, 59, 45, 0.28);
+  background: linear-gradient(135deg, #8e3b2d, #a14d39);
+  color: #fff8f3;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.input-summary {
+  margin-bottom: 16px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.summary-item {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.summary-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.summary-item strong {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.status-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 6px rgba(142, 59, 45, 0.12);
+}
+
+.board-panel {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.board-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.board-caption {
+  max-width: 240px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: right;
+}
+
+.palace-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.palace-card {
+  min-height: 180px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.55)),
+    var(--paper-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.palace-card header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.palace-card h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.branch-badge {
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(197, 163, 90, 0.18);
+  color: #7f6331;
+  font-size: 12px;
+}
+
+.palace-meta {
+  display: grid;
+  gap: 8px;
+}
+
+.meta-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.meta-row span {
+  color: var(--muted);
+}
+
+.meta-row strong {
+  font-size: 14px;
+}
+
+.placeholder-note {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 1024px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-panel,
+  .board-panel {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-shell {
+    width: min(100% - 20px, 100%);
+    padding-top: 20px;
+  }
+
+  .hero,
+  .board-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .birth-form,
+  .summary-grid,
+  .palace-board {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    padding: 20px;
+  }
+
+  .board-caption {
+    max-width: none;
+    text-align: left;
+  }
+}

@@ -9,8 +9,7 @@
 | `styles.css` | Tool styling and responsive layout | You are changing appearance | Medium |
 | `AGENTS.md` | High-risk operating rules | You are touching HEIC, storage, cloud sync, or smoke-test expectations | Detailed but governance-heavy |
 | `README.md` | Human-oriented feature and usage guide | You need product context or local run info | Overlaps with `AGENTS.md` |
-| `assets/louis-logo-data.js` | Embedded watermark asset | Only when logo loading or canvas taint issues matter | Large generated-like asset |
-| `assets/louis-logo.png` | Raw logo image | Only for asset replacement work | Binary |
+| 根目錄 `assets/louis-logo-transparent.png` | Shared header and watermark logo | Only when logo loading or watermark rendering matters | Shared root asset |
 
 ## Item Notes
 
@@ -48,17 +47,3 @@
 - Trigger: use for quick orientation or handoff context.
 - Inputs / outputs: feature map, preview steps, API list.
 - Caution: overlaps with `AGENTS.md`; prefer `AGENTS.md` for rules and `README.md` for narrative context.
-
-### `assets/louis-logo-data.js`
-
-- Summary: embedded data URL version of the logo to avoid file-mode canvas taint issues.
-- Trigger: only when debugging watermark asset loading.
-- Inputs / outputs: logo asset encoded for front-end use.
-- Caution: high token cost and low routing value for most tasks.
-
-### `assets/louis-logo.png`
-
-- Summary: source logo image.
-- Trigger: only when replacing or visually checking the logo asset.
-- Inputs / outputs: bitmap input asset.
-- Caution: binary asset; do not read it for ordinary coding tasks.

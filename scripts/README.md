@@ -2,6 +2,8 @@
 
 此資料夾放 `AI_Web` 層級的跨專案腳本。
 
+若你在這裡維護腳本，請以目前這個 `AI_Web` repo 為正式來源；歷史遷移紀錄可以保留，但不要把舊平行資料夾當成預設同步目標。
+
 ## louisko deployment plan
 
 `louisko-deployment-plan.mjs` 會把 `louisko.com` 的部署規劃變成可執行檢查：
