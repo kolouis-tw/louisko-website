@@ -27,6 +27,22 @@ Use this file when the task touches deployment, domains, runtime entrypoints, Do
 - Legacy backup service: `bazi-website`
 - Legacy backup generated domain: `https://bazi-ko.zeabur.app/`
 
+### Production LINE Channel Mapping
+
+This is the operational lookup record for the current Bazi LINE Bot. It is intentionally separate from the secret store so the channel can be found again without exposing credentials.
+
+| Layer | Confirmed value | Meaning |
+|---|---|---|
+| LINE Official Account | `Louisko 八字 AI 顧問` | User-facing account to add in LINE |
+| Basic ID | `@061rakvm` | Search/add identifier |
+| LINE Developers provider | `kolouis` / `2005215144` | Provider that owns the channel |
+| Messaging API channel | `2010764409` | Channel bound to the Official Account |
+| Webhook | `https://louisko.com/api/line/webhook` | Public endpoint verified by LINE Developers |
+| Zeabur runtime | `louisko-node-photo` / `6a118115a458d428a0ab1ee4` | Node service receiving the webhook |
+| Required runtime keys | `BAZI_LINE_OWNER_EMAIL`, `BAZI_LINE_CHANNEL_SECRET`, `BAZI_LINE_CHANNEL_ACCESS_TOKEN`, `BAZI_LINE_ALLOWED_USER_IDS` | Stored in Zeabur; values are never recorded here |
+
+The channel and webhook were configured through the logged-in LINE Developers and LINE Official Account Manager consoles on `2026-07-20`. LINE Developers `Verify` returned `Success` after the Zeabur service restart.
+
 ## Domain and DNS Ownership Map
 
 This section records the current relationship between the application host and the DNS/email provider. The names below are operational identifiers, not proof that the corresponding Cloudflare zones are owned by or connected to the site owner.

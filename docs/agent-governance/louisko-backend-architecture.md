@@ -198,6 +198,18 @@ LINE 與網站的分界是操作者身分，不是另一份命主資料：`BAZI_
 | 郵件 | Cloudflare Email Sending 已啟用，正式驗證信與重設信已完成端到端測試 |
 | LINE Bot | Phase 1 私有排盤確認、命主列表、Prompt 查看、Markdown 短效下載、簽章驗證、allowlist、TTL session、rate limit 與 webhook idempotency |
 
+### LINE Production Identity
+
+The current production mapping is:
+
+- Official Account: `Louisko 八字 AI 顧問` (`@061rakvm`)
+- LINE Developers provider: `kolouis` (`2005215144`)
+- Messaging API channel: `2010764409`
+- Webhook: `https://louisko.com/api/line/webhook`
+- Runtime: Zeabur `louisko-node-photo` (`6a118115a458d428a0ab1ee4`)
+
+The channel secret, access token, and allowlisted User ID are Zeabur-only secrets. They are not part of this architecture document.
+
 ## 七、未來可擴充功能
 
 ```mermaid

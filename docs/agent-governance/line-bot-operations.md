@@ -22,6 +22,22 @@ The website, LINE, and Markdown download all use the same structured canonical r
 
 ## Production Configuration
 
+### Production Channel Ledger
+
+The first production channel was created and verified on `2026-07-20`:
+
+| Item | Confirmed value |
+|---|---|
+| LINE Official Account | `Louisko 八字 AI 顧問` |
+| Basic ID | `@061rakvm` |
+| LINE Developers provider | `kolouis` / provider id `2005215144` |
+| Messaging API channel id | `2010764409` |
+| Zeabur service | `louisko-node-photo` / service id `6a118115a458d428a0ab1ee4` |
+| Webhook URL | `https://louisko.com/api/line/webhook` |
+| Allowlist owner | The configured `BAZI_LINE_ALLOWED_USER_IDS` value in Zeabur; do not copy it into documentation |
+
+The channel secret and long-lived channel access token were issued in LINE Developers and entered directly into Zeabur environment variables. Their values are intentionally omitted from this repository and all operational notes.
+
 Set these in the Zeabur service environment, never in GitHub, Markdown, browser code, or chat:
 
 ```text
@@ -44,13 +60,15 @@ The configured owner email is resolved to the existing website account by normal
 
 ## LINE Developer Console
 
-Set the Webhook URL to:
+For the production channel above, set the Webhook URL to:
 
 ```text
 https://louisko.com/api/line/webhook
 ```
 
 Enable webhook delivery, copy the channel secret and channel access token into Zeabur secrets, and add only the intended LINE User ID(s) to `BAZI_LINE_ALLOWED_USER_IDS`. Do not expose the owner email as a public LINE command or return it in logs.
+
+After the Zeabur service restarts with the four LINE variables, use the LINE Developers `Verify` action. A successful result confirms that Cloudflare, louisko.com, Zeabur, and the deployed webhook handler are connected. This console verification does not replace an end-to-end message test from an allowlisted LINE account.
 
 The handler validates the raw request body with HMAC-SHA256, uses LINE `webhookEventId` when available for idempotency, and never logs Prompt content or full personal birth data.
 
@@ -114,6 +132,14 @@ Before enabling the webhook in production:
 - Confirm `取得 Markdown` works once and the same token fails on a second request.
 - Re-send an identical webhook event and verify it is not processed twice.
 - Send a message from a non-allowed LINE user and verify no owner data is returned.
+
+Production setup status on `2026-07-20`:
+
+- The production channel was created under provider `kolouis` and bound to the `Louisko 八字 AI 顧問` Official Account.
+- The Webhook URL was saved in both LINE Official Account Manager and LINE Developers.
+- Zeabur received the four required LINE variables and the running service was restarted.
+- LINE Developers `Verify` returned `Success`.
+- The remaining acceptance step is a real message from the allowlisted LINE account: add `@061rakvm`, then send `幫助` and the documented sample `排盤` command.
 
 ## Deployment and Rollback
 
