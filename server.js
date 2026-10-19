@@ -1703,7 +1703,7 @@ app.use((req, res, next) => {
   try { pathname = decodeURIComponent(req.path); } catch { return res.sendStatus(400); }
   const rootFiles = new Set(["/", "/index.html", "/bazi", "/bazi.html", "/manifest.json", "/favicon.ico", "/robots.txt"]);
   const publicAsset = /^\/(assets|apps)\//.test(pathname) &&
-    !pathname.split("/").some((part) => part.startsWith(".") || ["server", "scripts", "docs", "changelog", "examples", "node_modules"].includes(part)) &&
+    !pathname.split("/").some((part, index) => part.startsWith(".") || ["server", "scripts", "changelog", "examples", "node_modules"].includes(part) || (part === "docs" && index !== 2)) &&
     (pathname.endsWith("/") || /\.(?:html|css|js|json|png|jpe?g|svg|ico|webp|gif|woff2?|ttf)$/i.test(pathname));
   if (!rootFiles.has(pathname) && !publicAsset) return res.sendStatus(404);
   return next();
