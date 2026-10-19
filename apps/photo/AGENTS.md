@@ -71,6 +71,8 @@ Stores：
 
 ## 雲端保留規則
 
+2026-10-19：所有雲端寫入／刪除 API 都要求網站 HttpOnly session，且帳號須符合 `PHOTO_OWNER_EMAIL`（fallback：`BAZI_LINE_OWNER_EMAIL`）；未設 owner 時拒絕修改。一般註冊帳號不能取得共享相簿管理權。未同步的本機相簿仍可離線刪除；雲端刪除失敗時不得清除對應本機照片。頁首「登入管理」連到既有網站帳號入口。
+
 目前「同步雲端」是 cloud-ready / R2-ready 功能：
 
 - 本機開發保存到 `_storage/photo-cloud`。

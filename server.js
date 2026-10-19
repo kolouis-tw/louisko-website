@@ -37,6 +37,7 @@ const baziEmailFrom = process.env.BAZI_EMAIL_FROM || "no-reply@louisko.com";
 const baziEmailFromName = process.env.BAZI_EMAIL_FROM_NAME || "Louisko 八字排盤";
 const baziPublicUrl = (process.env.BAZI_PUBLIC_URL || "https://louisko.com").replace(/\/$/, "");
 const baziLineOwnerEmail = String(process.env.BAZI_LINE_OWNER_EMAIL || "").trim().toLowerCase();
+const photoOwnerEmail = String(process.env.PHOTO_OWNER_EMAIL || baziLineOwnerEmail).trim().toLowerCase();
 const baziLineChannelSecret = String(process.env.BAZI_LINE_CHANNEL_SECRET || "");
 const baziLineChannelAccessToken = String(process.env.BAZI_LINE_CHANNEL_ACCESS_TOKEN || "");
 const baziLineAllowedUserIds = lineBot.normalizeLineUserIds(process.env.BAZI_LINE_ALLOWED_USER_IDS);
@@ -63,6 +64,21 @@ app.use(cors({
 }));
 app.post("/api/line/webhook", express.raw({ type: "application/json", limit: "1mb" }), handleLineWebhook);
 app.use(express.json({ limit: "1mb" }));
+
+// Shared albums belong to one owner, not to every registered website account.
+app.use("/api/photo-cloud", async (req, res, next) => {
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
+  try {
+    const user = await requireBaziSessionUser(req, res);
+    if (!photoOwnerEmail || user.email.toLowerCase() !== photoOwnerEmail) {
+      throw createBaziProfileError(403, "PHOTO_OWNER_REQUIRED", "只有相簿擁有者可修改雲端照片。");
+    }
+    res.setHeader("Cache-Control", "private, no-store");
+    return next();
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({ ok: false, error: error.code || "PHOTO_AUTH_FAILED", message: error.statusCode === 401 ? "請先登入 Louisko 帳號，再管理雲端相簿。" : error.message });
+  }
+});
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -1674,10 +1690,24 @@ function safeJson(value, fallback) {
   }
 }
 
-app.use("/media/photo-cloud", express.static(photoStorageRoot, {
+app.use("/media/photo-cloud", (req, res, next) => {
+  if (!normalizeObjectKey(req.path)) return res.sendStatus(404);
+  return next();
+}, express.static(photoStorageRoot, {
   immutable: true,
   maxAge: "30d",
 }));
+
+app.use((req, res, next) => {
+  let pathname;
+  try { pathname = decodeURIComponent(req.path); } catch { return res.sendStatus(400); }
+  const rootFiles = new Set(["/", "/index.html", "/bazi", "/bazi.html", "/manifest.json", "/favicon.ico", "/robots.txt"]);
+  const publicAsset = /^\/(assets|apps)\//.test(pathname) &&
+    !pathname.split("/").some((part) => part.startsWith(".") || ["server", "scripts", "docs", "changelog", "examples", "node_modules"].includes(part)) &&
+    (pathname.endsWith("/") || /\.(?:html|css|js|json|png|jpe?g|svg|ico|webp|gif|woff2?|ttf)$/i.test(pathname));
+  if (!rootFiles.has(pathname) && !publicAsset) return res.sendStatus(404);
+  return next();
+});
 
 app.use(express.static(root, {
   extensions: ["html"],

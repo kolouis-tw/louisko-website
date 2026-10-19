@@ -261,21 +261,19 @@ async function deleteAlbum(albumId) {
   const album = state.albums.find((item) => item.id === albumId);
   if (!album || !confirm(`刪除相簿「${album.name}」與其中照片？`)) return;
   setCloudStatus("刪除雲端相簿中...");
-  let cloudError = "";
   try {
-    await deleteCloudAlbum(albumId);
+    if (album.cloudSyncedAt) await deleteCloudAlbum(albumId);
   } catch (error) {
     console.warn(error);
-    cloudError = readableError(error);
+    setCloudStatus(`雲端刪除失敗，已保留本機相簿：${readableError(error)}`);
+    return;
   }
   const photos = await getPhotosByAlbum(albumId);
   await Promise.all(photos.map((photo) => deleteRecord("photos", photo.id)));
   await deleteRecord("albums", albumId);
   if (state.currentAlbumId === albumId) state.currentAlbumId = null;
   await refreshAlbums();
-  setCloudStatus(cloudError
-    ? `本機相簿已清除；雲端刪除需重試：${cloudError}`
-    : "相簿已刪除，雲端路徑與檔案也已同步移除。");
+  setCloudStatus("相簿已刪除。");
 }
 
 async function handleFiles(files) {
@@ -395,7 +393,8 @@ async function fetchCloud(path, options = {}) {
   let lastNetworkError = null;
   let lastResponse = null;
   for (const url of urls) {
-    const { timeoutMs, ...fetchOptions } = options;
+    const { timeoutMs, ...requestOptions } = options;
+    const fetchOptions = { credentials: "include", ...requestOptions };
     const controller = timeoutMs ? new AbortController() : null;
     const timer = timeoutMs ? setTimeout(() => controller.abort(), timeoutMs) : null;
     try {
@@ -738,20 +737,25 @@ async function deleteSelectedPhotos() {
   const selectedIds = [...state.selectedPhotoIds];
   setCloudStatus("刪除雲端照片中...");
   const failed = [];
+  const deletedIds = [];
   for (const id of selectedIds) {
     try {
-      await deleteCloudPhoto(state.detailAlbumId, id);
+      const photo = state.detailPhotos.find((item) => item.id === id);
+      if (photo?.cloudSyncedAt || photo?.cloudStorageKey || photo?.cloudOnly) {
+        await deleteCloudPhoto(state.detailAlbumId, id);
+      }
+      deletedIds.push(id);
     } catch (error) {
       console.warn(error);
       failed.push(readableError(error));
     }
   }
-  await Promise.all(selectedIds.map((id) => deleteRecord("photos", id)));
+  await Promise.all(deletedIds.map((id) => deleteRecord("photos", id)));
   state.selectedPhotoIds.clear();
   await openAlbum(state.detailAlbumId);
   await refreshAlbums();
   setCloudStatus(failed.length
-    ? `本機照片已清除；${failed.length} 筆雲端刪除需重試：${failed[0]}`
+    ? `${failed.length} 筆雲端刪除失敗，已保留本機照片：${failed[0]}`
     : "已刪除選取照片，本機與雲端檔案也已同步移除。");
 }
 

@@ -21,6 +21,8 @@ Use this file when the task touches deployment, domains, runtime entrypoints, Do
 
 ## Current Service Mapping
 
+2026-10-19 健診修復：公開靜態目錄改為頁面／前端資產白名單，後端原始碼、套件、文件與 storage 不提供下載。PHOTO 修改 API 需既有登入且符合 `PHOTO_OWNER_EMAIL`（預設沿用 `BAZI_LINE_OWNER_EMAIL`），讀取維持原共享模式。Docker context 排除 `.env*`、`_storage/` 與測試照片。回歸：`npm run test:security`。
+
 - Primary Zeabur service: `louisko-node-photo`
 - Primary Zeabur service id: `6a118115a458d428a0ab1ee4`
 - Primary generated domain: `https://louisko-node-photo.zeabur.app/`

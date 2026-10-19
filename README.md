@@ -24,6 +24,8 @@ Historical sibling folders or migration-era notes may still appear in old record
 
 ## Recent Status Summary
 
+2026-10-19 健診修復：靜態服務只公開網站頁面與前端資產；PHOTO 雲端修改沿用網站登入，限 `PHOTO_OWNER_EMAIL`（未設定時沿用 `BAZI_LINE_OWNER_EMAIL`）擁有者。讀取維持共享相簿；雲端刪除失敗會保留本機資料。執行 `npm run test:security` 驗證存取邊界。
+
 截至 `2026-07-16`，目前正式網站已完成這幾天的主要整合：
 
 - **部署架構**：GitHub 是版本來源；Zeabur 的 `louisko-node-photo` 執行 Node 主站、次頁與 API；Cloudflare 管理 `louisko.com` DNS、Email Sending 與 R2；Gmail 是驗證信與重設密碼信的收件測試端，不是網站資料庫。
