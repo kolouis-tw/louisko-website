@@ -89,6 +89,6 @@
 - 文字檔、Markdown、複製 Prompt 共用相同內容，先附核心義，再附個別命主資料；不含流月或舊 JSON。
 - 詳細界線與驗證方式見 `docs/export-reference.md`；命主紀錄、國農曆轉換及帳號同步沿用現行主頁。
 
-- `server/chart-png.cjs`：LINE PNG 的原生 Canvas adapter，與網站共用繪圖程式；依賴 Docker Noto CJK 字型。
+- `server/chart-png.cjs`：LINE PNG 的原生 Canvas adapter，與網站共用繪圖程式；使用隨附的 Noto Sans TC 字型。
 - `line-download.html`：LINE 的短效下載頁，支援 TXT／MD／PNG 與圖片預覽。
 - `tests/line-integration.test.cjs`：使用隔離儲存與 LINE reply mock，驗證簽章 webhook、舊檔更新及三格式下載。

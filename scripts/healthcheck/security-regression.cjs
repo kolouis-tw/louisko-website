@@ -22,7 +22,7 @@ const path = require('node:path');
   return {cookie:'louisko_bazi_session='+token};
  }
  try{
-  for(const p of ['/server.js','/package.json','/AGENTS.md','/.env','/apps/bazi/server/canonical-service.cjs','/apps/bazi/server/chart-png.cjs','/package-lock.json','/node_modules/express/package.json','/media/photo-cloud/metadata.json'])check('private '+p,(await fetch(base+p)).status,404);
+  for(const p of ['/server.js','/package.json','/AGENTS.md','/.env','/apps/bazi/server/canonical-service.cjs','/apps/bazi/server/chart-png.cjs','/apps/bazi/server/fonts/NotoSansTC-Regular.otf','/package-lock.json','/node_modules/express/package.json','/media/photo-cloud/metadata.json'])check('private '+p,(await fetch(base+p)).status,404);
   for(const p of ['/','/apps/bazi/','/apps/photo/','/apps/docs/','/apps/ziwei/','/assets/louisko-theme.css','/apps/photo/app.js','/apps/bazi/vendor/lunar-javascript-1.7.7.js','/apps/bazi/line-download.html','/manifest.json'])check('public '+p,(await fetch(base+p)).status,200);
   check('anonymous create denied',(await fetch(base+'/api/photo-cloud/albums',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:'security-test',name:'test'})})).status,401);
   const owner=await session('owner@example.test');const other=await session('other@example.test');

@@ -116,7 +116,7 @@ app.get("/api/bazi/auth/status", async (req, res) => {
 app.get("/api/bazi/line/status", (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   const renderer = chartPng.getRendererStatus();
-  res.json({ok:true, formats:["md","txt",...(renderer.chineseFontAvailable?["png"]:[])], renderer, versions:canonicalBaziService.getCurrentVersions()});
+  res.json({ok:true, formats:["md","txt",...(renderer.available && renderer.chineseFontAvailable?["png"]:[])], renderer, versions:canonicalBaziService.getCurrentVersions()});
 });
 
 app.get("/api/bazi/line/download", async (req, res) => {
