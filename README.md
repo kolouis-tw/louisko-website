@@ -39,6 +39,15 @@ Historical sibling folders or migration-era notes may still appear in old record
 詳細的服務關係、Cloudflare Zone、Workers Paid、R2、Email Sending、Zeabur 服務與未來擴充方向，請先讀 [docs/agent-governance/deployment-reference.md](docs/agent-governance/deployment-reference.md)；跨服務資料流請讀 [docs/agent-governance/louisko-backend-architecture.md](docs/agent-governance/louisko-backend-architecture.md)。
 LINE Bot 的設定、指令、資料隔離與測試請讀 [docs/agent-governance/line-bot-operations.md](docs/agent-governance/line-bot-operations.md)。
 
+
+## 八字／LINE 階段交接（2026-10-20）
+
+已完成核心義顧問 Prompt、TXT／MD／五行配色六柱 PNG、LINE 與網站資料對齊、下載進度與預覽，以及最新共用儲存操作和一次性授權審核修正。已完成程式位於 release worktree；主工作目錄仍保留其他未提交變更，沒有整份回灌。
+
+**程式完成並推送、正式站最新版切換尚未確認完成。** 上一輪通過 14 組 LINE／下載、7 組匯出與 33 項存取檢查；最新手機 LINE／瀏覽器實機驗收仍待補齊。完整新版論命決策引擎與 LINE 即時 LLM 對話尚未實作。
+
+詳見 [八字子專案 AGENTS](apps/bazi/AGENTS.md)、[八字 README](apps/bazi/README.md) 與 [階段交接紀錄](docs/agent-governance/bazi-stage-handoff.md)。後者包含程式基準、worktree、已完成階段、測試證據、部署快照與接手順序；歷史摘要不應覆蓋此有日期的紀錄。
+
 ## Repository Structure
 
 - Root: main site, shared assets, deployment entry, and shared workflow

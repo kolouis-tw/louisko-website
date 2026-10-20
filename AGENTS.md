@@ -33,6 +33,11 @@ Use this file as the root routing hub.
 - For root-level governance routing, use [docs/agent-governance/INDEX.md](docs/agent-governance/INDEX.md).
 - For app-specific work, jump to the matching app index before reading large implementation files.
 
+
+## Bazi 階段交接入口（2026-10-20）
+
+八字網站、LINE Bot、顧問 Prompt 或檔案下載的續作，先讀 [apps/bazi/AGENTS.md](apps/bazi/AGENTS.md) 與 [階段交接紀錄](docs/agent-governance/bazi-stage-handoff.md)。已完成程式在管理 release worktree，主目錄仍含其他未提交變更；先確認 checkout 與程式基準，勿用舊主目錄覆寫發布版本。紀錄明確區分本機完成、已推送、正式站核對及實機驗收，不得把部署 success 或替身測試寫成全部已上線。
+
 ## Core Routing Rules
 
 1. First decide whether the request belongs to the main site or to a specific `apps/<slug>/` project.

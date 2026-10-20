@@ -47,3 +47,8 @@
 - Trigger: mandatory before changing Bazi calculations or regression-sensitive behavior.
 - Inputs / outputs: Bazi logic task in, required read path and checks out.
 - Caution: this file points to required deeper reads, including the external Bazi spec entry.
+
+
+## Bazi 階段交接
+
+[八字網站與 LINE 階段交接紀錄](bazi-stage-handoff.md) 保存截至 2026-10-20 的功能完成、版本位置、測試證據與待驗收狀態；此為交接快照，服務狀態仍須重新查驗。

@@ -92,3 +92,8 @@
 - `server/chart-png.cjs`：LINE PNG 的原生 Canvas adapter，與網站共用繪圖程式；使用隨附的 Noto Sans TC 字型。
 - `line-download.html`：LINE 的短效下載頁，支援 TXT／MD／PNG 與圖片預覽。
 - `tests/line-integration.test.cjs`：使用隔離儲存與 LINE reply mock，驗證簽章 webhook、舊檔更新及三格式下載。
+
+
+## 階段交接
+
+續作先讀 [AGENTS.md](AGENTS.md) 與 [2026-10-20 階段交接紀錄](../../docs/agent-governance/bazi-stage-handoff.md)，確認最新程式所在 checkout、已完成階段及部署／實機驗收的未完成項目。
