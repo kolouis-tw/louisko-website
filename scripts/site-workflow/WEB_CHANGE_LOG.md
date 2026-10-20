@@ -2,6 +2,18 @@
 
 本文件用來記錄每次 `louisko.com` 網頁修改、GitHub 同步與 Zeabur 部署。
 
+## 2026-10-20 12:48 Asia/Taipei - 核心義終身顧問與五行命盤 PNG 上線
+
+- 目的：文字檔、Markdown、複製功能改用使用者提供的十九節核心義作角色設定，附個別命主六柱細盤；不輸出流月或舊 JSON。新增本機 Canvas 五行配色 PNG，保留排盤演算法。
+- 範圍：`apps/bazi/{index.html,bazi-analysis.html,advisor-core.js,chart-export.js}`、核心義原文副本、產生腳本、匯出測試、canonical service 與相應文件。
+- 合併基準：確認 Zeabur 實際追蹤 `codex/bazi-compact-prompt` 的 `90a2a27`，保留 LINE、帳號同步、農曆輸入、Photo 存取保護及公開檔案限制；沒有從較舊的 `main` 覆寫正式站。
+- 本機驗證：匯出測試 7/7、十神 100 組、旬空 60 柱、必要四柱與女命大運回歸、Prompt 命盤隔離、calendar profile、LINE canonical、security 25 項及 site verify 通過。
+- GitHub 功能 commit：`0c3a54e Add source-based lifetime advisor exports and five-element chart PNG`；已推送 `codex/bazi-compact-prompt`。
+- Zeabur：GitHub push 自動觸發；部署 `6ad6f1eb7d48a89b2ad3d27c` 已確認運作中。既有 CLI legacy token 回 `401`，改以已登入 Dashboard 查驗自動部署，沒有變更憑證。
+- 線上驗證：主頁、論命頁、兩個 JS 模組均 HTTP 200 且檔案雜湊與發佈來源一致。實際排盤後下載 TXT／MD／PNG 成功；TXT 與 MD 相同、以核心義起首、無流月及舊 JSON；PNG 為 2560 × 4186，桌面四柱方向及 390px 手機版正常，複製與下載內容相同。
+- 存取界線：後端程式、內部文件仍 404；未登入命主紀錄 API 仍 401。沒有建立正式測試帳號或發送 LINE／Email。
+- 工作區：使用獨立管理 worktree 發佈，保留原工作目錄其他未提交變更；只同步本次作者建立的匯出模組修正，不覆蓋其他子專案。
+
 ## 2026-07-20 - 建立 Bazi Phase 1 私有 LINE Bot adapter
 
 - 變更目的：依 LINE Bot 終身 AI 命理 Prompt 規格，讓已授權 LINE User ID 可使用既有網站 Bazi Core、命主紀錄、終身 Prompt 與 Markdown 匯出。

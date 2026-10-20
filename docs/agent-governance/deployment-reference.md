@@ -192,6 +192,12 @@ dig +short MX louisko.com
 dig +short TXT louisko.com
 ```
 
+## Verified deployment source (2026-10-20)
+
+- `louisko-node-photo` currently tracks GitHub branch `codex/bazi-compact-prompt`, not `main`. Preserve that branch’s LINE integration and static-file protections when publishing Bazi updates.
+- A push to this branch triggers Zeabur automatically; verify the new deployment and the custom domain before reporting completion.
+- The locally configured legacy Zeabur API key returned `401` on this date. Dashboard access and GitHub-triggered deployment remain usable; no credential was changed.
+
 ## Runtime Notes
 
 - The current production entry combines the main site, subpages, and Photo API behind the same Node service.
