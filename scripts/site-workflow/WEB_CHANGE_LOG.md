@@ -2,6 +2,19 @@
 
 本文件用來記錄每次 `louisko.com` 網頁修改、GitHub 同步與 Zeabur 部署。
 
+## 2026-10-20 - LINE 與網站完整匯出對齊及命盤 PNG
+
+- 目的：LINE 的新舊命主都使用這次網站核心義與同一份六柱資料，支援 TXT／Markdown／PNG；不加入流月。
+- 功能 commit：`e5ed332 Align Bazi LINE exports with website and add chart PNG downloads`；字型可攜性修正 `5647c4e Bundle Traditional Chinese fonts for portable LINE chart PNG rendering`。均已推送實際部署分支 `codex/bazi-compact-prompt`。
+- 資料修正：國曆以既有 lunar-javascript 轉農曆；舊 LINE 紀錄的錯誤農曆在 canonical adapter 正規化。Fingerprint 保留深層出生資料、姓名、規則、目標年與來源版本，讀取舊檔時自動更新。
+- 下載：TXT／MD 內容與網站 Prompt 相同；PNG 共用 `chart-export.js` 的六柱五色版型。LINE 回傳下載頁，按鈕才消耗一次性權限；PNG 可預覽與長按儲存。格式、owner、profile、artifact、contentHash、期限及並行下載都受控，渲染失敗可重試。
+- 本機驗證：原有 LINE canonical 回歸、3 組整合測試、7 組匯出測試、曆法與必要四柱／女命大運、Prompt 隔離、29 項存取保護及 site verify 通過。整合測試經由真實 HTTP 簽章 webhook，只有對 LINE reply API 的呼叫使用 mock，沒有寄送正式 LINE 訊息。
+- 瀏覽器：390px 手機版實際下載 TXT／MD／PNG、同頁再次儲存、PNG 預覽與已使用連結提示通過；TXT／MD 檔案比對一致。
+- 字型驗證：停用系統字型後的整合測試通過；使用隨附、具 SIL OFL 授權的 Noto Sans TC regular／bold，避免正式環境缺字。新增必要字型資產與來源 SHA-256，保持 server 目錄不能公開存取。
+- Zeabur 部署：`6ad6fb577d48a89b2ad3d50f`（字型終稿）運作中。正式 `/api/bazi/line/status` 確認原生 PNG 編碼與中文字型均就緒，格式為 `md/txt/png`、來源版本吻合；下載頁、共享繪圖及排盤頁原始檔比對一致。未登入 profiles 維持 401，server 字型、程式與 lockfile 維持 404。
+- 驗證範圍：完成伺服器整合與一般手機尺寸瀏覽器實際下載；尚未從使用者手機 LINE App 實際收發與儲存，不以 mock 測試冒充正式 LINE 收發。
+- 工作區：沿用獨立管理 worktree，未覆蓋原工作目錄其他子專案或未提交變更。
+
 ## 2026-10-20 12:48 Asia/Taipei - 核心義終身顧問與五行命盤 PNG 上線
 
 - 目的：文字檔、Markdown、複製功能改用使用者提供的十九節核心義作角色設定，附個別命主六柱細盤；不輸出流月或舊 JSON。新增本機 Canvas 五行配色 PNG，保留排盤演算法。

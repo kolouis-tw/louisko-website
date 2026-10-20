@@ -198,6 +198,12 @@ dig +short TXT louisko.com
 - A push to this branch triggers Zeabur automatically; verify the new deployment and the custom domain before reporting completion.
 - The locally configured legacy Zeabur API key returned `401` on this date. Dashboard access and GitHub-triggered deployment remain usable; no credential was changed.
 
+## LINE PNG runtime (2026-10-20)
+
+- PNG exports use `@napi-rs/canvas` and the private bundled Noto Sans TC regular/bold assets under `apps/bazi/server/fonts/`; do not rely on installed container fonts.
+- Check `/api/bazi/line/status`: both renderer flags must be true and formats must include `png`. The PNG encoder is probed at startup.
+- The repository now includes `package-lock.json`; the Docker fallback installs dependencies with `npm ci --omit=dev`.
+
 ## Runtime Notes
 
 - The current production entry combines the main site, subpages, and Photo API behind the same Node service.
