@@ -102,7 +102,7 @@ LINE 快速排盤會用網站同一套 lunar-javascript 轉成真正的農曆；
 
 `下載命盤 PNG`（亦支援 `取得 PNG`、`下載 PNG`、`下載命盤`）會回傳下載頁連結；`取得文字檔`／`下載 TXT` 及 `取得 Markdown` 提供相同 Prompt 的不同格式。命主選擇與產生完成的快速按鈕也包含三種格式。
 
-連結採 `/apps/bazi/line-download.html#token=...`；fragment 不傳給靜態頁伺服器，LINE 網頁預覽不會消耗下載權限。使用者點「下載檔案」才呼叫一次性 API。PNG 頁面顯示圖片，供手機長按儲存；同一開啟頁面可再次儲存已取得的本機 Blob，不重用伺服器 token。
+連結採 `/apps/bazi/line-download.html?openExternalBrowser=1#token=...`，依 [LINE 官方 URL 規則](https://developers.line.biz/en/docs/messaging-api/using-line-url-scheme/) 優先使用外部瀏覽器；fragment 不傳給靜態頁伺服器，LINE 網頁預覽不會消耗下載權限。使用者點「載入檔案」才呼叫一次性 API。頁面顯示準備狀態、實際接收位元組進度、檔名、大小及 PNG／文字全文預覽，再由使用者點「儲存檔案」、「開啟檔案」、支援時的原生檔案分享或複製全文。PNG 亦可長按儲存。同頁可再次儲存已取得的本機 Blob，不重用伺服器 token；成功載入後隱藏外部瀏覽器連結，避免將已使用 token 帶到另一頁。載入完成及送出儲存請求都不宣稱檔案已存入手機，實際位置由瀏覽器／系統選擇。
 
 下載 API 依 token 紀錄綁定 owner、profile、artifact、contentHash 與格式，禁止透過 query 更換格式。HEAD 不消耗 token；成功繪製才消耗，失敗可重試；單一 token 並行下載最多一次成功。過期、已使用、命主資料變動、版本過舊與跨 owner 均拒絕。
 
@@ -146,7 +146,7 @@ Before enabling the webhook in production:
 - Confirm the test chart returns `乙酉 丁亥 丙辰 辛卯` and current luck `己丑` for the 2005 female fixture.
 - Confirm `查看 Prompt` returns the current core-based Prompt for LINE-created and existing website profiles, including automatic stale-artifact refresh.
 - Confirm TXT/Markdown match the website Prompt, PNG has all five colors and the shared six-pillar layout, and expired/repeated tokens fail.
-- Open a LINE download page on mobile, tap download and long-press the PNG preview; confirm page preview alone does not consume the token.
+- Open a LINE download page on mobile; verify loading progress, filename/size, full TXT/MD or PNG preview, explicit save/open actions and native sharing when supported. Confirm there is no automatic download before save, PNG supports long-press, and merely opening the landing page does not consume the token.
 - Re-send an identical webhook event and verify it is not processed twice.
 - Send a message from a non-allowed LINE user and verify no owner data is returned.
 

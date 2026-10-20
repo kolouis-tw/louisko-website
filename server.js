@@ -830,6 +830,7 @@ async function readLineDownloadToken(token) {
 
 function lineDownloadUrl(token) {
   const url = new URL(`${baziPublicUrl}/apps/bazi/line-download.html`);
+  url.searchParams.set("openExternalBrowser", "1");
   url.hash = new URLSearchParams({token}).toString();
   return url.toString();
 }
@@ -985,6 +986,7 @@ async function sendLineDownloadLink(replyToken, ownerId, profile, format = "md")
   const token=await createLineDownloadToken(ownerId,profile.id,artifact,format);
   await replyLineMessages(replyToken,[lineBot.buildTextMessage([
     `${selected.label}已準備完成。`, "", `命主：${profile.name}`,
+    "開啟連結後，先載入並預覽，再按儲存或系統分享。",
     `下載連結 ${Math.ceil(baziLineDownloadTtlMs/60000)} 分鐘內有效，且只能使用一次：`,lineDownloadUrl(token)
   ].join("\n"))]);
 }

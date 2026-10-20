@@ -8,64 +8,55 @@
   <title>八字檔案下載</title>
   <link rel="stylesheet" href="../../assets/louisko-theme.css">
   <style>
-    main { max-width: 960px; margin: 40px auto; padding: 24px; }
-    .download-card { background: #fff; border-radius: 20px; padding: clamp(24px,5vw,48px); }
-    h1 { font-size: clamp(30px,5vw,48px); margin-top: 0; }
+    main { max-width: 960px; margin: 32px auto; padding: 20px; }
+    .download-card { background: #fff; border-radius: 20px; padding: clamp(22px,5vw,44px); }
+    h1 { font-size: clamp(30px,5vw,46px); margin-top: 0; }
     p { line-height: 1.8; }
-    button { margin: 12px 0; max-width: 100%; }
-    #download-status { min-height: 2em; overflow-wrap: anywhere; }
-    #chart-preview { display: block; width: 100%; height: auto; margin-top: 24px; border: 1px solid #ddd; }
+    button, .file-action { max-width: 100%; min-height: 48px; }
+    .file-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0; }
+    .file-action { display: inline-flex; align-items: center; justify-content: center; padding: 12px 20px; border: 1px solid #a66f63; border-radius: 12px; text-decoration: none; background: #fff; color: #26302f; box-sizing: border-box; }
+    #download-status, #file-name { overflow-wrap: anywhere; }
+    #download-status { min-height: 2em; }
+    #file-result { margin-top: 24px; border-top: 1px solid #ddd; padding-top: 20px; }
+    #file-name { margin: 0 0 8px; font-size: 20px; }
+    progress { width: 100%; height: 16px; accent-color: #a66f63; }
+    #chart-preview { display: block; width: 100%; height: auto; margin-top: 20px; border: 1px solid #ddd; }
+    #text-preview { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 520px; overflow: auto; padding: 18px; background: #f4f4f0; font: 16px/1.8 sans-serif; }
+    #save-help { font-size: 15px; color: #4e5b5a; }
     [hidden] { display: none !important; }
+    @media (max-width: 480px) { .file-actions > * { width: 100%; } }
   </style>
 </head>
 <body>
   <main>
-    <section class="download-card">
-      <h1>八字檔案下載</h1>
-      <p>按下按鈕取得 LINE 提供的檔案。連結有使用期限；若已失效，請回到 LINE 重新取得。</p>
-      <button id="download-file" type="button">下載檔案</button>
+    <section class="download-card" aria-labelledby="download-title">
+      <h1 id="download-title">八字檔案下載</h1>
+      <p>先載入檔案，確認內容後再選擇儲存方式。</p>
+      <div class="file-actions">
+        <button id="download-file" type="button">載入檔案</button>
+        <a id="external-browser" class="file-action" rel="noopener noreferrer" hidden>使用 Safari／Chrome 開啟</a>
+      </div>
+      <div id="download-progress" hidden>
+        <progress id="transfer-progress" aria-label="檔案載入進度"></progress>
+        <p id="transfer-detail" aria-live="polite"></p>
+      </div>
       <p id="download-status" role="status" aria-live="polite"></p>
-      <p id="image-help" hidden>下方是命盤預覽，也可以長按圖片儲存。</p>
-      <img id="chart-preview" alt="八字命盤細盤預覽" hidden>
+      <section id="file-result" aria-labelledby="file-name" hidden>
+        <h2 id="file-name"></h2>
+        <p id="file-size"></p>
+        <div class="file-actions">
+          <button id="share-file" type="button" hidden>分享／儲存到檔案</button>
+          <a id="save-file" class="file-action">儲存檔案</a>
+          <a id="open-file" class="file-action" target="_blank" rel="noopener noreferrer">開啟檔案</a>
+          <button id="copy-text" type="button" hidden>複製全文</button>
+        </div>
+        <p id="save-help"></p>
+        <img id="chart-preview" alt="八字命盤細盤預覽" hidden>
+        <pre id="text-preview" tabindex="0" aria-label="顧問檔案全文" hidden></pre>
+      </section>
       <a href="./">返回八字網站</a>
     </section>
   </main>
-  <script>
-    const button=document.getElementById("download-file");
-    const status=document.getElementById("download-status");
-    let token, saved=null;
-    function selectToken() {
-      token=new URLSearchParams(location.hash.slice(1)).get("token");
-      if(saved)URL.revokeObjectURL(saved.url);saved=null;
-      document.getElementById("chart-preview").hidden=true;document.getElementById("image-help").hidden=true;
-      button.disabled=false;button.textContent="下載檔案";
-      button.hidden=!/^[a-f0-9]{64}$/.test(token||"");
-      status.textContent=button.hidden?"下載連結不完整，請回到 LINE 重新取得。":"";
-    }
-    selectToken();window.addEventListener("hashchange",selectToken);
-    button.addEventListener("click",async()=>{
-      const requestedToken=token;
-      button.disabled=true;status.textContent="正在準備檔案…";
-      try {
-        if(!saved) {
-          const response=await fetch(`/api/bazi/line/download?token=${encodeURIComponent(token)}`,{cache:"no-store",credentials:"omit",referrerPolicy:"no-referrer"});
-          if(!response.ok)throw new Error(await response.text()||"下載失敗，請稍後重試。");
-          const blob=await response.blob();
-          if(requestedToken!==token)return;
-          const name=response.headers.get("content-disposition")?.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
-          const filename=(name?decodeURIComponent(name):"八字檔案").replace(/[\\/:*?"<>|\u0000-\u001f]/g,"_");
-          saved={url:URL.createObjectURL(blob),filename};
-          if(blob.type.startsWith("image/png")) {
-            const preview=document.getElementById("chart-preview");preview.src=saved.url;preview.hidden=false;
-            document.getElementById("image-help").hidden=false;
-          }
-        }
-        const link=document.createElement("a");link.href=saved.url;link.download=saved.filename;document.body.appendChild(link);link.click();link.remove();
-        status.textContent="檔案已準備完成。若尚未儲存，可再按一次按鈕。";button.textContent="再次儲存檔案";
-      } catch(error) { if(requestedToken===token){status.textContent=error.message;button.textContent="重試下載";} }
-      finally { button.disabled=false; }
-    });
-    window.addEventListener("pagehide",event=>{if(!event.persisted&&saved)URL.revokeObjectURL(saved.url);});
-  </script>
+  <script src="./line-download.js"></script>
 </body>
 </html>

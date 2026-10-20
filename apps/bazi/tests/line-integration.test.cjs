@@ -70,7 +70,7 @@ test('signed webhook through cache migration, Prompt, MD/TXT/PNG download and ow
   const message=text=>emit({type:'message',message:{type:'text',text}});
   const postback=(action,profileId=p.id)=>emit({type:'postback',postback:{data:new URLSearchParams({action,profileId}).toString()}});
   const last=()=>replies.at(-1).messages;
-  const link=()=>new URL(last()[0].text.match(/http:\/\/localhost\/apps\/bazi\/line-download\.html#token=[a-f0-9]+/)[0]);
+  const link=()=>new URL(last()[0].text.match(/http:\/\/localhost\/apps\/bazi\/line-download\.html\?openExternalBrowser=1#token=[a-f0-9]+/)[0]);
   const downloadPath=url=>"/api/bazi/line/download?"+url.hash.slice(1);
   const tokenOf=url=>new URLSearchParams(url.hash.slice(1)).get("token");
   const get=url=>fetch(base+downloadPath(url));
@@ -87,7 +87,7 @@ test('signed webhook through cache migration, Prompt, MD/TXT/PNG download and ow
   await message('查看 Prompt');assert.equal(JSON.parse(await fs.readFile(artifactPath)).generatedAt,firstTime,'fresh cache is reused');
   artifact.promptTemplateVersion='old';artifact.generationFingerprint='old';await fs.writeFile(artifactPath,JSON.stringify(artifact));
   await message('查看 Prompt');artifact=JSON.parse(await fs.readFile(artifactPath));assert.ok(canonical.isArtifactCurrent(artifact,p));
-  await message('取得 Markdown');const mdLink=link();
+  await message('取得 Markdown');const mdLink=link();assert.equal(mdLink.searchParams.get("openExternalBrowser"),"1");
   assert.equal((await fetch(base+downloadPath(mdLink),{method:'HEAD'})).status,405);
   assert.equal((await fetch(base+mdLink.pathname)).status,200,"landing preview must not consume token");
   const md=await get(mdLink);assert.equal(md.status,200);assert.match(md.headers.get('content-type'),/^text\/markdown/);assert.match(md.headers.get('content-disposition'),/\.md/);
