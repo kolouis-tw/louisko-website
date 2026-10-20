@@ -10,6 +10,7 @@ const heicConvert = require("heic-convert");
 const { S3Client, DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand } = require("@aws-sdk/client-s3");
 const canonicalBaziService = require("./apps/bazi/server/canonical-service.cjs");
 const lineBot = require("./apps/bazi/server/line-bot.cjs");
+const chartPng = require("./apps/bazi/server/chart-png.cjs");
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -48,6 +49,7 @@ const baziLineRateLimitPerMinute = Math.max(1, Math.min(120, Number(process.env.
 const baziLineEventLocks = new Map();
 const baziLineGenerationLocks = new Map();
 const baziLineRateLimits = new Map();
+const baziLineDownloadLocks = new Set();
 const scryptAsync = promisify(crypto.scrypt);
 
 app.disable("x-powered-by");
@@ -111,23 +113,39 @@ app.get("/api/bazi/auth/status", async (req, res) => {
   res.json({ ok: true, emailConfigured: baziEmailProvider === "console" || (baziEmailProvider === "cloudflare" && Boolean(baziEmailApiToken && baziEmailAccountId && baziEmailFrom)) });
 });
 
+app.get("/api/bazi/line/status", (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  const renderer = chartPng.getRendererStatus();
+  res.json({ok:true, formats:["md","txt",...(renderer.chineseFontAvailable?["png"]:[])], renderer, versions:canonicalBaziService.getCurrentVersions()});
+});
+
 app.get("/api/bazi/line/download", async (req, res) => {
+  res.setHeader("Cache-Control", "private, no-store");
+  if (req.method !== "GET") return res.status(405).set("Allow", "GET").end();
+  let token, locked = false;
   try {
-    const token = normalizeBaziToken(req.query?.token);
-    const download = await consumeLineDownloadToken(token);
+    token = normalizeBaziToken(req.query?.token);
+    if (baziLineDownloadLocks.has(token)) throw createLineError(409,"DOWNLOAD_IN_PROGRESS","此連結正在下載，請稍候。");
+    baziLineDownloadLocks.add(token); locked = true;
+    const download = await readLineDownloadToken(token);
     const artifact = await readLineArtifact(download.ownerId, download.profileId);
-    if (!artifact || artifact.artifactId !== download.artifactId) {
-      throw createBaziProfileError(404, "ARTIFACT_NOT_FOUND", "Prompt 檔案不存在或已更新。");
+    const profile = (await readBaziProfiles(download.ownerId)).find(item=>item.id===download.profileId);
+    if (!profile || !artifact || artifact.artifactId !== download.artifactId || !canonicalBaziService.isArtifactCurrent(artifact,profile)
+      || (download.contentHash && artifact.contentHash !== download.contentHash)) {
+      await deleteLineRecord("downloads",token);
+      throw createBaziProfileError(410,"ARTIFACT_UPDATED","命主或顧問檔案已更新，請從 LINE 重新取得下載連結。");
     }
-    const profile = (await readBaziProfiles(download.ownerId)).find((item) => item.id === download.profileId);
-    const filename = `${lineBot.sanitizeFilename(profile?.name, "bazi-profile")}_終身八字_AI命理顧問檔案.md`;
-    res.setHeader("Cache-Control", "private, no-store");
-    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename="bazi-advisor.md"; filename*=UTF-8''${encodeURIComponent(filename)}`);
-    res.send(artifact.content);
+    const format = lineBot.getDownloadFormat(download.format || "md");
+    const body = format.extension === "png" ? await chartPng.renderPng(artifact.canonicalResult) : artifact.content;
+    // Consume only after rendering succeeds; an interrupted renderer can be retried.
+    await deleteLineRecord("downloads",token);
+    const filename = `${lineBot.sanitizeFilename(profile.name,"bazi-profile")}_${format.extension==="png"?"八字命盤":"終身八字_AI命理顧問檔案"}.${format.extension}`;
+    res.setHeader("Content-Type",format.mime);
+    res.setHeader("Content-Disposition",`attachment; filename="bazi-${format.extension==="png"?"chart":"advisor"}.${format.extension}"; filename*=UTF-8''${encodeURIComponent(filename)}`);
+    res.send(body);
   } catch (error) {
-    res.status(error.statusCode || 400).type("text/plain; charset=utf-8").send(error.message || "Markdown 下載失敗。");
-  }
+    res.status(error.statusCode || 400).type("text/plain; charset=utf-8").send(error.statusCode ? error.message : "下載失敗，請稍後重試或從 LINE 重新取得連結。");
+  } finally { if(locked)baziLineDownloadLocks.delete(token); }
 });
 
 app.post("/api/bazi/auth/register", async (req, res) => {
@@ -769,8 +787,10 @@ async function readLineArtifact(ownerId, profileId) {
 
 async function ensureLineArtifact(ownerId, profile) {
   const existing = await readLineArtifact(ownerId, profile.id);
-  if (existing?.content) return existing;
-  const generated = await generateLineArtifact(ownerId, profile, new Date().getFullYear());
+  if (canonicalBaziService.isArtifactCurrent(existing,profile)) return existing;
+  const targetYear = new Date().getFullYear();
+  const pending = baziLineGenerationLocks.get(`${ownerId}:${profile.id}:${targetYear}`);
+  const generated = await (pending || generateLineArtifact(ownerId,profile,targetYear));
   return generated.artifact;
 }
 
@@ -783,31 +803,34 @@ async function writeLineGeneration(ownerId, profileId, generation) {
   await writeBaziJson(lineGenerationKey(ownerId, profileId, generation.inputFingerprint), generation);
 }
 
-async function createLineDownloadToken(ownerId, profileId, artifactId) {
+async function createLineDownloadToken(ownerId, profileId, artifact, format = "md") {
+  lineBot.getDownloadFormat(format);
   const token = crypto.randomBytes(32).toString("hex");
   await writeLineRecord("downloads", token, {
     version: 1,
     ownerId,
     profileId,
-    artifactId,
+    artifactId: artifact.artifactId,
+    contentHash: artifact.contentHash,
+    format,
     createdAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + baziLineDownloadTtlMs).toISOString(),
   });
   return token;
 }
 
-async function consumeLineDownloadToken(token) {
+async function readLineDownloadToken(token) {
   const record = await readLineRecord("downloads", token);
-  await deleteLineRecord("downloads", token);
-  if (!record || !record.expiresAt || Date.parse(record.expiresAt) <= Date.now()) {
-    throw createLineError(410, "SESSION_EXPIRED", "Markdown 下載連結已過期，請從 LINE 重新取得。");
+  if (!record || !record.expiresAt || !Number.isFinite(Date.parse(record.expiresAt)) || Date.parse(record.expiresAt) <= Date.now()) {
+    if(record)await deleteLineRecord("downloads",token);
+    throw createLineError(410, "SESSION_EXPIRED", "下載連結已過期或已使用，請從 LINE 重新取得。");
   }
   return record;
 }
 
 function lineDownloadUrl(token) {
-  const url = new URL(`${baziPublicUrl}/api/bazi/line/download`);
-  url.searchParams.set("token", token);
+  const url = new URL(`${baziPublicUrl}/apps/bazi/line-download.html`);
+  url.hash = new URLSearchParams({token}).toString();
   return url.toString();
 }
 
@@ -861,6 +884,9 @@ async function generateLineArtifact(ownerId, profile, targetYear = new Date().ge
       contentHash: generated.advisorPrompt.contentHash,
       chars: generated.advisorPrompt.chars,
       generatedAt: generated.generatedAt,
+      targetYear: generated.targetYear,
+      versions: generated.versions,
+      canonicalResult: generated.canonicalResult,
       qualityReport: generated.advisorPrompt.qualityReport,
     };
     await writeLineGeneration(ownerId, profile.id, generation);
@@ -889,7 +915,7 @@ function buildGeneratedSummary(profile, generated, ownerId) {
     `全文：約 ${generated.advisorPrompt.chars} 字`,
   ].join("\n"), [
     lineBot.postbackItem("查看全文", `action=view-prompt&profileId=${encodeURIComponent(profile.id)}`),
-    lineBot.postbackItem("取得 Markdown", `action=download-markdown&profileId=${encodeURIComponent(profile.id)}`),
+    ...lineBot.downloadActions(profile.id),
     lineBot.postbackItem("重新產生", `action=regenerate&profileId=${encodeURIComponent(profile.id)}`),
   ]);
 }
@@ -953,15 +979,13 @@ async function sendCurrentLinePrompt(replyToken, ownerId, profile) {
   await replyLinePrompt(replyToken, artifact.content);
 }
 
-async function sendLineMarkdownLink(replyToken, ownerId, profile) {
-  const artifact = await ensureLineArtifact(ownerId, profile);
-  const token = await createLineDownloadToken(ownerId, profile.id, artifact.artifactId);
-  await replyLineMessages(replyToken, [lineBot.buildTextMessage([
-    "Markdown 已準備完成。",
-    "",
-    `命主：${profile.name}`,
-    "下載連結 15 分鐘內有效，且只對目前這份 Prompt 有效：",
-    lineDownloadUrl(token),
+async function sendLineDownloadLink(replyToken, ownerId, profile, format = "md") {
+  const selected=lineBot.getDownloadFormat(format);
+  const artifact=await ensureLineArtifact(ownerId,profile);
+  const token=await createLineDownloadToken(ownerId,profile.id,artifact,format);
+  await replyLineMessages(replyToken,[lineBot.buildTextMessage([
+    `${selected.label}已準備完成。`, "", `命主：${profile.name}`,
+    `下載連結 ${Math.ceil(baziLineDownloadTtlMs/60000)} 分鐘內有效，且只能使用一次：`,lineDownloadUrl(token)
   ].join("\n"))]);
 }
 
@@ -987,7 +1011,7 @@ async function sendSelectedProfile(replyToken, userId, profile) {
     "請選擇下一步。",
   ].join("\n"), [
     lineBot.postbackItem("查看 Prompt", `action=view-prompt&profileId=${encodeURIComponent(profile.id)}`),
-    lineBot.postbackItem("取得 Markdown", `action=download-markdown&profileId=${encodeURIComponent(profile.id)}`),
+    ...lineBot.downloadActions(profile.id),
     lineBot.postbackItem("重新排盤", `action=regenerate&profileId=${encodeURIComponent(profile.id)}`),
   ])]);
   await writeLineSession(userId, { state: "selected-profile", selectedProfileId: profile.id });
@@ -1026,8 +1050,8 @@ async function handleLineProfileAction(replyToken, userId, ownerId, action, prof
     await sendCurrentLinePrompt(replyToken, ownerId, profile);
     return;
   }
-  if (action === "download-markdown") {
-    await sendLineMarkdownLink(replyToken, ownerId, profile);
+  if (["download-markdown","download-png","download-text"].includes(action)) {
+    await sendLineDownloadLink(replyToken, ownerId, profile, {"download-markdown":"md","download-png":"png","download-text":"txt"}[action]);
     return;
   }
   if (action === "regenerate") {
@@ -1055,7 +1079,7 @@ async function handleLinePostback(replyToken, userId, postback) {
     await sendSelectedProfile(replyToken, userId, profile);
     return;
   }
-  if (["view-prompt", "download-markdown", "regenerate"].includes(data.action)) {
+  if (["view-prompt", "download-markdown", "download-png", "download-text", "regenerate"].includes(data.action)) {
     await handleLineProfileAction(replyToken, userId, owner.accountId, data.action, data.profileId);
   }
 }
@@ -1089,14 +1113,13 @@ async function handleLineMessage(replyToken, userId, text) {
     await sendLineProfiles(replyToken, owner.accountId, userId);
   } else if (parsed.command === "quick-chart") {
     await handleLineQuickChart(replyToken, userId, parsed);
-  } else if (parsed.command === "view-prompt" || parsed.command === "download-markdown") {
+  } else if (["view-prompt","download-markdown","download-png","download-text","regenerate"].includes(parsed.command)) {
     const profile = await getSingleLineProfile(owner.accountId, userId);
     if (!profile) {
       await sendLineProfiles(replyToken, owner.accountId, userId);
       return;
     }
-    if (parsed.command === "view-prompt") await sendCurrentLinePrompt(replyToken, owner.accountId, profile);
-    else await sendLineMarkdownLink(replyToken, owner.accountId, profile);
+    await handleLineProfileAction(replyToken,userId,owner.accountId,parsed.command,profile.id);
   }
 }
 

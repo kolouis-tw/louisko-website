@@ -55,3 +55,5 @@ Node 測試涵蓋來源摘要、核心義完整性、截圖六柱星運／自坐
 ## 網頁與 LINE 共用
 
 `server/canonical-service.cjs` 的 VM 載入同一份 `advisor-core.js` 與 `chart-export.js`，版本標記包含核心義來源摘要。LINE 與命主紀錄重新產生的顧問檔案因此也採用新內容，保留既有曆法與排盤規則。
+
+LINE 下載 PNG 與網站共用 `createCanvas`，伺服器注入原生 Canvas factory；`line-download.html` 提供下載、失敗重試與圖片預覽。TXT／MD 共用同一個 artifact.content，舊檔在版本、命主輸入或指定年份變動時自動更新。

@@ -18,7 +18,7 @@ LINE Platform
   -> existing Bazi account/profile persistence and R2/local storage
 ```
 
-The website, LINE, and Markdown download all use the same structured canonical result for a generation. LINE artifacts are stored under the existing storage provider using `line/` keys; there is no LINE-specific database.
+The website, LINE, Markdown/text downloads and PNG renderer all use the same structured canonical result for a generation. LINE artifacts are stored under the existing storage provider using `line/` keys; there is no LINE-specific database.
 
 ## Production Configuration
 
@@ -79,6 +79,9 @@ The handler validates the raw request body with HMAC-SHA256, uses LINE `webhookE
 我的命主
 查看 Prompt
 取得 Markdown
+取得文字檔
+下載命盤 PNG
+重新產生
 幫助
 取消
 ```
@@ -93,7 +96,17 @@ Example:
 
 The parser applies the website defaults for LINE input: solar calendar, `Asia/Taipei` / UTC+8, north hemisphere, and `子初換日`. Gender is required in the LINE command. The Bot first displays the normalized data and asks for confirmation; only after confirmation does it save/update the owner-scoped profile and generate the artifact.
 
-`查看 Prompt` reads the current saved artifact. If a profile was created on the website and has no LINE artifact yet, the first view or download generates one with the current canonical versions. `重新產生` explicitly refreshes the artifact. `取得 Markdown` creates a one-time, short-lived, owner/profile/artifact-scoped download token.
+`查看 Prompt`、文字檔、Markdown 與 PNG 共用同一份 canonical snapshot。讀取時比對命主資料、姓名、目標年份、核心義與網站引擎來源版本；舊檔、內容雜湊不符或資料更動時自動重建，版本有效時直接沿用。`重新產生` 可手動更新。
+
+LINE 快速排盤會用網站同一套 lunar-javascript 轉成真正的農曆；伺服器 adapter 亦從標準陽曆重新轉換，修復舊 LINE 紀錄中誤填的農曆文字，不改既有四柱與大運算法。
+
+`下載命盤 PNG`（亦支援 `取得 PNG`、`下載 PNG`、`下載命盤`）會回傳下載頁連結；`取得文字檔`／`下載 TXT` 及 `取得 Markdown` 提供相同 Prompt 的不同格式。命主選擇與產生完成的快速按鈕也包含三種格式。
+
+連結採 `/apps/bazi/line-download.html#token=...`；fragment 不傳給靜態頁伺服器，LINE 網頁預覽不會消耗下載權限。使用者點「下載檔案」才呼叫一次性 API。PNG 頁面顯示圖片，供手機長按儲存；同一開啟頁面可再次儲存已取得的本機 Blob，不重用伺服器 token。
+
+下載 API 依 token 紀錄綁定 owner、profile、artifact、contentHash 與格式，禁止透過 query 更換格式。HEAD 不消耗 token；成功繪製才消耗，失敗可重試；單一 token 並行下載最多一次成功。過期、已使用、命主資料變動、版本過舊與跨 owner 均拒絕。
+
+PNG 使用 `chart-export.js` 同一個 Canvas 排版，以 `@napi-rs/canvas` 在伺服器繪圖；Docker 安裝 Noto CJK 字型。單次只允許一個 PNG render，避免共享服務記憶體暴增。`GET /api/bazi/line/status` 僅回傳格式、字型就緒與程式版本，不回傳命主、LINE ID、token 或帳號設定。
 
 ## Data Records
 
@@ -104,7 +117,7 @@ The existing Bazi profile record remains the source of owner profile data. The L
 - `line/generations/<owner>/<profile>/<input-fingerprint>.json`: canonical result and version metadata.
 - `line/artifacts/<owner>/<profile>/<artifact-id>.json`: Prompt content, hash, character count, and quality metadata.
 - `line/artifacts/<owner>/<profile>/latest.json`: latest artifact pointer/content used by read-only Prompt retrieval.
-- `line/downloads/<random-token>.json`: one-time Markdown download authorization.
+- `line/downloads/<random-token>.json`: one-time, format-bound download authorization.
 
 Profile and artifact reads always use the resolved website account ID. A profile ID supplied by LINE cannot cross the owner boundary.
 
@@ -131,8 +144,9 @@ Before enabling the webhook in production:
 - Send an incomplete `排盤` command and verify missing fields are reported.
 - Send the example command and verify the confirmation step appears before generation.
 - Confirm the test chart returns `乙酉 丁亥 丙辰 辛卯` and current luck `己丑` for the 2005 female fixture.
-- Confirm `查看 Prompt` returns the full Prompt for both a LINE-created profile and an existing website profile.
-- Confirm `取得 Markdown` works once and the same token fails on a second request.
+- Confirm `查看 Prompt` returns the current core-based Prompt for LINE-created and existing website profiles, including automatic stale-artifact refresh.
+- Confirm TXT/Markdown match the website Prompt, PNG has all five colors and the shared six-pillar layout, and expired/repeated tokens fail.
+- Open a LINE download page on mobile, tap download and long-press the PNG preview; confirm page preview alone does not consume the token.
 - Re-send an identical webhook event and verify it is not processed twice.
 - Send a message from a non-allowed LINE user and verify no owner data is returned.
 
@@ -154,3 +168,7 @@ Rollback is the existing Zeabur service rollback or a revert of the LINE adapter
 
 - [LINE Messaging API webhook events and signature validation](https://developers.line.biz/en/reference/messaging-api/nojs/)
 - [LINE text message character count](https://developers.line.biz/en/docs/messaging-api/text-character-count/)
+
+## 2026-10-20 完整對齊驗證
+
+`npm run test:bazi:line` 現在同時執行原有 canonical regression 與簽章 webhook HTTP 整合測試。整合測試使用隔離暫存帳號、命主、token 與 LINE reply mock，不發訊息至正式 LINE；涵蓋舊檔更新、深層 fingerprint、農曆一致性、三格式下載、過期與並行 token、渲染失敗重試、跨 owner 拒絕及新命主確認流程。正式手機 LINE 收發與儲存仍須與伺服器測試分別記錄。

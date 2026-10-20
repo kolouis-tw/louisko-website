@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { Solar } = require("../vendor/lunar-javascript-1.7.7.js");
 
 const DEFAULT_LINE_TEXT_SAFE_LIMIT = 4500;
 const DEFAULT_SESSION_TTL_MS = 15 * 60 * 1000;
@@ -74,6 +75,7 @@ function parseQuickBaziInput(text, defaults = {}) {
     return { command: "quick-chart", status: "invalid", code: "INVALID_TIME", message: "出生時間格式或時間範圍不正確。" };
   }
   const gender = genderMatch[1] === "女" ? "female" : "male";
+  const lunar=Solar.fromYmdHms(year,month,day,hour,minute,0).getLunar();
   return {
     command: "quick-chart",
     status: "ready",
@@ -81,7 +83,7 @@ function parseQuickBaziInput(text, defaults = {}) {
       name,
       inputCalendarType: "solar",
       birthSolar: { year, month, day, hour, minute },
-      birthLunar: { year, month, day, isLeap: false, ganzhiYear: "" },
+      birthLunar: {year:lunar.getYear(),month:Math.abs(lunar.getMonth()),day:lunar.getDay(),isLeap:lunar.getMonth()<0,ganzhiYear:lunar.getYearInGanZhi()},
       gender,
       hemisphere: defaults.hemisphere || "north",
       dayChangeRule: defaults.dayChangeRule || "lateZiHour",
@@ -98,6 +100,9 @@ function parseLineCommand(text) {
   if (/^(我的命主|命主列表|profiles?)$/i.test(normalized)) return { command: "profiles" };
   if (/^(查看\s*prompt|查看全文|prompt)$/i.test(normalized)) return { command: "view-prompt" };
   if (/^(取得\s*markdown|取得\s*md|下載\s*markdown)$/i.test(normalized)) return { command: "download-markdown" };
+  if (/^(取得|下載)\s*(png|命盤(?:\s*png)?|圖檔)$/i.test(normalized)) return { command: "download-png" };
+  if (/^(取得|下載)\s*(txt|文字檔)$/i.test(normalized)) return { command: "download-text" };
+  if (/^(重新產生|重新排盤)$/i.test(normalized)) return { command: "regenerate" };
   return parseQuickBaziInput(normalized);
 }
 
@@ -192,6 +197,22 @@ function buildConfirmationMessage(sessionId, profile) {
   ]);
 }
 
+const downloadFormats=Object.freeze({
+  md:{extension:"md",mime:"text/markdown; charset=utf-8",label:"Markdown"},
+  txt:{extension:"txt",mime:"text/plain; charset=utf-8",label:"文字檔"},
+  png:{extension:"png",mime:"image/png",label:"命盤 PNG"}
+});
+function getDownloadFormat(format) {
+  if (!Object.hasOwn(downloadFormats,format)) {
+    const error=new Error("不支援此下載格式。");error.statusCode=422;throw error;
+  }
+  return downloadFormats[format];
+}
+function downloadActions(profileId) {
+  return [["取得 Markdown","download-markdown"],["取得文字檔","download-text"],["下載命盤 PNG","download-png"]]
+    .map(([label,action])=>postbackItem(label,`action=${action}&profileId=${encodeURIComponent(profileId)}`));
+}
+
 function buildHelpMessage() {
   return buildTextMessage([
     "Louisko 八字命理顧問",
@@ -203,13 +224,18 @@ function buildHelpMessage() {
     "",
     "我的命主：查看既有命主",
     "查看 Prompt：查看目前有效 Prompt",
-    "取得 Markdown：取得短效下載連結",
+    "取得 Markdown：下載顧問 Markdown 檔",
+    "取得文字檔：下載顧問 TXT 檔",
+    "下載命盤 PNG：下載五行配色細盤圖",
+    "重新產生：依最新版本更新顧問檔案",
     "取消：取消目前操作",
   ].join("\n"), [
     messageActionItem("排盤格式", "排盤"),
     messageActionItem("我的命主", "我的命主"),
     messageActionItem("查看 Prompt", "查看 Prompt"),
     messageActionItem("取得 Markdown", "取得 Markdown"),
+    messageActionItem("取得文字檔", "取得文字檔"),
+    messageActionItem("下載命盤 PNG", "下載命盤 PNG"),
     messageActionItem("取消", "取消"),
   ]);
 }
@@ -219,6 +245,8 @@ module.exports = {
   DEFAULT_SESSION_TTL_MS,
   buildConfirmationMessage,
   buildHelpMessage,
+  downloadActions,
+  getDownloadFormat,
   buildTextMessage,
   chunkPrompt,
   eventFingerprint,

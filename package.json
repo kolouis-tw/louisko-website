@@ -9,7 +9,7 @@
     "site:verify": "node scripts/site-workflow/manage-site.mjs verify",
     "style:info": "node scripts/site-workflow/louisko-style-system.mjs info",
     "style:final": "node scripts/site-workflow/louisko-style-system.mjs final",
-    "test:bazi:line": "node apps/bazi/scripts/line-bot-regression-check.cjs",
+    "test:bazi:line": "node apps/bazi/scripts/line-bot-regression-check.cjs && node --test apps/bazi/tests/line-integration.test.cjs",
     "test:security": "node scripts/healthcheck/security-regression.cjs"
   },
   "engines": {
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1053.0",
+    "@napi-rs/canvas": "^1.0.11",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "heic-convert": "^2.1.0",

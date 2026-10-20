@@ -40,7 +40,7 @@ function runLineUtilityChecks() {
 
   const help = lineBot.buildHelpMessage();
   assert(help.text.includes("請輸入命令，或點選下方按鈕："));
-  assert.equal(help.quickReply.items.length, 5);
+  assert.equal(help.quickReply.items.length, 7);
   assert(help.quickReply.items.some((item) => item.action.text === "查看 Prompt"));
   assert(help.quickReply.items.some((item) => item.action.text === "取得 Markdown"));
 
@@ -79,7 +79,7 @@ function runCanonicalChecks() {
   assertPillars(chartB, ["己卯", "丙子", "戊午", "戊午"]);
   assert.equal(chartB.canonicalResult.currentLuck.pillar, "甲戌");
   assert.equal(chartA.versions.baziCoreVersion, "website-bazi-inline-v1");
-  assert.match(chartA.versions.promptTemplateVersion, /^advisor-core-[a-f0-9]{12}-chart-v1$/);
+  assert.match(chartA.versions.promptTemplateVersion, /^advisor-core-[a-f0-9]{12}-chart-v2$/);
   assert(chartA.advisorPrompt.content.startsWith(require("../advisor-core.js").text));
   assert(!/流月|JSON|undefined|\[object Object\]/.test(chartA.advisorPrompt.content));
   assert.notEqual(chartA.advisorPrompt.contentHash, chartB.advisorPrompt.contentHash);

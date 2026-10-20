@@ -136,12 +136,13 @@
       "\n提示只代表所選規則的字與柱位條件命中；成局、成化及喜忌仍須另判。\n\n## 神煞輔助\n"+shenShaText;
   }
 
-  async function createCanvas(payload) {
-    if(typeof document==="undefined")throw new Error("圖檔輸出需要瀏覽器。");
-    if(document.fonts?.ready)await document.fonts.ready;
+  async function createCanvas(payload, options = {}) {
+    if(!options.createCanvas && typeof document==="undefined")throw new Error("圖檔輸出需要繪圖環境。");
+    if(typeof document!=="undefined" && document.fonts?.ready)await document.fonts.ready;
+    const makeCanvas=options.createCanvas ?? (()=>document.createElement("canvas"));
     const detail=derive(payload),width=1280,pad=28,inner=width-pad*2,labelW=84,colW=(inner-labelW)/6;
-    const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
-    const font='"PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif';
+    const canvas=makeCanvas(),ctx=canvas.getContext("2d");
+    const font=options.fontFamily ?? '"PingFang TC", "Noto Sans CJK TC", "Noto Sans TC", "Microsoft JhengHei", "Heiti TC", "Arial Unicode MS", sans-serif';
     const linesFor=(text,maxWidth,size)=>{
       ctx.font=`500 ${size}px ${font}`;
       const lines=[];let line="";
@@ -190,7 +191,7 @@
     text("星運依日干，自坐依各柱天干；提示為規則命中，成局、成化與喜忌另判。",pad,y+30,18,"#616962");
     text("起運與歲數沿用網站估算區間，未推定精確交運日期。",pad,y+58,18,"#616962");
     // Crop the working canvas to the measured content height, preserving device-resolution text.
-    const output=document.createElement("canvas");output.width=canvas.width;output.height=Math.ceil((y+86)*2);
+    const output=makeCanvas();output.width=canvas.width;output.height=Math.ceil((y+86)*2);
     output.getContext("2d").drawImage(canvas,0,0);
     return output;
   }

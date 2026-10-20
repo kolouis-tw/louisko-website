@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>八字檔案下載</title>
+  <link rel="stylesheet" href="../../assets/louisko-theme.css">
+  <style>
+    main { max-width: 960px; margin: 40px auto; padding: 24px; }
+    .download-card { background: #fff; border-radius: 20px; padding: clamp(24px,5vw,48px); }
+    h1 { font-size: clamp(30px,5vw,48px); margin-top: 0; }
+    p { line-height: 1.8; }
+    button { margin: 12px 0; max-width: 100%; }
+    #download-status { min-height: 2em; overflow-wrap: anywhere; }
+    #chart-preview { display: block; width: 100%; height: auto; margin-top: 24px; border: 1px solid #ddd; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="download-card">
+      <h1>八字檔案下載</h1>
+      <p>按下按鈕取得 LINE 提供的檔案。連結有使用期限；若已失效，請回到 LINE 重新取得。</p>
+      <button id="download-file" type="button">下載檔案</button>
+      <p id="download-status" role="status" aria-live="polite"></p>
+      <p id="image-help" hidden>下方是命盤預覽，也可以長按圖片儲存。</p>
+      <img id="chart-preview" alt="八字命盤細盤預覽" hidden>
+      <a href="./">返回八字網站</a>
+    </section>
+  </main>
+  <script>
+    const button=document.getElementById("download-file");
+    const status=document.getElementById("download-status");
+    let token, saved=null;
+    function selectToken() {
+      token=new URLSearchParams(location.hash.slice(1)).get("token");
+      if(saved)URL.revokeObjectURL(saved.url);saved=null;
+      document.getElementById("chart-preview").hidden=true;document.getElementById("image-help").hidden=true;
+      button.disabled=false;button.textContent="下載檔案";
+      button.hidden=!/^[a-f0-9]{64}$/.test(token||"");
+      status.textContent=button.hidden?"下載連結不完整，請回到 LINE 重新取得。":"";
+    }
+    selectToken();window.addEventListener("hashchange",selectToken);
+    button.addEventListener("click",async()=>{
+      const requestedToken=token;
+      button.disabled=true;status.textContent="正在準備檔案…";
+      try {
+        if(!saved) {
+          const response=await fetch(`/api/bazi/line/download?token=${encodeURIComponent(token)}`,{cache:"no-store",credentials:"omit",referrerPolicy:"no-referrer"});
+          if(!response.ok)throw new Error(await response.text()||"下載失敗，請稍後重試。");
+          const blob=await response.blob();
+          if(requestedToken!==token)return;
+          const name=response.headers.get("content-disposition")?.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+          const filename=(name?decodeURIComponent(name):"八字檔案").replace(/[\\/:*?"<>|\u0000-\u001f]/g,"_");
+          saved={url:URL.createObjectURL(blob),filename};
+          if(blob.type.startsWith("image/png")) {
+            const preview=document.getElementById("chart-preview");preview.src=saved.url;preview.hidden=false;
+            document.getElementById("image-help").hidden=false;
+          }
+        }
+        const link=document.createElement("a");link.href=saved.url;link.download=saved.filename;document.body.appendChild(link);link.click();link.remove();
+        status.textContent="檔案已準備完成。若尚未儲存，可再按一次按鈕。";button.textContent="再次儲存檔案";
+      } catch(error) { if(requestedToken===token){status.textContent=error.message;button.textContent="重試下載";} }
+      finally { button.disabled=false; }
+    });
+    window.addEventListener("pagehide",event=>{if(!event.persisted&&saved)URL.revokeObjectURL(saved.url);});
+  </script>
+</body>
+</html>

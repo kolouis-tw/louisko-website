@@ -32,14 +32,10 @@
 - [ ] 流年查詢顯示指定年份往後 6 年
 - [ ] 點擊「論命」可開啟 `bazi-analysis.html`
 - [ ] 改流年年份後，payload 的 `annualLuck` 與 `currentLuck` 會同步切換
-- [ ] 論命頁可顯示大運、流年、十二流月與 AI prompt
+- [ ] 論命頁可顯示大運、流年與核心義 AI Prompt（不含流月）
 - [ ] 論命頁預設顯示「終身 AI 命理顧問 Prompt」
-- [ ] 可在「終身 AI 命理顧問 Prompt」與「完整除錯資料」間切換
-- [ ] Prompt 字數與狀態顯示正常
-- [ ] 終身 Prompt 一致性檢查結果會顯示為品質狀態
-- [ ] 即使一致性檢查未通過，仍可複製與下載 Prompt；品質提醒不可阻擋匯出
 - [ ] 可複製 Prompt
-- [ ] 可下載 `.md`
+- [ ] TXT 與 Markdown 以十九節核心義起首、內容與複製一致，可下載五行配色 PNG
 - [ ] A4 列印預覽不顯示按鈕
 
 ## 命主紀錄與雙曆法
@@ -81,8 +77,8 @@ node apps/bazi/scripts/calendar-profile-regression-check.mjs
 - [ ] `排盤 姓名 YYYY/MM/DD HH:MM 男／女` 會先顯示正規化資料並要求確認。
 - [ ] 確認後才會寫入現有帳號 owner 的命主紀錄與 canonical generation/artifact。
 - [ ] `我的命主` 及數字選擇只列出 owner scope 內的命主。
-- [ ] `查看 Prompt` 只讀最新 artifact，不重新計算；`重新產生` 才更新 artifact。
-- [ ] `取得 Markdown` 連結為一次性、短效、owner/profile/artifact scoped token。
+- [ ] `查看 Prompt` 對版本有效的 artifact 直接讀取；姓名、出生資料、年份或版本改變時自動更新；`重新產生` 可手動更新。
+- [ ] TXT／Markdown／PNG 下載連結綁定格式、owner、profile 與 artifact；下載頁預覽及 HEAD 不消耗 token，成功下載後即失效。
 - [ ] Prompt 分段不超過設定安全字數，且單次回覆不超過 5 則訊息。
 - [ ] 重送相同 `webhookEventId` 不會重複處理。
 - [ ] 不完整排盤、過期確認、未知命主與未設定環境變數都有可理解錯誤。
@@ -92,3 +88,6 @@ node apps/bazi/scripts/calendar-profile-regression-check.mjs
 ```sh
 npm run test:bazi:line
 ```
+
+- [ ] LINE `下載命盤 PNG` 會開啟下載頁，按鈕可下載 `.png`，圖片可長按儲存，390px 無水平溢出。
+- [ ] 下載失敗可重試；下載完成後同頁可再次儲存 Blob；過期或資料已更新時顯示清楚訊息。

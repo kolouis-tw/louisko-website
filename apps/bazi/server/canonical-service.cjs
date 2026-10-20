@@ -13,6 +13,9 @@ const baziAnalysisCutoff = "\n    try {";
 const ADVISOR_SCHEMA_VERSION = "advisor-schema-v1";
 
 let cachedEngine = null;
+const engineSourceHash = crypto.createHash("sha256").update([
+  __filename, baziIndexPath, baziAnalysisPath, path.join(__dirname,"../advisor-core.js"), path.join(__dirname,"../chart-export.js")
+].map(file => fs.readFileSync(file, "utf8")).join("\n")).digest("hex");
 
 function extractInlineScript(filePath, cutoffMarker) {
   const html = fs.readFileSync(filePath, "utf8");
@@ -64,7 +67,9 @@ function getCurrentVersions() {
     calendarRuleVersion: "website-calendar-inline-v1",
     baziCoreVersion: "website-bazi-inline-v1",
     advisorSchemaVersion: ADVISOR_SCHEMA_VERSION,
-    promptTemplateVersion: `advisor-core-${BaziAdvisorCore.sourceSha256.slice(0, 12)}-chart-v1`,
+    canonicalInputVersion: "canonical-input-v2",
+    engineSourceHash,
+    promptTemplateVersion: `advisor-core-${BaziAdvisorCore.sourceSha256.slice(0, 12)}-chart-v2`,
   };
 }
 
@@ -109,8 +114,11 @@ function createCanonicalInput(profile) {
   const canonical = profile?.canonicalBirthInput || {};
   const calendarType = profile?.inputCalendarType || canonical.calendarType || "solar";
   const lunar = getProfileLunar(profile);
-  const hasProfileSolar = [profile?.birthSolar?.year, profile?.birthSolar?.month, profile?.birthSolar?.day].every((value) => Number.isFinite(Number(value)));
-  const solar = calendarType === "lunar" && !hasProfileSolar ? lunarToSolar(lunar) : getProfileSolar(profile);
+  const storedSolar = getProfileSolar(profile);
+  const hasProfileSolar = Object.values(storedSolar).every(Number.isFinite);
+  const solar = calendarType === "lunar" && !hasProfileSolar ? lunarToSolar(lunar) : storedSolar;
+  const converted = lunarApi.Solar.fromYmdHms(solar.year,solar.month,solar.day,solar.hour,solar.minute,0).getLunar();
+  const birthLunar = {year:converted.getYear(),month:Math.abs(converted.getMonth()),day:converted.getDay(),isLeap:converted.getMonth()<0,ganzhiYear:converted.getYearInGanZhi()};
   const dayChangeRule = profile?.dayChangeRule || canonical.dayChangeRule || "lateZiHour";
   const gender = profile?.gender || canonical.gender || "male";
   const hemisphere = profile?.hemisphere || canonical.hemisphere || "north";
@@ -125,18 +133,21 @@ function createCanonicalInput(profile) {
     timezoneOffset: Number.isFinite(timezoneOffset) ? timezoneOffset : 8,
     displayName: String(profile?.name || canonical.name || "").trim(),
     calendarType,
-    birthLunar: lunar,
+    birthLunar,
   };
 }
 
 function normalizeForFingerprint(value) {
-  return JSON.stringify(value, Object.keys(value || {}).sort());
+  const sort = item => Array.isArray(item) ? item.map(sort) : item && typeof item === "object"
+    ? Object.fromEntries(Object.keys(item).sort().map(key => [key, sort(item[key])])) : item;
+  return JSON.stringify(sort(value));
 }
 
-function buildInputFingerprint(input, versions) {
+function buildInputFingerprint(input, versions, targetYear = new Date().getFullYear()) {
   return crypto.createHash("sha256")
     .update(normalizeForFingerprint({
       input: {
+        displayName: input.displayName,
         year: input.year,
         month: input.month,
         day: input.day,
@@ -150,6 +161,7 @@ function buildInputFingerprint(input, versions) {
         birthLunar: input.birthLunar,
       },
       versions,
+      targetYear,
     }), "utf8")
     .digest("hex");
 }
@@ -158,18 +170,33 @@ function buildArtifactId(profileId, fingerprint) {
   return `advisor_${crypto.createHash("sha256").update(`${profileId}|${fingerprint}`, "utf8").digest("hex").slice(0, 32)}`;
 }
 
-function generateBaziProfile(profile, targetYear = new Date().getFullYear()) {
-  const engine = loadEngine();
+function getGenerationIdentity(profile, targetYear = new Date().getFullYear()) {
   const input = createCanonicalInput(profile);
   const target = Number.isInteger(Number(targetYear)) ? Number(targetYear) : new Date().getFullYear();
+  const versions = getCurrentVersions();
+  const inputFingerprint = buildInputFingerprint(input, versions, target);
+  return {input,targetYear:target,versions,inputFingerprint,artifactId:buildArtifactId(String(profile.id || ""),inputFingerprint)};
+}
+
+function isArtifactCurrent(artifact, profile, targetYear = new Date().getFullYear()) {
+  if (!artifact?.content || !artifact.canonicalResult || !artifact.contentHash) return false;
+  const identity=getGenerationIdentity(profile,targetYear);
+  return artifact.profileId === String(profile.id) && artifact.artifactId === identity.artifactId
+    && artifact.promptTemplateVersion === identity.versions.promptTemplateVersion
+    && artifact.targetYear === identity.targetYear
+    && artifact.generationFingerprint === identity.inputFingerprint
+    && artifact.contentHash === crypto.createHash("sha256").update(artifact.content,"utf8").digest("hex");
+}
+
+function generateBaziProfile(profile, targetYear = new Date().getFullYear()) {
+  const engine = loadEngine();
+  const {input,targetYear:target,versions,inputFingerprint,artifactId}=getGenerationIdentity(profile,targetYear);
   const chart = engine.core.calculateBaziChart(input, target);
   const payload = engine.core.buildBaziAnalysisPayload(chart, input);
   const analysis = engine.analysis.analyzeBazi(payload);
   const lifetime = analysis.promptExport?.lifetime;
   if (!lifetime?.prompt) throw new Error("Canonical lifetime Prompt was not generated.");
 
-  const versions = getCurrentVersions();
-  const inputFingerprint = buildInputFingerprint(input, versions);
   const generatedAt = new Date().toISOString();
   const contentHash = crypto.createHash("sha256").update(lifetime.prompt, "utf8").digest("hex");
   const profileId = String(profile.id || "");
@@ -179,7 +206,7 @@ function generateBaziProfile(profile, targetYear = new Date().getFullYear()) {
     input,
     targetYear: target,
     inputFingerprint,
-    artifactId: buildArtifactId(profileId, inputFingerprint),
+    artifactId,
     generatedAt,
     versions,
     canonicalResult: payload,
@@ -211,6 +238,8 @@ module.exports = {
   createCanonicalInput,
   generateBaziProfile,
   getCurrentVersions,
+  getGenerationIdentity,
+  isArtifactCurrent,
   loadEngine,
   resetEngineForTests,
 };
