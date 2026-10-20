@@ -11,6 +11,7 @@ const { S3Client, DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, P
 const canonicalBaziService = require("./apps/bazi/server/canonical-service.cjs");
 const lineBot = require("./apps/bazi/server/line-bot.cjs");
 const chartPng = require("./apps/bazi/server/chart-png.cjs");
+const { createDownloadConsumer } = require("./apps/bazi/server/download-consumer.cjs");
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -25,6 +26,11 @@ const r2Bucket = process.env.R2_BUCKET || "";
 const r2PublicBaseUrl = (process.env.R2_PUBLIC_BASE_URL || "").replace(/\/$/, "");
 const r2Client = createR2Client();
 const activeStorageProvider = storageProvider === "r2" && r2Client ? "r2" : "local";
+const consumeLineDownload = createDownloadConsumer({
+  provider: activeStorageProvider, client: r2Client, bucket: r2Bucket,
+  objectKey: token => baziAuthStorageKey(lineRecordKey("download-receipts", token)),
+  filePath: token => baziAuthFilePath(lineRecordKey("download-receipts", token)),
+});
 const webPhotoMaxBytes = 600 * 1024;
 const webPhotoMaxEdge = 1800;
 const baziSessionCookie = "louisko_bazi_session";
@@ -121,6 +127,8 @@ app.get("/api/bazi/line/status", (req, res) => {
 
 app.get("/api/bazi/line/download", async (req, res) => {
   res.setHeader("Cache-Control", "private, no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
   if (req.method !== "GET") return res.status(405).set("Allow", "GET").end();
   let token, locked = false;
   try {
@@ -137,8 +145,12 @@ app.get("/api/bazi/line/download", async (req, res) => {
     }
     const format = lineBot.getDownloadFormat(download.format || "md");
     const body = format.extension === "png" ? await chartPng.renderPng(artifact.canonicalResult) : artifact.content;
-    // Consume only after rendering succeeds; an interrupted renderer can be retried.
-    await deleteLineRecord("downloads",token);
+    // Recheck expiry after rendering; consume atomically across overlapping deployments.
+    if (Date.parse(download.expiresAt) <= Date.now() || !await consumeLineDownload(token, download.expiresAt)) {
+      throw createLineError(410, "SESSION_EXPIRED", "下載連結已過期或已使用，請從 LINE 重新取得。");
+    }
+    // A cleanup failure must not discard the only usable response after consumption.
+    try { await deleteLineRecord("downloads",token); } catch { console.warn("LINE download token cleanup deferred"); }
     const filename = `${lineBot.sanitizeFilename(profile.name,"bazi-profile")}_${format.extension==="png"?"八字命盤":"終身八字_AI命理顧問檔案"}.${format.extension}`;
     res.setHeader("Content-Type",format.mime);
     res.setHeader("Content-Disposition",`attachment; filename="bazi-${format.extension==="png"?"chart":"advisor"}.${format.extension}"; filename*=UTF-8''${encodeURIComponent(filename)}`);
@@ -1739,6 +1751,10 @@ app.use(express.static(root, {
   setHeaders(res, filePath) {
     if (filePath.endsWith(".html")) {
       res.setHeader("Cache-Control", "no-cache");
+    }
+    if (filePath === path.join(root, "apps/bazi/line-download.html")) {
+      res.setHeader("Cache-Control", "no-store");
+      res.setHeader("Referrer-Policy", "no-referrer");
     }
   },
 }));
