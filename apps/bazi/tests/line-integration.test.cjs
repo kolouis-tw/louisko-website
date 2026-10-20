@@ -89,9 +89,12 @@ test('signed webhook through cache migration, Prompt, MD/TXT/PNG download and ow
   await message('查看 Prompt');artifact=JSON.parse(await fs.readFile(artifactPath));assert.ok(canonical.isArtifactCurrent(artifact,p));
   await message('取得 Markdown');const mdLink=link();assert.equal(mdLink.searchParams.get("openExternalBrowser"),"1");
   assert.equal((await fetch(base+downloadPath(mdLink),{method:'HEAD'})).status,405);
-  assert.equal((await fetch(base+mdLink.pathname)).status,200,"landing preview must not consume token");
+  const landing=await fetch(base+mdLink.pathname);assert.equal(landing.status,200,"landing preview must not consume token");
+  assert.equal(landing.headers.get('cache-control'),'no-store');
+  for(const asset of ['file-delivery.js','file-delivery.css','line-download.js'])assert.equal((await fetch(base+'/apps/bazi/'+asset+'?v=20261020-2')).status,200);
   const md=await get(mdLink);assert.equal(md.status,200);assert.match(md.headers.get('content-type'),/^text\/markdown/);assert.match(md.headers.get('content-disposition'),/\.md/);
   assert.equal(await md.text(),artifact.content);assert.equal((await get(mdLink)).status,410);
+  assert.equal(md.headers.get('x-content-type-options'),'nosniff');assert.equal(md.headers.get('referrer-policy'),'no-referrer');
   await message('取得文字檔');const txt=await get(link());assert.equal(txt.status,200);assert.match(txt.headers.get('content-type'),/^text\/plain/);assert.equal(await txt.text(),artifact.content);
   await message('下載命盤 PNG');const pngLink=link();
   const recordPath=path.join(tmp,'auth','line','downloads',tokenOf(pngLink)+'.json');
@@ -110,6 +113,10 @@ test('signed webhook through cache migration, Prompt, MD/TXT/PNG download and ow
   }
   if(process.env.BAZI_TEST_PNG_OUTPUT)await fs.writeFile(process.env.BAZI_TEST_PNG_OUTPUT,image);
   assert.equal((await get(pngLink)).status,410);
+  const receiptPath=path.join(tmp,'auth','line','download-receipts',tokenOf(pngLink)+'.json');
+  const receipt=JSON.parse(await fs.readFile(receiptPath));assert.ok(receipt.consumedAt);assert.equal(receipt.expiresAt,tokenRecord.expiresAt);
+  // Even if storage cleanup failed or a second process read the old authorization, consumption wins.
+  await fs.writeFile(recordPath,JSON.stringify(tokenRecord));assert.equal((await get(pngLink)).status,410);
   await message('下載 PNG');const parallel=link();const outcomes=await Promise.all([get(parallel),get(parallel)]);assert.equal(outcomes.filter(r=>r.status===200).length,1,'token permits at most one response');
   await message('取得 Markdown');const expired=link();const expiryPath=path.join(tmp,'auth','line','downloads',tokenOf(expired)+'.json');const expiredRecord=JSON.parse(await fs.readFile(expiryPath));expiredRecord.expiresAt=new Date(0).toISOString();await fs.writeFile(expiryPath,JSON.stringify(expiredRecord));assert.equal((await get(expired)).status,410);
   await message('下載 PNG');const oldLink=link();

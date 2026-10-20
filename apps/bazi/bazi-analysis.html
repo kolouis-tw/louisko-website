@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>八字論命</title>
+  <link rel="stylesheet" href="./file-delivery.css?v=20261020-2">
   <style>
     :root {
       color-scheme: dark;
@@ -521,9 +522,11 @@
     </div>
 
     <p class="export-status" id="export-status" role="status" aria-live="polite"></p>
+    <section id="export-file-result" class="file-result" aria-label="已準備的檔案" hidden></section>
     <div id="app"></div>
   </main>
 
+  <script src="./file-delivery.js?v=20261020-2"></script>
   <script src="./advisor-core.js"></script>
   <script src="./chart-export.js"></script>
   <script>
@@ -2683,17 +2686,6 @@ ${referenceText}`;
       return BaziChartExport.formatReference(payload);
     }
 
-    function downloadArtifact(blob, fileName) {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
-
     function advisorFileName(payload) {
       const pillars = ["year", "month", "day", "hour"].map((key) => payload.pillars[key].pillar).join("");
       return `${payload.user.gender === "female" ? "坤造" : "乾造"}_${pillars}_${payload.annualLuck?.year ?? "原局"}`;
@@ -2701,36 +2693,33 @@ ${referenceText}`;
 
     function registerExports(payload, prompt) {
       const status = document.getElementById("export-status");
+      if (typeof BaziFileDelivery === "undefined") {
+        status.textContent = "匯出功能未能載入，請重新整理頁面後再試。";
+        return;
+      }
+      const delivery = BaziFileDelivery.mount(document.getElementById("export-file-result"), message => { status.textContent = message; });
+      const buttons = ["download-txt", "download-md", "download-png"].map(id => document.getElementById(id));
+      async function prepare(button, label, filename, createBlob) {
+        for (const item of buttons) item.disabled = true;
+        button.textContent = "正在產生檔案…";
+        status.textContent = "正在準備檔案，完成後會顯示預覽與儲存按鈕。";
+        delivery.reset();
+        try { await delivery.show(await createBlob(), filename); }
+        catch { status.textContent = "檔案產生失敗，請重試。"; }
+        finally { for (const item of buttons) item.disabled = false; button.textContent = label; }
+      }
       for (const [id, extension, mime] of [["download-txt", "txt", "text/plain"], ["download-md", "md", "text/markdown"]]) {
         const button = document.getElementById(id);
         button.hidden = false;
-        button.onclick = () => {
-          try {
-            downloadArtifact(new Blob([prompt], { type: `${mime};charset=utf-8` }), `${advisorFileName(payload)}_終身命理顧問.${extension}`);
-            status.textContent = `已產生 ${extension} 顧問檔案`;
-          } catch (error) {
-            status.textContent = "檔案產生失敗，請重試。";
-          }
-        };
+        button.onclick = () => prepare(button, extension === "txt" ? "下載文字檔" : "下載 .md", `${advisorFileName(payload)}_終身命理顧問.${extension}`,
+          () => new Blob([prompt], { type: `${mime};charset=utf-8` }));
       }
       const pngButton = document.getElementById("download-png");
       pngButton.hidden = false;
-      pngButton.onclick = async () => {
-        pngButton.disabled = true;
-        pngButton.textContent = "正在產生命盤…";
-        status.textContent = "";
-        try {
-          const canvas = await BaziChartExport.createCanvas(payload);
-          const blob = await new Promise((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error("PNG 轉換失敗")), "image/png"));
-          downloadArtifact(blob, `${advisorFileName(payload)}_八字命盤.png`);
-          status.textContent = "已產生五行配色命盤 PNG";
-        } catch (error) {
-          status.textContent = "命盤圖檔產生失敗，請重試。";
-        } finally {
-          pngButton.disabled = false;
-          pngButton.textContent = "下載命盤 PNG";
-        }
-      };
+      pngButton.onclick = () => prepare(pngButton, "下載命盤 PNG", `${advisorFileName(payload)}_八字命盤.png`, async () => {
+        const canvas = await BaziChartExport.createCanvas(payload);
+        return await new Promise((resolve, reject) => canvas.toBlob(result => result ? resolve(result) : reject(new Error("PNG 轉換失敗")), "image/png"));
+      });
     }
 
     function buildAiPrompt(payload) {

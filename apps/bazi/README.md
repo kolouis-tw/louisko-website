@@ -101,3 +101,7 @@ BAZI_LINE_ALLOWED_USER_IDS
 ## LINE 與網站完整匯出對齊（2026-10-20）
 
 LINE 支援 `查看 Prompt`、`取得 Markdown`、`取得文字檔`、`下載命盤 PNG`、`重新產生`。版本與輸入變動會自動更新舊檔；PNG 由與網站相同的 `chart-export.js` 產生五行配色六柱細盤，採短效下載頁並提供圖片預覽。`server/chart-png.cjs` 只接收 canonical snapshot，不另排四柱；伺服器隨附並明確載入 Noto Sans TC 字型。
+
+## 匯出審核與操作
+
+網站與 LINE 的 TXT／MD／PNG 共用 `file-delivery.js/css`，檔案產生後可預覽、主動儲存、開啟或分享。下載頁處理失效連結、初始化失敗、傳輸異常及舊操作競態；後端以私有使用收據防止跨程序重播。修正清單、維護方式與實測範圍見 [下載審核](docs/download-audit.md)。

@@ -2,6 +2,16 @@
 
 本文件用來記錄每次 `louisko.com` 網頁修改、GitHub 同步與 Zeabur 部署。
 
+
+## 2026-10-20 - 全面審核並統一網站與 LINE 檔案儲存
+
+- 核對：上一版 `82a3194` 已實際切換，正式 HTML 與帶版本 JS 均與來源吻合。使用者核心義原檔已搬至原工作區 `Bazi_LineBOT_md/`，與發佈副本 SHA-256 相同。
+- 修正：網站 PNG 改成先準備／預覽後明確儲存；與 LINE 共用 `file-delivery.js/css`。File／原生分享不支援時保留預覽與其他操作；修正分享／複製競態、複製備援、Blob 釋放、初始化失敗、失效連結重試、代理錯誤、空檔及傳輸截斷。
+- 一次性授權：渲染成功後以 filesystem exclusive create 或 R2 conditional create 留存私有收據，跨部署程序阻擋重播；渲染後重新核對到期。收據僅含時間戳，保留至原 token 到期，未變更正式 bucket lifecycle。
+- 驗證：canonical、簽章 webhook HTTP、9 組下載互動及 2 組儲存層防重播、7 組匯出、曆法／命主、Prompt 隔離、33 項存取保護、site verify 及 diff／語法檢查。停用系統字型重跑與 PNG 圖片檢視通過，排盤規則保持原狀。
+- 邊界：新前端互動以 VM／DOM 替身驗證，R2 conditional 寫入以 SDK 請求替身驗證；本機儲存、HTTP、原生 PNG 實際執行。瀏覽器控制停用，未冒充手機 LINE App 或本回合新版瀏覽器視覺測試。完整紀錄見 `apps/bazi/docs/download-audit.md`。
+- 發布：仍使用獨立 release worktree 與既有 `codex/bazi-compact-prompt` 自動部署，未覆蓋原工作區其他未提交修改。
+
 ## 2026-10-20 - 修正 LINE 下載無進度與看不到檔案
 
 - 問題：舊下載頁在非同步抓取後背景點擊下載，LINE 內未必顯示儲存流程；TXT／MD 沒有內容預覽，使用者無法確認檔案。

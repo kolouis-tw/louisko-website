@@ -1,0 +1,11 @@
+.file-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0; }
+.file-actions > * { max-width: 100%; min-height: 48px; }
+.file-action { display: inline-flex; align-items: center; justify-content: center; padding: 12px 20px; border: 1px solid #a66f63; border-radius: 12px; text-decoration: none; background: #fff; color: #26302f; box-sizing: border-box; }
+.file-result { margin-top: 24px; border: 1px solid #ddd; border-radius: 16px; padding: clamp(18px,4vw,32px); background: #fff; }
+.file-result h2 { overflow-wrap: anywhere; margin: 0 0 8px; font-size: 20px; }
+.file-result [data-file="image"] { display: block; width: 100%; height: auto; margin-top: 20px; border: 1px solid #ddd; }
+.file-result [data-file="text"] { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 520px; overflow: auto; padding: 18px; background: #f4f4f0; font: 16px/1.8 sans-serif; }
+.file-result [data-file="help"] { font-size: 15px; color: #4e5b5a; line-height: 1.8; }
+.file-result [hidden], .file-result[hidden] { display: none !important; }
+@media (max-width: 480px) { .file-actions > * { width: 100%; } }
+@media print { .file-result { display: none !important; } }

@@ -104,7 +104,7 @@ LINE 快速排盤會用網站同一套 lunar-javascript 轉成真正的農曆；
 
 連結採 `/apps/bazi/line-download.html?openExternalBrowser=1#token=...`，依 [LINE 官方 URL 規則](https://developers.line.biz/en/docs/messaging-api/using-line-url-scheme/) 優先使用外部瀏覽器；fragment 不傳給靜態頁伺服器，LINE 網頁預覽不會消耗下載權限。使用者點「載入檔案」才呼叫一次性 API。頁面顯示準備狀態、實際接收位元組進度、檔名、大小及 PNG／文字全文預覽，再由使用者點「儲存檔案」、「開啟檔案」、支援時的原生檔案分享或複製全文。PNG 亦可長按儲存。同頁可再次儲存已取得的本機 Blob，不重用伺服器 token；成功載入後隱藏外部瀏覽器連結，避免將已使用 token 帶到另一頁。載入完成及送出儲存請求都不宣稱檔案已存入手機，實際位置由瀏覽器／系統選擇。
 
-下載 API 依 token 紀錄綁定 owner、profile、artifact、contentHash 與格式，禁止透過 query 更換格式。HEAD 不消耗 token；成功繪製才消耗，失敗可重試；單一 token 並行下載最多一次成功。過期、已使用、命主資料變動、版本過舊與跨 owner 均拒絕。
+下載 API 依 token 紀錄綁定 owner、profile、artifact、contentHash 與格式，禁止透過 query 更換格式。HEAD 不消耗 token；成功繪製才消耗，失敗可重試；單一 token 並行下載最多一次成功；`server/download-consumer.cjs` 以本機 exclusive create／R2 `If-None-Match: *` 在渲染成功後原子寫入收據，跨程序防止重播。收據寫入失敗回 503，不傳回檔案；清除原權限失敗不丟棄已產生的唯一回應。過期、已使用、命主資料變動、版本過舊與跨 owner 均拒絕。
 
 PNG 使用 `chart-export.js` 同一個 Canvas 排版，以 `@napi-rs/canvas` 在伺服器繪圖；隨程式提供完整 Noto Sans TC 字型並明確註冊，不依賴容器的系統字型。單次只允許一個 PNG render，避免共享服務記憶體暴增。`GET /api/bazi/line/status` 僅回傳格式、字型就緒與程式版本，不回傳命主、LINE ID、token 或帳號設定。
 
@@ -118,6 +118,7 @@ The existing Bazi profile record remains the source of owner profile data. The L
 - `line/artifacts/<owner>/<profile>/<artifact-id>.json`: Prompt content, hash, character count, and quality metadata.
 - `line/artifacts/<owner>/<profile>/latest.json`: latest artifact pointer/content used by read-only Prompt retrieval.
 - `line/downloads/<random-token>.json`: one-time, format-bound download authorization.
+- `line/download-receipts/<random-token>.json`: atomic consumption receipt shared by overlapping deployments; contains only timestamps. Keep until the original token has expired. Local deployments must share one storage path; R2 deployments must share one bucket/prefix.
 
 Profile and artifact reads always use the resolved website account ID. A profile ID supplied by LINE cannot cross the owner boundary.
 
@@ -174,3 +175,7 @@ Rollback is the existing Zeabur service rollback or a revert of the LINE adapter
 `npm run test:bazi:line` 現在同時執行原有 canonical regression 與簽章 webhook HTTP 整合測試。整合測試使用隔離暫存帳號、命主、token 與 LINE reply mock，不發訊息至正式 LINE；涵蓋舊檔更新、深層 fingerprint、農曆一致性、三格式下載、過期與並行 token、渲染失敗重試、跨 owner 拒絕及新命主確認流程。正式手機 LINE 收發與儲存仍須與伺服器測試分別記錄。
 
 字型驗收必須額外執行 `DISABLE_SYSTEM_FONTS_LOAD=1 npm run test:bazi:line`，確保不依賴開發機字型。正式 `/api/bazi/line/status` 的 `renderer.available` 與 `renderer.chineseFontAvailable` 都應為 `true`，且格式列表包含 `png`；不能只以部署 RUNNING 作為 PNG 就緒依據。
+
+## 下載體驗審核
+
+網站與 LINE 共用 `apps/bazi/file-delivery.js/css`。到期或已使用連結不再提供無效重試；代理錯誤、空內容、錯誤格式與傳輸不完整不作成功。初始化失敗可重新載入。詳見 [下載審核](../../apps/bazi/docs/download-audit.md)，包括手機／R2 實測範圍及收據維護。

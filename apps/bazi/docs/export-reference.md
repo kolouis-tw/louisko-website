@@ -1,6 +1,8 @@
 # 顧問核心義與命盤匯出
 
-更新：2026-10-20。本功能位於論命頁 `bazi-analysis.html`，不改出生四柱、節氣或既有起運與大運計算。
+更新：2026-10-20。匯出操作審核與驗證邊界見 [download-audit.md](download-audit.md)。
+
+本功能位於論命頁 `bazi-analysis.html`，不改出生四柱、節氣或既有起運與大運計算。
 
 ## 核心義來源
 
@@ -57,3 +59,5 @@ Node 測試涵蓋來源摘要、核心義完整性、截圖六柱星運／自坐
 `server/canonical-service.cjs` 的 VM 載入同一份 `advisor-core.js` 與 `chart-export.js`，版本標記包含核心義來源摘要。LINE 與命主紀錄重新產生的顧問檔案因此也採用新內容，保留既有曆法與排盤規則。
 
 LINE 下載 PNG 與網站共用 `createCanvas`，伺服器注入原生 Canvas factory；`line-download.html` 提供下載、失敗重試與圖片預覽。TXT／MD 共用同一個 artifact.content，舊檔在版本、命主輸入或指定年份變動時自動更新。
+
+網站與 LINE 現在共用 `file-delivery.js/css`，先準備內容與預覽，再由使用者主動儲存、開啟、分享或複製；PNG 不再於非同步完成後背景點擊下載。

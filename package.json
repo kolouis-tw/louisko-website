@@ -9,7 +9,7 @@
     "site:verify": "node scripts/site-workflow/manage-site.mjs verify",
     "style:info": "node scripts/site-workflow/louisko-style-system.mjs info",
     "style:final": "node scripts/site-workflow/louisko-style-system.mjs final",
-    "test:bazi:line": "node apps/bazi/scripts/line-bot-regression-check.cjs && node --test apps/bazi/tests/line-integration.test.cjs",
+    "test:bazi:line": "node apps/bazi/scripts/line-bot-regression-check.cjs && node --test apps/bazi/tests/line-integration.test.cjs apps/bazi/tests/download-flow.test.cjs apps/bazi/tests/download-consumer.test.cjs",
     "test:security": "node scripts/healthcheck/security-regression.cjs"
   },
   "engines": {
