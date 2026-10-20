@@ -81,3 +81,10 @@
 - Trigger: only when you need rationale for a past change.
 - Inputs / outputs: version notes and fix summaries.
 - Caution: historical notes may not reflect the current canonical implementation.
+
+## 顧問檔案與命盤圖輸出
+
+- `docs/advisor-core.md`：使用者提供的顧問角色原文；由 `node apps/bazi/scripts/build-advisor-core.mjs` 產生 `advisor-core.js`。
+- `chart-export.js`：以結構化命盤產生六柱文字、關係提示與五行配色 Canvas PNG，不從 DOM 反推資料。
+- 文字檔、Markdown、複製 Prompt 共用相同內容，先附核心義，再附個別命主資料；不含流月或舊 JSON。
+- 詳細界線與驗證方式見 `docs/export-reference.md`；命主紀錄、國農曆轉換及帳號同步沿用現行主頁。

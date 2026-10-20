@@ -79,7 +79,9 @@ function runCanonicalChecks() {
   assertPillars(chartB, ["己卯", "丙子", "戊午", "戊午"]);
   assert.equal(chartB.canonicalResult.currentLuck.pillar, "甲戌");
   assert.equal(chartA.versions.baziCoreVersion, "website-bazi-inline-v1");
-  assert.equal(chartA.versions.promptTemplateVersion, "advisor-v2.0");
+  assert.match(chartA.versions.promptTemplateVersion, /^advisor-core-[a-f0-9]{12}-chart-v1$/);
+  assert(chartA.advisorPrompt.content.startsWith(require("../advisor-core.js").text));
+  assert(!/流月|JSON|undefined|\[object Object\]/.test(chartA.advisorPrompt.content));
   assert.notEqual(chartA.advisorPrompt.contentHash, chartB.advisorPrompt.contentHash);
   const lunarProfile = canonical.createCanonicalInput({
     id: "lunar-regression",

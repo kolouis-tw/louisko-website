@@ -1,5 +1,10 @@
 import fs from "fs";
 import vm from "vm";
+import { createRequire } from "node:module";
+const require=createRequire(import.meta.url);
+const BaziAdvisorCore=require("../advisor-core.js");
+const BaziChartExport=require("../chart-export.js");
+const { Solar }=require("../vendor/lunar-javascript-1.7.7.js");
 
 function extractScript(html, cutoffMarker) {
   const match = html.match(/<script>([\s\S]*)<\/script>/);
@@ -11,8 +16,10 @@ function extractScript(html, cutoffMarker) {
 
 function loadIndexContext() {
   const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
-  const script = `${extractScript(html, 'document.getElementById("year").value = String(defaults.year);')}\n;globalThis.__indexExports = { calculateBaziChart, buildBaziAnalysisPayload };`;
+  const script = `${extractScript(html, '    document.getElementById("year").value = String(defaults.year);')}\n;globalThis.__indexExports = { calculateBaziChart, buildBaziAnalysisPayload };`;
   const context = vm.createContext({
+    BaziAdvisorCore,
+    BaziChartExport,
     console,
     Math,
     Date,
@@ -27,8 +34,10 @@ function loadIndexContext() {
 
 function loadAnalysisContext() {
   const html = fs.readFileSync(new URL("../bazi-analysis.html", import.meta.url), "utf8");
-  const script = `${extractScript(html, "\n    try {")}\n;globalThis.__analysisExports = { analyzeBazi, createLifetimeAdvisorSource, validateGeneratedLifetimePrompt, validateLifetimeAdvisorSource, analyzeLuckCycleEffects };`;
+  const script = `${extractScript(html, "\n    try {\n      const raw = localStorage.getItem")}\n;globalThis.__analysisExports = { analyzeBazi, createLifetimeAdvisorSource, validateGeneratedLifetimePrompt, validateLifetimeAdvisorSource, analyzeLuckCycleEffects };`;
   const context = vm.createContext({
+    BaziAdvisorCore,
+    BaziChartExport,
     console,
     Math,
     Date,
@@ -43,7 +52,10 @@ function loadAnalysisContext() {
 }
 
 function buildInput({ year, month, day, hour, minute, gender, annualYear }) {
+  const lunar=Solar.fromYmdHms(year,month,day,hour,minute,0).getLunar();
   return {
+    calendarType:"solar",
+    birthLunar:{year:lunar.getYear(),month:Math.abs(lunar.getMonth()),day:lunar.getDay(),isLeap:lunar.getMonth()<0,ganzhiYear:lunar.getYearInGanZhi()},
     year,
     month,
     day,
@@ -54,15 +66,7 @@ function buildInput({ year, month, day, hour, minute, gender, annualYear }) {
     birthHemisphere: "北半球",
     lateZiSwitchDay: true,
     annualYear,
-    displayName: "",
-    calendarType: "solar",
-    birthLunar: {
-      year,
-      month,
-      day,
-      isLeap: false,
-      ganzhiYear: ""
-    }
+    displayName: ""
   };
 }
 
@@ -71,8 +75,12 @@ function buildPromptForChart(indexApi, analysisApi, config) {
   const chart = indexApi.calculateBaziChart(input, config.annualYear);
   const payload = indexApi.buildBaziAnalysisPayload(chart, input);
   const analysis = analysisApi.analyzeBazi(payload);
-  const source = analysisApi.createLifetimeAdvisorSource(payload, analysis.sections, analysis.annualMonths, analysis.shenShaResult);
-  const validation = analysisApi.validateGeneratedLifetimePrompt(source, analysis.promptExport.lifetime.prompt);
+  const source = analysisApi.createLifetimeAdvisorSource(payload, analysis.sections, [], analysis.shenShaResult);
+  const prompt=analysis.promptExport.lifetime.prompt;
+  const validation={passed:prompt.startsWith(BaziAdvisorCore.text) && !/流月|JSON|基礎引擎初判/.test(prompt)};
+  for(const pillar of Object.values(payload.pillars)) assert(prompt.includes(pillar.pillar), "missing birth pillar in prompt");
+  assert(prompt.includes(payload.user.birthSolar), "missing birth date in prompt");
+  assert(prompt.includes(payload.currentLuck.pillar), "missing current luck in prompt");
   return {
     chart,
     payload,
@@ -151,8 +159,8 @@ function main() {
   checkPromptLines(parallelB, ["年柱：乙酉", "月柱：丁亥", "日柱：丙辰", "時柱：辛卯"]);
   checkPromptLines(parallelA, ["年柱：乙卯", "月柱：戊子", "日柱：丁未", "時柱：庚子"]);
 
-  assert(chartB.analysis.promptExport.lifetime.qualityReport.passed, "lifetime quality report should pass for chart B");
-  assert(chartBAgain.analysis.promptExport.lifetime.qualityReport.passed, "repeat generation should still pass");
+  assert(chartB.validation.passed, "lifetime quality report should pass for chart B");
+  assert(chartBAgain.validation.passed, "repeat generation should still pass");
 
   const guiWei = chartB.payload.luckCycles.find((cycle) => cycle.pillar === "癸未");
   const renWu = chartB.payload.luckCycles.find((cycle) => cycle.pillar === "壬午");
@@ -176,11 +184,11 @@ function main() {
   const result = {
     chartA: {
       pillars: Object.values(chartA.payload.pillars).map((pillar) => pillar.pillar).join(" "),
-      passed: chartA.analysis.promptExport.lifetime.qualityReport.passed
+      passed: chartA.validation.passed
     },
     chartB: {
       pillars: Object.values(chartB.payload.pillars).map((pillar) => pillar.pillar).join(" "),
-      passed: chartB.analysis.promptExport.lifetime.qualityReport.passed,
+      passed: chartB.validation.passed,
       currentLuck: chartB.source.currentLuck?.pillar ?? null,
       guiWeiEffect,
       renWuEffect

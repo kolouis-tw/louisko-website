@@ -3,6 +3,8 @@ const path = require("path");
 const vm = require("vm");
 const crypto = require("crypto");
 const lunarApi = require("../vendor/lunar-javascript-1.7.7.js");
+const BaziAdvisorCore = require("../advisor-core.js");
+const BaziChartExport = require("../chart-export.js");
 
 const baziIndexPath = path.join(__dirname, "..", "index.html");
 const baziAnalysisPath = path.join(__dirname, "..", "bazi-analysis.html");
@@ -23,6 +25,8 @@ function extractInlineScript(filePath, cutoffMarker) {
 
 function createContext() {
   return vm.createContext({
+    BaziAdvisorCore,
+    BaziChartExport,
     console,
     Math,
     Date,
@@ -60,7 +64,7 @@ function getCurrentVersions() {
     calendarRuleVersion: "website-calendar-inline-v1",
     baziCoreVersion: "website-bazi-inline-v1",
     advisorSchemaVersion: ADVISOR_SCHEMA_VERSION,
-    promptTemplateVersion: "advisor-v2.0",
+    promptTemplateVersion: `advisor-core-${BaziAdvisorCore.sourceSha256.slice(0, 12)}-chart-v1`,
   };
 }
 
@@ -181,7 +185,6 @@ function generateBaziProfile(profile, targetYear = new Date().getFullYear()) {
     canonicalResult: payload,
     analysis: {
       sections: analysis.sections,
-      annualMonths: analysis.annualMonths,
       shenShaResult: analysis.shenShaResult,
       currentLuck: payload.currentLuck,
       annualLuck: payload.annualLuck,

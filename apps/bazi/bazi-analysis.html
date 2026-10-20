@@ -41,6 +41,8 @@
     }
 
     .topbar {
+      display: flex !important;
+      flex-wrap: wrap;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -159,12 +161,14 @@
 
     .chart-overview {
       display: grid;
+      direction: rtl;
       grid-template-columns: repeat(4, 1fr);
       gap: 12px;
       margin-bottom: 22px;
     }
 
     .pillar {
+      direction: ltr;
       min-height: 210px;
       padding: 16px;
       border: 1px solid var(--line);
@@ -495,6 +499,8 @@
         padding: 16px;
       }
     }
+    [hidden] { display: none !important; }
+    .export-status { min-height: 1.5em; color: var(--muted); }
   </style>
   <link rel="stylesheet" href="../../assets/louisko-theme.css">
 </head>
@@ -508,13 +514,18 @@
       <a class="back-link" href="./">返回排盤</a>
       <div class="topbar-actions">
         <button class="primary" id="copy-prompt" type="button" hidden>複製 Prompt</button>
-        <button id="download-prompt" type="button" hidden>下載 .md</button>
+        <button id="download-txt" type="button" hidden>下載文字檔</button>
+        <button id="download-md" type="button" hidden>下載 .md</button>
+        <button id="download-png" type="button" hidden>下載命盤 PNG</button>
       </div>
     </div>
 
+    <p class="export-status" id="export-status" role="status" aria-live="polite"></p>
     <div id="app"></div>
   </main>
 
+  <script src="./advisor-core.js"></script>
+  <script src="./chart-export.js"></script>
   <script>
     const elementClassByElement = { 木: "wood", 火: "fire", 土: "earth", 金: "metal", 水: "water" };
     const stems = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
@@ -2622,38 +2633,111 @@ ${JSON.stringify(payload, null, 2)}`;
     }
 
     function buildPromptExportState(payload, sections, annualMonths, shenShaResult) {
-      const fullPayload = { ...payload, monthlyLuck: annualMonths, shenSha: shenShaResult };
-      const source = createLifetimeAdvisorSource(fullPayload, sections, annualMonths, shenShaResult);
-      const data = { payload: fullPayload, sections, annualMonths, shenShaResult, source };
-      const fullPrompt = buildFullBaziPrompt(data);
-      const lifetimePrompt = buildLifetimeBaziAdvisorPrompt(data);
-      const qualityReport = analyzePromptQuality(lifetimePrompt, source);
-      const instructionPart = lifetimePrompt.split("# 一、本命知識庫")[0] ?? lifetimePrompt;
-      const knowledgePart = lifetimePrompt.includes("# 一、本命知識庫") ? `# 一、本命知識庫${lifetimePrompt.split("# 一、本命知識庫")[1]}` : "";
-      const displayName = getAdvisorDisplayName(payload);
-      const pillars = `${payload.pillars.year.pillar} ${payload.pillars.month.pillar} ${payload.pillars.day.pillar} ${payload.pillars.hour.pillar}`;
+      const prompt = buildAiPrompt({ ...payload, shenSha: shenShaResult });
       return {
-        debug: createPromptEntry("完整除錯資料", "debug", fullPrompt, validatePromptLength(fullPrompt)),
-        lifetime: createPromptEntry("終身 AI 命理顧問 Prompt", "lifetime-advisor", lifetimePrompt, validateLifetimePrompt(lifetimePrompt), {
-          displayName,
-          pillars,
-          version: LIFETIME_PROMPT_VERSION,
-          suggestedFilename: `${displayName}_終身八字AI命理顧問.md`,
-          qualityReport,
-          sourceSignature: source.metadata.chartSignature,
-          instructionChars: instructionPart.length,
-          knowledgeChars: knowledgePart.length
-        }),
-        mode: "lifetime"
+        mode: "lifetime",
+        lifetime: { prompt, validation: { chars: prompt.length, status: "就緒" }, displayName: getAdvisorDisplayName(payload) }
       };
     }
 
-    function buildAiPrompt(payload, sections, annualMonths, shenShaResult) {
-      return buildPromptExportState(payload, sections, annualMonths, shenShaResult).lifetime.prompt;
+    function buildLifetimeAdvisorPrompt(referenceText) {
+      if (typeof BaziAdvisorCore === "undefined" || !BaziAdvisorCore.text) throw new Error("未能載入命理顧問核心義。");
+      return `${BaziAdvisorCore.text}
+
+---
+
+# 本命主的終身顧問工作方式
+
+以上核心義是你的基本角色與分析規範；以下補充首次建檔及後續對話方式。
+
+以下命盤資料是本對話的顧問建檔依據。請使用繁體中文，風格半文言半白話，清楚連結命理結構與現實情境；每個主要分析段落都要有「依據」與「結論」。
+
+【首次完整建檔】
+第一次收到本檔時，先在第一段定盤，明確寫出乾造或坤造、年柱、月柱、日柱、時柱與日主；接著完成整張命盤的專屬分析，不要只回覆「已載入」、重述資料或直接詢問問題。
+
+第一階段先只取原局四柱八字，分析五行強弱、月令與通根、十神、用神、格局、調候及刑沖合會害破。先建立命盤主軸、主要矛盾、可用資源與成事方式，再分析性格、事業、財運、感情婚姻及健康五行傾向。不能只按五行數量判斷吉凶，也不能以「缺什麼就補什麼」代替判斷。
+
+第二階段再加入參考大運與指定流年兩柱共四字，統整六柱十二字。沿用原局日干作為日主，說明五行氣勢、十神引動、用神受助或受制、格局變化及刑沖合會害破；逐項指出參與柱位，區分原局既有結構與運年新增作用。不要以流年取代出生月令，或把十二字等權相加後覆蓋原局結論。
+
+接著總覽所附全部大運，深入分析參考大運與流年，給出可行建議及全命總結；完成後才邀請命主提出後續問題。
+
+【後續長期諮詢】
+建檔完成後，後續問題沿用這份命盤與已建立的分析脈絡，只調用與問題相關的內容，不重複整份建檔。先理解命主當下的具體情境，再說明命理依據、可能走向、成立條件與可行策略。
+
+原局四柱固定，參考大運與流年只是建檔時的時運切片，不是永久的「當前大運」或「今年」。問題涉及其他時間時，先確認目標年份及其對應運年；資料未提供時請索取可靠排盤資料，不自行改排或臆造。命主補充的現實經歷、後續分析與原始命盤資料須分開記錄，不能因新事件改寫原局。
+
+在新的對話中，應重新提供本檔及必要的後續紀錄，不假設你已保有其他對話的記憶。
+
+【資料與判斷原則】
+只以本檔所列的命盤資料建檔，不混入其他命盤、舊版評分或未提供的初判。保留來源中的歲數、起運時間、星運、自坐、空亡與關係提示；資料未載明者應標示待確認。
+
+來源提示中的「可相沖」「可合」「可化」等是條件提示，不等於已成局、已成化或必然發生事件。用神、格局及人生解讀若未在來源定案，屬於你的分析，必須另列依據與成立條件，不能冒充來源原文。旺相休囚死須放回月令與原局整體判斷，不直接等同命主吉凶。
+
+神煞僅在有提供資料時作輔助，不凌駕原局、格局、用神與大運流年。健康只能描述五行命理傾向，不做醫療診斷；各項人生取象均保留條件判斷，不寫成必然事件。
+
+【命主顧問資料】
+${referenceText}`;
+    }
+
+    function formatAdvisorChart(payload) {
+      return BaziChartExport.formatReference(payload);
+    }
+
+    function downloadArtifact(blob, fileName) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function advisorFileName(payload) {
+      const pillars = ["year", "month", "day", "hour"].map((key) => payload.pillars[key].pillar).join("");
+      return `${payload.user.gender === "female" ? "坤造" : "乾造"}_${pillars}_${payload.annualLuck?.year ?? "原局"}`;
+    }
+
+    function registerExports(payload, prompt) {
+      const status = document.getElementById("export-status");
+      for (const [id, extension, mime] of [["download-txt", "txt", "text/plain"], ["download-md", "md", "text/markdown"]]) {
+        const button = document.getElementById(id);
+        button.hidden = false;
+        button.onclick = () => {
+          try {
+            downloadArtifact(new Blob([prompt], { type: `${mime};charset=utf-8` }), `${advisorFileName(payload)}_終身命理顧問.${extension}`);
+            status.textContent = `已產生 ${extension} 顧問檔案`;
+          } catch (error) {
+            status.textContent = "檔案產生失敗，請重試。";
+          }
+        };
+      }
+      const pngButton = document.getElementById("download-png");
+      pngButton.hidden = false;
+      pngButton.onclick = async () => {
+        pngButton.disabled = true;
+        pngButton.textContent = "正在產生命盤…";
+        status.textContent = "";
+        try {
+          const canvas = await BaziChartExport.createCanvas(payload);
+          const blob = await new Promise((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error("PNG 轉換失敗")), "image/png"));
+          downloadArtifact(blob, `${advisorFileName(payload)}_八字命盤.png`);
+          status.textContent = "已產生五行配色命盤 PNG";
+        } catch (error) {
+          status.textContent = "命盤圖檔產生失敗，請重試。";
+        } finally {
+          pngButton.disabled = false;
+          pngButton.textContent = "下載命盤 PNG";
+        }
+      };
+    }
+
+    function buildAiPrompt(payload) {
+      return buildLifetimeAdvisorPrompt(formatAdvisorChart(payload));
     }
 
     function analyzeBazi(payload) {
-      const annualMonths = analyzeAnnualMonths(payload);
       const shenShaResult = calculateShenShaStatic(getPillarsForShenSha(payload));
       const strength = analyzeStrength(payload);
       const elementFlow = analyzeFiveElements(payload);
@@ -2664,16 +2748,14 @@ ${JSON.stringify(payload, null, 2)}`;
       const favorable = analyzeFavorable(payload, strength, climate);
       const luck = analyzeLuck(payload);
       const annual = analyzeAnnual(payload);
-      const monthly = analyzeMonthly(payload, annualMonths);
       const domains = analyzeDomains(payload, tenGod, favorable);
       const shenSha = analyzeShenSha(payload, shenShaResult);
-      const sections = [strength, elementFlow, tenGod, interactions, pattern, climate, favorable, domains, luck, annual, monthly, shenSha];
+      const sections = [strength, elementFlow, tenGod, interactions, pattern, climate, favorable, domains, luck, annual, shenSha];
       return {
         sections,
-        annualMonths,
         shenShaResult,
-        promptExport: buildPromptExportState(payload, sections, annualMonths, shenShaResult),
-        aiPrompt: buildAiPrompt({ ...payload, monthlyLuck: annualMonths, shenSha: shenShaResult }, sections, annualMonths, shenShaResult)
+        promptExport: buildPromptExportState(payload, sections, [], shenShaResult),
+        aiPrompt: buildAiPrompt({ ...payload, shenSha: shenShaResult })
       };
     }
 
@@ -2783,38 +2865,7 @@ ${JSON.stringify(payload, null, 2)}`;
     }
 
     function renderPromptPanel(exportState) {
-      const current = exportState[exportState.mode];
-      const qualityWarning = exportState.mode === "lifetime" && current.qualityReport && !current.qualityReport.passed;
-      const statusClass = current.validation.status === "超過上限"
-        ? "over"
-        : current.validation.status === "接近上限"
-          ? "near"
-          : "safe";
-      const countLabel = exportState.mode === "lifetime"
-        ? `終身 Prompt 字數：${current.validation.chars}`
-        : `Prompt 字數：${current.validation.chars} / ${MAX_PROMPT_CHARS}`;
-      return `
-        <div class="prompt-toolbar">
-          <div class="prompt-mode-group">
-            <button id="prompt-mode-lifetime" class="${exportState.mode === "lifetime" ? "active" : ""}" type="button">終身 AI 命理顧問 Prompt</button>
-            <button id="prompt-mode-debug" class="${exportState.mode === "debug" ? "active" : ""}" type="button">完整除錯資料</button>
-          </div>
-          <div class="prompt-meta">
-            <span id="prompt-char-count">${countLabel}</span>
-            <span id="prompt-status" class="prompt-status ${statusClass}">狀態：${current.validation.status}</span>
-            ${current.displayName ? `<span>命主：${escapeHtml(current.displayName)}</span>` : ""}
-            ${current.pillars ? `<span>四柱：${escapeHtml(current.pillars)}</span>` : ""}
-            ${current.version ? `<span>版本：${escapeHtml(current.version)}</span>` : ""}
-            ${current.instructionChars ? `<span>指令區：${current.instructionChars}</span>` : ""}
-            ${current.knowledgeChars ? `<span>知識庫：${current.knowledgeChars}</span>` : ""}
-            ${current.qualityReport ? `<span>品質分：${escapeHtml(current.qualityReport.score)}</span>` : ""}
-            ${current.qualityReport ? `<span>一致性：${current.qualityReport.passed ? "通過" : "失敗"}</span>` : ""}
-          </div>
-        </div>
-        ${qualityWarning ? `<p class="subtitle">此命盤的 AI 顧問檔案有品質提醒，但仍可複製或下載；品質提醒不會阻擋 Prompt 匯出。</p>` : ""}
-        ${current.qualityReport && isDevelopmentMode() && (current.qualityReport.score < 85 || !current.qualityReport.passed) ? `<p class="subtitle">開發檢查：品質分數 ${current.qualityReport.score}、原局作用異常 ${current.qualityReport.invalidNatalInteractionCount}、圖表錯置 ${current.qualityReport.chartConsistencyErrors.length}、十神錯誤 ${current.qualityReport.tenGodErrors.length}、藏干錯誤 ${current.qualityReport.hiddenStemErrors.length}、大運錯誤 ${current.qualityReport.luckCycleErrors.length}、缺段 ${current.qualityReport.missingInitialSections?.length ?? 0}、建檔流年誤導 ${current.qualityReport.buildYearAutoAnalysisDetected ? 1 : 0}、儀式化語言 ${current.qualityReport.ceremonialLanguage?.length ?? 0}、模板重複 ${current.qualityReport.repeatedTemplateSentences.length}。</p>` : ""}
-        <pre id="prompt-output" class="prompt-box">${escapeHtml(current.prompt)}</pre>
-      `;
+      return `<pre id="prompt-output" class="prompt-box">${escapeHtml(exportState.lifetime.prompt)}</pre>`;
     }
 
     function getPromptFilename(mode, payload) {
@@ -2905,8 +2956,7 @@ ${JSON.stringify(payload, null, 2)}`;
       const container = document.getElementById("ai-prompt-panel");
       if (!container || !latestPromptExport) return;
       container.innerHTML = renderPromptPanel(latestPromptExport);
-      bindPromptModeSwitch(payload);
-      syncTopbarPromptButtons(payload);
+
     }
 
     function getVisibleAnalysisSections(sections) {
@@ -2918,6 +2968,15 @@ ${JSON.stringify(payload, null, 2)}`;
       const analysis = analyzeBazi(payload);
       const annual = payload.annualLuck;
       latestPromptExport = analysis.promptExport;
+      registerExports(payload, analysis.aiPrompt);
+      const copyButton = document.getElementById("copy-prompt");
+      copyButton.hidden = false;
+      copyButton.onclick = async () => {
+        copyButton.disabled = true;
+        try { await copyCurrentPrompt(); }
+        catch (error) { copyButton.textContent = "複製失敗，請重試"; }
+        finally { copyButton.disabled = false; }
+      };
 
       document.getElementById("app").innerHTML = `
         <section class="hero">
@@ -2955,25 +3014,18 @@ ${JSON.stringify(payload, null, 2)}`;
             <p class="subtitle">每步十年。</p>
             ${renderTimeline(payload.luckCycles)}
           </section>
-          <section class="section wide" id="monthly-cards">
-            <h2>十二流月卡</h2>
-            <p class="subtitle">依流年天干五虎遁推算，日期以節氣約略區間呈現。</p>
-            ${renderAnnualMonths(analysis.annualMonths)}
-          </section>
           <section class="section wide" id="shensha-list">
             <h2>核心神煞 Core Shen Sha Set</h2>
             <p class="subtitle">規則版本 ${escapeHtml(analysis.shenShaResult.ruleSetVersion)}；固定規則引擎計算，只作輔助參考。</p>
             ${renderShenSha(analysis.shenShaResult)}
           </section>
           <section class="section wide" id="ai-master-reading">
-            <h2>AI Prompt 匯出</h2>
-            <p class="subtitle">預設顯示終身 AI 命理顧問 Prompt；完整除錯資料仍保留於內部輸出層。</p>
+            <h2>終身命理顧問 Prompt</h2>
             <div id="ai-prompt-panel">${renderPromptPanel(latestPromptExport)}</div>
           </section>
         </div>
       `;
-      bindPromptModeSwitch(payload);
-      syncTopbarPromptButtons(payload);
+
     }
 
     try {

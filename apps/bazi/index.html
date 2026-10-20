@@ -471,6 +471,7 @@
     }
 
     .pillars {
+      direction: rtl;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 14px;
@@ -478,6 +479,7 @@
     }
 
     .pillar {
+      direction: ltr;
       display: grid;
       gap: 12px;
       min-height: 300px;
@@ -2682,8 +2684,7 @@
           branch: annualLuck.branch,
           stemTenGod: annualLuck.stemTenGod,
           branchTenGod: annualLuck.branchMainTenGod
-        } : null,
-        monthlyLuck: []
+        } : null
       };
     }
 
