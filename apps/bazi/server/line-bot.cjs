@@ -41,6 +41,13 @@ function isAllowedLineUser(userId, allowedUserIds) {
   return Boolean(userId && allowedUserIds instanceof Set && allowedUserIds.has(userId));
 }
 
+// Only disclose the signed caller's own ID in a one-to-one chat. This never grants access.
+function isSelfIdRequest(event) {
+  return event?.type === "message" && event.message?.type === "text"
+    && event.source?.type === "user" && /^U[0-9a-f]{32}$/.test(event.source.userId || "")
+    && /^(?:我的\s*ID|查詢\s*ID|\/myid)$/i.test(String(event.message.text || "").trim());
+}
+
 function parseQuickBaziInput(text, defaults = {}) {
   const normalized = String(text || "").trim().replace(/[：]/g, ":");
   if (!/^排盤(?:\s|$)/i.test(normalized)) return null;
@@ -228,6 +235,7 @@ function buildHelpMessage() {
     "取得文字檔：下載顧問 TXT 檔",
     "下載命盤 PNG：下載五行配色細盤圖",
     "重新產生：依最新版本更新顧問檔案",
+    "我的ID：取得此帳號的 LINE User ID",
     "取消：取消目前操作",
   ].join("\n"), [
     messageActionItem("排盤格式", "排盤"),
@@ -252,6 +260,7 @@ module.exports = {
   eventFingerprint,
   formatProfileSummary,
   isAllowedLineUser,
+  isSelfIdRequest,
   messageActionItem,
   normalizeLineUserIds,
   parseLineCommand,

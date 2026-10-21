@@ -84,6 +84,7 @@ The handler validates the raw request body with HMAC-SHA256, uses LINE `webhookE
 重新產生
 幫助
 取消
+我的ID
 ```
 
 Example:
@@ -91,6 +92,8 @@ Example:
 ```text
 排盤 王小明 2000/01/01 12:00 男
 ```
+
+`我的ID`（亦支援 `查詢ID`、`/myid`）是白名單外唯一的辨識入口：須先通過 Webhook 簽章驗證，且只接受一對一文字訊息與有效的 LINE User ID；限速與事件去重照常執行。僅回覆發訊者自己的 ID，不讀取 owner、命主、session 或下載資料，也不自動加入白名單。群組／聊天室不回覆此指令。管理者核對帳號後，在 Zeabur 的 `BAZI_LINE_ALLOWED_USER_IDS` 追加 ID，保留既有項目；不得以暱稱代替 ID，也不要把真實 ID 寫進 Git 或文件。所有獲准帳號目前共用設定的網站 owner，尚無每個 LINE 使用者獨立資料隔離。
 
 公開說明與測試範例只能使用虛構姓名、日期與時間，不得放入真實命主個資。LINE 官方帳號管理後台的「自動回應訊息」必須關閉，讓 `/api/line/webhook` 成為唯一回覆來源；Webhook 開啟即可接收並處理訊息。
 

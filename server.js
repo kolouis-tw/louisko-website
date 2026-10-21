@@ -122,7 +122,7 @@ app.get("/api/bazi/auth/status", async (req, res) => {
 app.get("/api/bazi/line/status", (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   const renderer = chartPng.getRendererStatus();
-  res.json({ok:true, formats:["md","txt",...(renderer.available && renderer.chineseFontAvailable?["png"]:[])], renderer, versions:canonicalBaziService.getCurrentVersions()});
+  res.json({ok:true, selfIdCommand:true, formats:["md","txt",...(renderer.available && renderer.chineseFontAvailable?["png"]:[])], renderer, versions:canonicalBaziService.getCurrentVersions()});
 });
 
 app.get("/api/bazi/line/download", async (req, res) => {
@@ -1160,6 +1160,13 @@ async function processLineEvent(event, destination) {
   const userId = event?.source?.userId || "";
   const fingerprint = lineBot.eventFingerprint(event, destination);
   return withLineEventIdempotency(fingerprint, async () => {
+    if (lineBot.isSelfIdRequest(event)) {
+      enforceLineRateLimit(userId);
+      await replyLineMessages(event.replyToken, [lineBot.buildTextMessage(
+        `你的 LINE User ID：\n${userId}\n\n請將此 ID 提供給管理者核對白名單。此指令不會自動開通權限。`
+      )]);
+      return { handled: true };
+    }
     if (!lineBot.isAllowedLineUser(userId, baziLineAllowedUserIds)) {
       console.warn(`LINE user denied: ${fingerprint}`);
       return { denied: true };

@@ -12,6 +12,12 @@ const {Solar}=require('../vendor/lunar-javascript-1.7.7.js');
 const sha=value=>crypto.createHash('sha256').update(value).digest('hex');
 const fixture=()=>({id:'fixture-a',...bot.parseLineCommand('排盤 測試命主 2000/01/01 12:00 男').profile});
 
+test('self-ID command requires a direct text event and a valid caller ID',()=>{
+ const event={type:'message',source:{type:'user',userId:'U'+'1'.repeat(32)},message:{type:'text',text:'我的ID'}};
+ for(const text of ['我的ID','我的 id','查詢ID','/myid'])assert.equal(bot.isSelfIdRequest({...event,message:{type:'text',text}}),true);
+ for(const patch of [{type:'postback'},{source:{...event.source,type:'group'}},{source:{...event.source,type:'room'}},{source:{type:'user'}},{source:{type:'user',userId:'not-a-user'}},{message:{type:'image',text:'我的ID'}},{message:{type:'text',text:'我的ID Uother'}},{message:{type:'text',text:'我的命主'}}])assert.equal(bot.isSelfIdRequest({...event,...patch}),false);
+});
+
 test('normalized LINE solar/lunar input and Prompt agree exactly with website generation',()=>{
  const p=fixture();const input=canonical.createCanonicalInput(p);const engine=canonical.loadEngine();
  const lunar=Solar.fromYmdHms(2000,1,1,12,0,0).getLunar();
@@ -125,6 +131,18 @@ test('signed webhook through cache migration, Prompt, MD/TXT/PNG download and ow
   await message('查看 Prompt');artifact=JSON.parse(await fs.readFile(artifactPath));assert.ok(canonical.isArtifactCurrent(artifact,updated));assert.ok(artifact.content.includes('更新名字'));assert.ok(artifact.content.includes('12:01'));
   assert.equal((await postback('download-png','foreign-profile')).status,404);
   const replyCount=replies.length;await emit({type:'message',message:{type:'text',text:'我的命主'}},'Udenied');assert.equal(replies.length,replyCount,'non-allowed user receives no owner information');
+  const newcomer='U'+'1'.repeat(32),beforeProfiles=await fs.readFile(path.join(tmp,'profiles',owner+'.json'),'utf8');
+  const selfId={type:'message',message:{type:'text',text:'我的ID'}};
+  assert.equal((await emit(selfId,newcomer,'self-id-once')).status,200);
+  assert.equal(last().length,1);assert.equal(last()[0].text,`你的 LINE User ID：\n${newcomer}\n\n請將此 ID 提供給管理者核對白名單。此指令不會自動開通權限。`);
+  const identityReplies=replies.length;await emit(selfId,newcomer,'self-id-once');assert.equal(replies.length,identityReplies,'self-ID redelivery is deduplicated');
+  await emit({type:'message',message:{type:'text',text:'下載 PNG'}},newcomer);
+  await emit({...selfId,source:{type:'group',userId:newcomer,groupId:'fixture-group'}},newcomer);
+  assert.equal(replies.length,identityReplies,'self-ID neither authorizes downloads nor replies in group chats');
+  assert.equal(await fs.readFile(path.join(tmp,'profiles',owner+'.json'),'utf8'),beforeProfiles);
+  await assert.rejects(fs.access(path.join(tmp,'auth','line','sessions',sha(newcomer)+'.json')));
+  const unsignedBody=JSON.stringify({events:[{...selfId,source:{type:'user',userId:newcomer}}]});
+  assert.equal((await fetch(base+'/api/line/webhook',{method:'POST',headers:{'content-type':'application/json'},body:unsignedBody})).status,401);assert.equal(replies.length,identityReplies);
   const event={type:'message',message:{type:'text',text:'幫助'}};await emit(event,'Utest','duplicate');const count=replies.length;await emit(event,'Utest','duplicate');assert.equal(replies.length,count);
   await message('重新產生');assert.ok(last()[0].text.includes('檔案已產生'));
   // Full new-profile confirmation flow and persisted lunar conversion.
